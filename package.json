@@ -1,7 +1,7 @@
 {
 	"name": "@haelp/teto",
-	"version": "1.0.3",
-	"description": "A js-based controllable TETR.IO client.",
+	"version": "1.0.5",
+	"description": "A typescript-based controllable TETR.IO client.",
 	"maintainers": [
 		"haelp"
 	],
