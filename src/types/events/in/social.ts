@@ -1,0 +1,40 @@
+import { Social as SocialTypes } from "../../../types";
+
+export interface Social {
+  "social.online": number;
+
+  "social.dm": SocialTypes.DM;
+
+  "social.presence": {
+    user: string;
+    presence: {
+      status: SocialTypes.Status;
+      detail: SocialTypes.Detail | String; // keep this as String for autocomplete
+      invitable: boolean;
+    };
+  };
+
+  "social.relationships.remove": string;
+  "social.relationships.add": {
+    _id: string;
+    from: {
+      _id: string;
+      username: string;
+      avatar_revision: string | null;
+    };
+    to: {
+      _id: string;
+      username: string;
+      avatar_revision: string | null;
+    };
+  };
+
+  "social.notification": SocialTypes.Notification;
+
+  "social.invite": {
+    sender: string;
+    roomid: string;
+    roomname: string;
+    roomname_safe: string;
+  };
+}

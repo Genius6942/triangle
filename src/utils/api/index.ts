@@ -1,0 +1,50 @@
+// export * as API from "./wrapper";
+
+import { CONSTANTS } from "../constants";
+import { Get, Post, basic } from "./basic";
+import { relationship } from "./relationship";
+import { rooms } from "./rooms";
+import { server } from "./server";
+import { users } from "./users";
+
+export interface APIDefaults {
+  token: string;
+  userAgent: string;
+}
+
+export class API {
+  readonly defaults: APIDefaults = {
+    token: "",
+    userAgent: CONSTANTS.userAgent
+  };
+
+  get!: Get;
+  post!: Post;
+
+  rooms!: ReturnType<typeof rooms>;
+  server!: ReturnType<typeof server>;
+  users!: ReturnType<typeof users>;
+  social!: ReturnType<typeof relationship>;
+
+  /** @hideconstructor */
+  constructor(options: Partial<APIDefaults> = {}) {
+    this.update(options);
+  }
+
+  update(options: Partial<APIDefaults> = {}) {
+    (Object.keys(options) as (keyof APIDefaults)[]).forEach((key) => {
+      this.defaults[key] = options[key]!;
+    });
+
+    const b = basic(this.defaults);
+    this.get = b.get;
+    this.post = b.post;
+
+    this.rooms = rooms(this.get, this.post, this.defaults);
+    this.server = server(this.get, this.post, this.defaults);
+    this.users = users(this.get, this.post, this.defaults);
+    this.social = relationship(this.get, this.post, this.defaults);
+  }
+}
+
+export * as APITypes from "./wrapper";

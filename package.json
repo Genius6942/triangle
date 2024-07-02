@@ -1,0 +1,47 @@
+{
+	"name": "@haelp/teto",
+	"version": "1.0.3",
+	"description": "A js-based controllable TETR.IO client.",
+	"maintainers": [
+		"haelp"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Genius6942/triangle"
+	},
+	"displayName": "triangle.js",
+	"private": false,
+	"homepage": "https://triangle.haelp.dev",
+	"main": "src/index.ts",
+	"scripts": {
+		"test": "tsc --noEmit",
+		"format": "prettier --write \"./**/*.ts\"",
+		"docs": "typedoc",
+		"pub": "npm publish --access public"
+	},
+	"keywords": [
+		"tetrio",
+		"tetris",
+		"ribbon",
+		"websocket",
+		"bot"
+	],
+	"author": "halp",
+	"license": "MIT",
+	"dependencies": {
+		"@types/node": "^20.12.7",
+		"@types/ws": "^8.5.10",
+		"chalk": "^5.3.0",
+		"lodash": "^4.17.21",
+		"msgpackr": "^1.10.1",
+		"node-fetch": "^2.7.0",
+		"typedoc": "^0.25.13",
+		"typescript": "^5.4.5",
+		"ws": "^8.16.0"
+	},
+	"devDependencies": {
+		"open": "^10.1.0",
+		"prettier": "^3.2.5",
+		"ts-node": "^10.9.2"
+	}
+}
