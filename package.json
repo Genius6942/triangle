@@ -1,48 +1,54 @@
 {
-	"name": "@haelp/teto",
-	"version": "1.0.6",
-	"description": "A typescript-based controllable TETR.IO client.",
-	"maintainers": [
-		"haelp"
-	],
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/Genius6942/triangle"
-	},
-	"displayName": "triangle.js",
-	"private": false,
-	"homepage": "https://triangle.haelp.dev",
-	"main": "src/index.ts",
-	"scripts": {
-		"test": "tsc --noEmit",
-		"format": "prettier --write \"./**/*.ts\"",
-		"docs": "typedoc",
-		"pub": "npm publish --access public"
-	},
-	"keywords": [
-		"tetrio",
-		"tetris",
-		"ribbon",
-		"websocket",
-		"bot"
-	],
-	"author": "halp",
-	"license": "MIT",
-	"dependencies": {
-		"@types/node": "^20.12.7",
-		"@types/ws": "^8.5.10",
-		"chalk": "^5.3.0",
-		"lodash": "^4.17.21",
-		"msgpackr": "^1.10.1",
-		"node-fetch": "^2.7.0",
-		"ping": "^0.4.4",
-		"typedoc": "^0.25.13",
-		"typescript": "^5.4.5",
-		"ws": "^8.16.0"
-	},
-	"devDependencies": {
-		"open": "^10.1.0",
-		"prettier": "^3.2.5",
-		"ts-node": "^10.9.2"
-	}
+  "name": "@haelp/teto",
+  "version": "1.1.0",
+  "description": "A typescript-based controllable TETR.IO client.",
+  "maintainers": [
+    "haelp"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Genius6942/triangle"
+  },
+  "displayName": "triangle.js",
+  "private": false,
+  "homepage": "https://triangle.haelp.dev",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "tsc --noEmit",
+    "format": "prettier --write \"./**/*.ts\"",
+    "docs": "typedoc",
+    "build": "esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/index.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
+    "pub": "npm publish --access public"
+  },
+  "files": [
+    "dist"
+  ],
+  "types": "dist/types/index.d.ts",
+  "keywords": [
+    "tetrio",
+    "tetris",
+    "ribbon",
+    "websocket",
+    "bot"
+  ],
+  "author": "halp",
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-typescript": "^11.1.6",
+    "@types/node": "^20.12.7",
+    "@types/ping": "^0.4.4",
+    "@types/ws": "^8.5.10",
+    "chalk": "^5.3.0",
+    "esbuild": "^0.23.0",
+    "lodash": "^4.17.21",
+    "msgpackr": "^1.10.1",
+    "node-fetch": "^2.7.0",
+    "ping": "^0.4.4",
+    "prettier": "^3.2.5",
+    "rollup": "^4.18.0",
+    "rollup-plugin-typescript2": "^0.36.0",
+    "typedoc": "^0.25.13",
+    "typescript": "^5.4.5",
+    "ws": "^8.16.0"
+  }
 }

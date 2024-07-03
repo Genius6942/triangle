@@ -15,7 +15,6 @@ import {
   OutgoingGarbage
 } from "./garbage";
 import { calculateIncrease, deepCopy } from "./utils";
-// @ts-expect-error commonjs idrc
 import chalk from "chalk";
 
 export interface GameOptions {
