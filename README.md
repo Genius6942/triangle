@@ -8,13 +8,19 @@
 npm i @haelp/teto
 ```
 
-or 
+or
 
 ```bash
-git clone https://github.com/Genius6942/triangle.js triangle
+git clone https://github.com/Genius6942/triangle triangle
 ```
 
+### Installing bun
 
+If you don't yet have bun and want to use bun, run the following:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
 
 ## Setup (git installation only)
 
@@ -39,11 +45,15 @@ To do this, add the following to the "compilerOptions" object in your `tsconfig.
 The following usage examples assume you are using Typescript. If you are not, you will need to compile the source code before running your project. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
 
 ### Import
+
 Bun:
+
 ```ts
 import { Client } from "@haelp/teto/bun";
 ```
+
 Node:
+
 ```ts
 import { Client } from "@haelp/teto";
 ```
@@ -164,10 +174,28 @@ It is recommended to set a custom `userAgent` in the client options to identify 
 Be careful with what variables you save and where. Due to the event-based nature of TETR.IO and this library, it is easy to accidentally create a memory leak.
 For example, the "tick" function exposed on the "client.game.start" event is used for this reason.
 
+## Building
+
+Install bun if you haven't already:
+
+```bash
+curl -fsSL https://bun.sh/install | bash
+```
+
+Then run:
+
+```bash
+bun run build
+```
+
+## Contributing
+
+File an issue and make a pull request on github
+
 ## Credits
 
 - [halp](https://github.com/Genius6942) [(website under construction)](https://haelp.dev)
 
-Thanks to [luke](https://github.com/encryptluke) for testing this library on MochBot.
+Thanks to [luke](https://github.com/encryptluke) and [redstone576](https://github.com/redstone576)for testing this library on MochBot.
 
 Interested in contribute to the project? Contact `haelp` on discord (Please come with some experience with TETR.IO api and an understanding of this library).
