@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun i @haelp/teto
+npm i @haelp/teto
 ```
 
 or 
@@ -15,7 +15,8 @@ git clone https://github.com/Genius6942/triangle.js triangle
 ```
 
 
-## Setup
+
+## Setup (git installation only)
 
 It is _highly_ recommended that you use a Typescript project for this library if you choose to clone from source. If you are not using Typescript, you will need to use a tool like `tsc` to compile the source code. This is because the TETR.IO api is complex and being able to use type checking will greatly reduce the chance of errors. Incorrectly formatted messages sent to the server may cause an account ban.
 
@@ -37,11 +38,19 @@ To do this, add the following to the "compilerOptions" object in your `tsconfig.
 
 The following usage examples assume you are using Typescript. If you are not, you will need to compile the source code before running your project. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
 
+### Import
+Bun:
+```ts
+import { Client } from "@haelp/teto/bun";
+```
+Node:
+```ts
+import { Client } from "@haelp/teto";
+```
+
 ### Creating a client
 
 ```ts
-import { Client } from "@triangle"; // or "./path/to/triangle/src" if you did not set up a path mapping
-
 const client = await Client.connect({
   username: "your-username",
   password: "your-password"
