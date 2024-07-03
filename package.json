@@ -1,51 +1,51 @@
 {
-  "name": "@haelp/teto",
-  "version": "1.1.4",
-  "description": "A typescript-based controllable TETR.IO client.",
-  "maintainers": [
-    "haelp"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Genius6942/triangle"
-  },
-  "displayName": "triangle.js",
-  "private": false,
-  "homepage": "https://triangle.haelp.dev",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "tsc --noEmit",
-    "format": "prettier --write \"./**/*.ts\"",
-    "docs": "typedoc",
-    "build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/node/index.js && tsc --declaration --emitDeclarationOnly --outdir dist/types && cp src -r dist/bun && cp dist-director.js dist/index.js",
-    "pub": "npm publish --access public"
-  },
-  "files": [
-    "dist"
-  ],
-  "types": "dist/types/index.d.ts",
-  "keywords": [
-    "tetrio",
-    "tetris",
-    "ribbon",
-    "websocket",
-    "bot"
-  ],
-  "author": "halp",
-  "license": "MIT",
-  "devDependencies": {
-    "@types/node": "^20.12.7",
-    "@types/ping": "^0.4.4",
-    "@types/ws": "^8.5.10",
-    "chalk": "^5.3.0",
-    "esbuild": "^0.23.0",
-    "lodash": "^4.17.21",
-    "msgpackr": "^1.10.1",
-    "node-fetch": "^2.7.0",
-    "ping": "^0.4.4",
-    "prettier": "^3.2.5",
-    "typedoc": "^0.25.13",
-    "typescript": "^5.4.5",
-    "ws": "^8.16.0"
-  }
+	"name": "@haelp/teto",
+	"version": "1.1.4",
+	"description": "A typescript-based controllable TETR.IO client.",
+	"maintainers": [
+		"haelp"
+	],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/Genius6942/triangle"
+	},
+	"displayName": "triangle.js",
+	"private": false,
+	"homepage": "https://triangle.haelp.dev",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "tsc --noEmit",
+		"format": "prettier --write \"./**/*.ts\"",
+		"docs": "typedoc",
+		"build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/node/index.js && bun build src/index.ts --target=bun --outfile=dist/bun/index.js && tsc --declaration --emitDeclarationOnly --outdir dist/types && cp dist-director.js dist/index.js",
+		"pub": "npm publish --access public"
+	},
+	"files": [
+		"dist"
+	],
+	"types": "dist/types/index.d.ts",
+	"keywords": [
+		"tetrio",
+		"tetris",
+		"ribbon",
+		"websocket",
+		"bot"
+	],
+	"author": "halp",
+	"license": "MIT",
+	"devDependencies": {
+		"@types/node": "^20.12.7",
+		"@types/ping": "^0.4.4",
+		"@types/ws": "^8.5.10",
+		"chalk": "^5.3.0",
+		"esbuild": "^0.23.0",
+		"lodash": "^4.17.21",
+		"msgpackr": "^1.10.1",
+		"node-fetch": "^2.7.0",
+		"ping": "^0.4.4",
+		"prettier": "^3.2.5",
+		"typedoc": "^0.25.13",
+		"typescript": "^5.4.5",
+		"ws": "^8.16.0"
+	}
 }
