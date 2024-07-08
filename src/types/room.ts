@@ -3,7 +3,7 @@ import { User } from "./user";
 import { BagType, KickTable } from "../engine";
 
 export namespace Room {
-  export type Type = "public" | "private";
+  export type Type = "custom";
 
   export type State = "ingame" | "lobby";
 
@@ -62,23 +62,23 @@ export namespace Room {
   export interface SetConfig {
     name: string;
     options: {
-      g: number;
-      stock: number;
+      g: number | string;
+      stock: number | string;
       display_next: boolean;
       display_hold: boolean;
-      gmargin: number;
-      gincrease: number;
-      garbagemultiplier: number;
-      garbagemargin: number;
-      garbageincrease: number;
-      garbagecap: number;
-      garbagecapincrease: number;
-      garbagecapmax: number;
-      garbageattackcap: number;
+      gmargin: number | string;
+      gincrease: number | string;
+      garbagemultiplier: number | string;
+      garbagemargin: number | string;
+      garbageincrease: number | string;
+      garbagecap: number | string;
+      garbagecapincrease: number | string;
+      garbagecapmax: number | string;
+      garbageattackcap: number | string;
       garbageabsolutecap: boolean;
-      garbagephase: number;
+      garbagephase: number | string;
       garbagequeue: boolean;
-      garbageare: number;
+      garbageare: number | string;
       garbageentry: string;
       garbageblocking: string;
       garbagetargetbonus: string;
@@ -87,36 +87,36 @@ export namespace Room {
       spinbonuses: Game.SpinBonuses;
       combotable: Game.ComboTable;
       kickset: KickTable;
-      nextcount: number;
+      nextcount: number | string;
       allow_harddrop: boolean;
       display_shadow: boolean;
-      locktime: number;
-      garbagespeed: number;
-      are: number;
-      lineclear_are: number;
+      locktime: number | string;
+      garbagespeed: number | string;
+      are: number | string;
+      lineclear_are: number | string;
       infinitemovement: boolean;
-      lockresets: number;
+      lockresets: number | string;
       allow180: boolean;
       room_handling: boolean;
-      room_handling_arr: number;
-      room_handling_das: number;
-      room_handling_sdf: number;
+      room_handling_arr: number | string;
+      room_handling_das: number | string;
+      room_handling_sdf: number | string;
       manual_allowed: boolean;
       b2bchaining: boolean;
       allclears: boolean;
       clutch: boolean;
       nolockout: boolean;
       passthrough: Game.Passthrough;
-      boardwidth: number;
-      boardheight: number;
-      messiness_change: number;
-      messiness_inner: number;
+      boardwidth: number | string;
+      boardheight: number | string;
+      messiness_change: number | string;
+      messiness_inner: number | string;
       messiness_nosame: boolean;
-      messiness_timeout: number;
+      messiness_timeout: number | string;
       usebombs: boolean;
     };
-    userLimit: number;
-    autoStart: number;
+    userLimit: number | string;
+    autoStart: number | string;
     allowAnonymous: boolean;
     allowUnranked: boolean;
     userRankLimit: string;
@@ -126,8 +126,8 @@ export namespace Room {
     match: {
       gamemode: Game.GameMode;
       modename: string;
-      ft: number;
-      wb: number;
+      ft: number | string;
+      wb: number | string;
     };
   }
 }

@@ -47,4 +47,8 @@ export interface Client {
 
   /** Fires when a message is sent to the server. Contains the raw data of the server message. Useful for logging. */
   "client.ribbon.send": { command: string; data?: any; id: number };
+
+  // relationship stuff
+  /** Fires whenever the client is friended */
+  "client.friended": { id: string; name: string; avatar: number };
 }

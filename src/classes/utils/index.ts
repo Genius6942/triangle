@@ -16,8 +16,7 @@ export class ClientUtils {
 
   /**
    * Get the userid based on username
-   * @example
-   * const uid = await client.utils.getID('halp');
+	 * @deprecated in favor of `client.social.resolve`
    */
   async getID(username: string) {
     return this.api.users.resolve(username);

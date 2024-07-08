@@ -35,14 +35,14 @@ export class Social {
       dm: async (content: string) => {
         await this.dm(r.id, content);
       },
-      invite: async () => await this.invite({ id: r.id })
+      invite: async () => await this.invite(r.id)
     }));
     this.other = init.other.map((r) => ({
       ...r,
       dm: async (content: string) => {
         await this.dm(r.id, content);
       },
-      invite: async () => await this.invite({ id: r.id })
+      invite: async () => await this.invite(r.id)
     }));
     this.blocked = init.blocked;
     this.notifications = init.notifications;
@@ -64,6 +64,8 @@ export class Social {
             username: r.to.username,
             avatar: r.to.avatar_revision,
             dm: async () => {},
+            markAsRead: async () =>
+              client.emit("social.relationships.ack", r._id),
             dms: await client.api.social.dms(r.to._id),
             invite: async () => {}
           }))
@@ -77,6 +79,8 @@ export class Social {
             username: r.to.username,
             avatar: r.to.avatar_revision,
             dm: async () => {},
+            markAsRead: async () =>
+              client.emit("social.relationships.ack", r._id),
             dms: await client.api.social.dms(r.to._id),
             invite: async () => {}
           }))
@@ -99,13 +103,54 @@ export class Social {
   }
 
   private init() {
+    setTimeout(
+      () =>
+        this.notifications.forEach((n) => {
+          if (n.type === "friend") {
+            if (!n.seen) {
+              this.client.emit("client.friended", {
+                id: n.data.relationship.from._id,
+                name: n.data.relationship.from.username,
+                avatar: n.data.relationship.from.avatar_revision
+              });
+            }
+          }
+        }),
+      0
+    );
+
     this.client.on("social.online", (count) => {
       this.online = count;
     });
 
-    this.client.on("social.notification", (n) =>
-      this.notifications.splice(0, 0, n)
-    );
+    this.client.on("social.notification", async (n) => {
+      this.notifications.splice(0, 0, n);
+
+      if (n.type === "friend") {
+        this.client.emit("client.friended", {
+          id: n.data.relationship.from._id,
+          name: n.data.relationship.from.username,
+          avatar: n.data.relationship.from.avatar_revision
+        });
+
+				const user = this.get({ id: n.data.relationship.from._id });
+
+				if (!user) {
+					this.other.push({
+						id: n.data.relationship.from._id,
+						username: n.data.relationship.from.username,
+						avatar: n.data.relationship.from.avatar_revision,
+						dm: async (content: string) => {
+							await this.dm(n.data.relationship.from._id, content);
+						},
+						markAsRead: async () => this.client.emit("social.relationships.ack", n.data.relationship._id),
+						dms: await this.api.social.dms(n.data.relationship.from._id),
+						relationshipID: n.data.relationship._id,
+						invite: async () => await this.invite(n.data.relationship.from._id)
+					});
+				}
+      }
+    });
 
     this.client.on("social.dm", async (dm) => {
       const user = this.get({ id: dm.data.user });
@@ -119,12 +164,25 @@ export class Social {
           dm: async (content: string) => {
             await this.dm(u._id, content);
           },
+          markAsRead: async () =>
+            this.client.emit("social.relationships.ack", u._id),
+
           dms: await this.api.social.dms(u._id),
+
           relationshipID: "",
-          invite: async () => await this.invite({ id: u._id })
+          invite: async () => await this.invite(u._id)
         });
       }
     });
+  }
+
+  /**
+   * Marks all notifications as read
+   * @example
+   * client.social.markNotificationsAsRead();
+   */
+  markNotificationsAsRead() {
+    this.client.emit("social.notifications.ack");
   }
 
   /**
@@ -168,26 +226,26 @@ export class Social {
       );
   }
 
+  /**
+   * Get the user id given a username
+   */
+  async resolve(username: string) {
+    return await this.api.users.resolve(username);
+  }
+
   /** Get a users' information based on their userid or username
    * @example
-   * const user = await client.social.who({ username: "halp" });
-   * @example
-   * // halp's id
-   * const user = await client.social.who("646f633d276f42a80ba44304");
+   * const user = await client.social.who(client.social.resolve('halp'));
    */
   who(id: string): Promise<APITypes.Users.User>;
-  who(target: { username: string }): Promise<APITypes.Users.User>;
-  async who(
-    target: string | { username: string }
-  ): Promise<APITypes.Users.User> {
-    if (typeof target === "string") return this.api.users.get({ id: target });
-    else return this.api.users.get(target);
+  async who(id: string): Promise<APITypes.Users.User> {
+    return this.api.users.get({ id });
   }
 
   /**
    * Send a message to a specified user (based on id)
    * @example
-   * await client.social.dm('646f633d276f42a80ba44304', 'what\'s up?');
+   * await client.social.dm(client.social.resolve('halp'), 'what\'s up?');
    */
   async dm(userID: string, message: string) {
     return await this.client.wrap(
@@ -203,31 +261,72 @@ export class Social {
   /**
    * Send a user a friend request
    * @example
-   * await client.social.friend({ username: 'halp' });
-   * @example
-   * await client.social.friend({ id: '646f633d276f42a80ba44304' });
+   * await client.social.friend(client.social.resolve('halp'));
+	 * @returns false if the user is already friended, true otherwise
+	 * @throws {Error} If an error occurs (such as the user has blocked the client, etc)
    */
-  async friend(user: { username: string } | { id: string }) {
-    let id: string;
-    if ("username" in user) id = await this.api.users.resolve(user.username);
-    else id = user.id;
+  async friend(userID: string) {
+		if (this.friends.find((r) => r.id === userID)) return false;
+    await this.api.social.friend(userID);
+		this.friends.push({
+			id: userID,
+			username: (await this.who(userID)).username,
+			avatar: (await this.who(userID)).avatar_revision,
+			dm: async (content: string) => {
+				await this.dm(userID, content);
+			},
+			markAsRead: async () => this.client.emit("social.relationships.ack", userID),
+			dms: await this.api.social.dms(userID),
+			relationshipID: "",
+			invite: async () => await this.invite(userID)
+		});
 
-    await this.api.social.friend(id);
+		return true;
+  }
+
+  /**
+   * Unfriend a user. Note: unfriending a user will unblock them if they are blocked.
+   * @example
+   * await client.social.unfriend(client.social.resolve('halp'));
+	 * @returns false if the user is not unfriended, true otherwise
+   */
+  async unfriend(userID: string) {
+		if (!this.friends.find((r) => r.id === userID)) return false;
+    await this.api.social.unfriend(userID);
+		this.friends = this.friends.filter((r) => r.id !== userID);
+
+		return true;
+  }
+
+  /**
+   * Block a user
+   * @example
+   * await client.social.block(client.social.resolve('halp'));
+	 * @returns false if the user is already blocked, true otherwise
+   */
+  async block(userID: string) {
+		if (this.blocked.find((r) => r.id === userID)) return false;
+    await this.api.social.block(userID);
+  }
+
+  /**
+   * Unblock a user. Note: unblocking a user will unfriend them if they are friended.
+   * @example
+   * await client.social.unblock(client.social.resolve('halp'));
+	 * @returns false if the user is not unblocked, true otherwise
+   */
+  async unblock(userID: string) {
+		
+    await this.api.social.unblock(userID);
   }
 
   /**
    * Invite a user to your room
    * @example
-   * await client.social.invite({ username: 'halp' });
-   * @example
-   * await client.social.invite({ id: '646f633d276f42a80ba44304' });
+   * await client.social.invite(client.social.resolve('halp'));
    */
-  async invite(user: { username: string } | { id: string }) {
-    let id: string;
-    if ("username" in user) id = await this.api.users.resolve(user.username);
-    else id = user.id;
-
-    this.client.emit("social.invite", id);
+  async invite(userID: string) {
+    this.client.emit("social.invite", userID);
   }
 
   /**

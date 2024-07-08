@@ -12,8 +12,11 @@ export type * from "./types";
 export class Client {
   /** User information */
   public user: ClientUser;
-  /** Helpful utils for creating a client. Have an idea you don't see? Create an issue + PR on the repository. */
-  public utils: ClientUtils;
+	/**
+	 * Utils for the client.
+	 * @deprecated - functionality has been moved to other sections. This may be removed in the future.
+	 */
+	public utils: ClientUtils;
   /** The client's token */
   public token: string;
   /** @hidden */

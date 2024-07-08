@@ -12,4 +12,7 @@ export interface Social {
   };
 
   "social.invite": string;
+
+  "social.notifications.ack": void;
+	"social.relationships.ack": string;
 }

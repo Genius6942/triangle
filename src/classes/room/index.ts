@@ -260,7 +260,15 @@ export class Room {
       value: Utils.DeepKeyValue<RoomTypes.SetConfig, T>;
     }[]
   ) {
-    return await this.client.wrap("room.setconfig", options, "room.update");
+    return await this.client.wrap(
+      "room.setconfig",
+      options.map((opt) =>
+        typeof opt.value === "number"
+          ? { index: opt.index, value: opt.value.toString() }
+          : opt
+      ),
+      "room.update"
+    );
   }
 
   /**

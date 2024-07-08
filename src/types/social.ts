@@ -101,6 +101,7 @@ export namespace Social {
     username: string;
     avatar: number;
     dm: (content: string) => Promise<void>;
+		markAsRead: () => void;
     dms: DM[];
     invite: () => Promise<void>;
   }
