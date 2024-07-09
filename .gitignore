@@ -2,3 +2,4 @@ node_modules
 docs
 dist
 bun.js
+engine.js

@@ -1,6 +1,6 @@
 {
 	"name": "@haelp/teto",
-	"version": "1.2.0",
+	"version": "1.2.1",
 	"description": "A typescript-based controllable TETR.IO client.",
 	"maintainers": [
 		"haelp"
@@ -17,13 +17,15 @@
 		"test": "tsc --noEmit",
 		"format": "prettier --write \"./**/*.ts\"",
 		"docs": "typedoc",
-		"build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --outfile=bun.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
+		"build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --outfile=bun.js && esbuild src/engine/index.ts --minify --bundle --platform=browser --outfile=engine.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
 		"pub": "npm publish --access public"
 	},
 	"files": [
 		"dist",
 		"bun.js",
-		"bun.d.ts"
+		"bun.d.ts",
+		"engine.js",
+		"engine.d.ts"
 	],
 	"types": "dist/types/index.d.ts",
 	"keywords": [
