@@ -207,8 +207,14 @@ export class Engine {
   isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate180>) {
     if (typeof kick === "object") {
       return (
-        (kick.id === "03" && kick.index === 3) ||
-        (kick.id === "21" && kick.index === 3)
+        // fin cw and tst ccw
+        ((kick.id === "23" || kick.id === "03") &&
+          kick.kick[0] === 1 &&
+          kick.kick[1] === -2) ||
+        // fin ccw and tst cw
+        ((kick.id === "21" || kick.id === "01") &&
+          kick.kick[0] === -1 &&
+          kick.kick[1] === -2)
       );
     }
 
