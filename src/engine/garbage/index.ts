@@ -140,7 +140,7 @@ export class GarbageQueue {
     while (total < this.cap(frame) && this.queue.length > 0) {
       const item = deepCopy(this.queue[0]);
 
-      if (item.frame + this.options.garbage.speed > frame) break; // do not spawn garbage that is still traveling
+      if (item.frame + this.options.garbage.speed > frame - 1) break; // do not spawn garbage that is still traveling
 
       total += item.amount;
 

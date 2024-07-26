@@ -20,6 +20,8 @@ export class Room {
   public type!: RoomTypes.Type;
   /** Name of the room */
   public name!: string;
+  /** Safe Name of the room */
+  public name_safe!: string;
   /** UID of the host */
   public owner!: string;
   /** UID of the room creator (this person can reclaim host) */
@@ -55,6 +57,7 @@ export class Room {
       "public",
       "type",
       "name",
+      "name_safe",
       "owner",
       "creator",
       "state",
@@ -160,6 +163,10 @@ export class Room {
 
     // chat
     this.listen("room.chat", this.chats.push.bind(this.chats));
+
+		// get booted
+		this.listen("room.kick", () => this.destroy());
+		this.listen('room.leave', () => this.destroy());
   }
 
   /** Whether or not the client is the host */

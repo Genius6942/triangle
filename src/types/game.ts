@@ -456,6 +456,7 @@ export namespace Game {
 
     export interface Out {
       keys?: Keypress[];
+      runAfter?: (() => void)[];
     }
 
     export type Func = (data: In) => Promise<Out> | Out;

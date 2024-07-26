@@ -53,23 +53,7 @@ export namespace Social {
   export interface Notification {
     _id: string;
     data: {
-      relationship: {
-        _id: string;
-        from: {
-          _id: string;
-          username: string;
-          avatar_revision: number;
-        };
-        to: {
-          _id: string;
-          username: string;
-          avatar_revision: number;
-        };
-        type: NotificationType;
-        unread: number;
-        updated: string;
-      };
-      ismutual?: boolean;
+      relationship: Relationship;
     };
     seen: boolean;
     stream: string;
@@ -93,17 +77,6 @@ export namespace Social {
     type: Social.RelationshipType;
     unread: number;
     updated: string;
-  }
-
-  export interface Interaction {
-    id: string;
-    relationshipID: string;
-    username: string;
-    avatar: number;
-    dm: (content: string) => Promise<void>;
-		markAsRead: () => void;
-    dms: DM[];
-    invite: () => Promise<void>;
   }
 
   export interface Blocked {

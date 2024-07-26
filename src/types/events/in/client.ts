@@ -1,3 +1,4 @@
+import { Relationship } from "../../../classes";
 import { Engine } from "../../../engine";
 import { Game, Room } from "../../../types";
 import { Ribbon } from "./ribbon";
@@ -51,4 +52,11 @@ export interface Client {
   // relationship stuff
   /** Fires whenever the client is friended */
   "client.friended": { id: string; name: string; avatar: number };
+
+  /** Fires when a DM (direct message) has been recieved and AFTER any unknown data has been loaded about the user */
+  "client.dm": {
+    user: Relationship;
+    content: string;
+    reply: (message: string) => Promise<void>;
+  };
 }

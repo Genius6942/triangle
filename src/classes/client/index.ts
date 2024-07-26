@@ -137,6 +137,10 @@ export class Client {
     if (options.userAgent) {
       api.update({ userAgent: options.userAgent });
     }
+		if (options.turnstile) {
+			api.update({ turnstile: options.turnstile });
+		}
+
     const sessionID = `SESS-${Math.floor(
       Math.random() * Number.MAX_SAFE_INTEGER
     )}`;

@@ -10,12 +10,15 @@ import { users } from "./users";
 export interface APIDefaults {
   token: string;
   userAgent: string;
+  /** a cf_clearance Cloudflare turnstile token. */
+  turnstile: string | null;
 }
 
 export class API {
   readonly defaults: APIDefaults = {
     token: "",
-    userAgent: CONSTANTS.userAgent
+    userAgent: CONSTANTS.userAgent,
+    turnstile: null
   };
 
   get!: Get;
@@ -27,7 +30,7 @@ export class API {
   social!: ReturnType<typeof relationship>;
 
   /** @hideconstructor */
-  constructor(options: Partial<APIDefaults> = {}) {
+  constructor(options: Partial<APIDefaults> = {}){
     this.update(options);
   }
 

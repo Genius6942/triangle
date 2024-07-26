@@ -1,14 +1,25 @@
 import { Events, Social as SocialTypes } from "../../types";
 import type { Client } from "../client";
 import { APITypes } from "../../utils";
+import { Relationship } from "./relationship";
 
 interface SocialInitData {
   online: number;
   notifications: SocialTypes.Notification[];
-  friends: SocialTypes.Interaction[];
-  other: SocialTypes.Interaction[];
+  friends: ReturnType<typeof processRelationship>[];
+  other: ReturnType<typeof processRelationship>[];
   blocked: SocialTypes.Blocked[];
 }
+
+const processRelationship = (r: SocialTypes.Relationship, selfID: string) => ({
+  ...r,
+  user: {
+    id: r.from._id === selfID ? r.to._id : r.from._id,
+    username: r.from._id === selfID ? r.to.username : r.from.username,
+    avatar:
+      r.from._id === selfID ? r.to.avatar_revision : r.from.avatar_revision
+  }
+});
 
 export class Social {
   private client: Client;
@@ -16,9 +27,9 @@ export class Social {
   /** The current number of people online */
   public online: number;
   /** List of the client's friends */
-  public friends: SocialTypes.Interaction[];
+  public friends: Relationship[];
   /** List of "pending" relationships (shows in `other` tab on TETR.IO) */
-  public other: SocialTypes.Interaction[];
+  public other: Relationship[];
   /** people you block */
   public blocked: SocialTypes.Blocked[];
   /** Notifications */
@@ -30,20 +41,33 @@ export class Social {
 
     this.init();
     this.online = init.online;
-    this.friends = init.friends.map((r) => ({
-      ...r,
-      dm: async (content: string) => {
-        await this.dm(r.id, content);
-      },
-      invite: async () => await this.invite(r.id)
-    }));
-    this.other = init.other.map((r) => ({
-      ...r,
-      dm: async (content: string) => {
-        await this.dm(r.id, content);
-      },
-      invite: async () => await this.invite(r.id)
-    }));
+    this.friends = init.friends.map(
+      (r) =>
+        new Relationship(
+          {
+            id: r.user.id,
+            relationshipID: r._id,
+            username: r.user.username,
+            avatar: r.user.avatar
+          },
+          this,
+          this.client
+        )
+    );
+    this.other = init.other.map(
+      (r) =>
+        new Relationship(
+          {
+            id: r.user.id,
+            relationshipID: r._id,
+            username: r.user.username,
+            avatar: r.user.avatar
+          },
+          this,
+
+          this.client
+        )
+    );
     this.blocked = init.blocked;
     this.notifications = init.notifications;
   }
@@ -52,46 +76,21 @@ export class Social {
     client: Client,
     initData: Events.in.Client["client.ready"]["social"]
   ) {
+    const rel = initData.relationships.map((r) =>
+      processRelationship(r, client.user.id)
+    );
     const data: SocialInitData = {
       online: initData.total_online,
       notifications: initData.notifications,
-      friends: await Promise.all(
-        initData.relationships
-          .filter((r) => r.type === "friend")
-          .map(async (r) => ({
-            id: r.to._id,
-            relationshipID: r._id,
-            username: r.to.username,
-            avatar: r.to.avatar_revision,
-            dm: async () => {},
-            markAsRead: async () =>
-              client.emit("social.relationships.ack", r._id),
-            dms: await client.api.social.dms(r.to._id),
-            invite: async () => {}
-          }))
-      ),
-      other: await Promise.all(
-        initData.relationships
-          .filter((r) => r.type === "pending")
-          .map(async (r) => ({
-            id: r.to._id,
-            relationshipID: r._id,
-            username: r.to.username,
-            avatar: r.to.avatar_revision,
-            dm: async () => {},
-            markAsRead: async () =>
-              client.emit("social.relationships.ack", r._id),
-            dms: await client.api.social.dms(r.to._id),
-            invite: async () => {}
-          }))
-      ),
+      friends: await Promise.all(rel.filter((r) => r.type === "friend")),
+      other: await Promise.all(rel.filter((r) => r.type === "pending")),
 
-      blocked: initData.relationships
+      blocked: rel
         .filter((r) => r.type === "block")
         .map((r) => ({
-          id: r.to._id,
-          username: r.to.username,
-          avatar: r.to.avatar_revision
+          id: r.user.id,
+          username: r.user.username,
+          avatar: r.user.avatar
         }))
     };
 
@@ -108,10 +107,11 @@ export class Social {
         this.notifications.forEach((n) => {
           if (n.type === "friend") {
             if (!n.seen) {
+							const rel = processRelationship(n.data.relationship, this.client.user.id);
               this.client.emit("client.friended", {
-                id: n.data.relationship.from._id,
-                name: n.data.relationship.from.username,
-                avatar: n.data.relationship.from.avatar_revision
+								id: rel.user.id,
+								name: rel.user.username,
+								avatar: rel.user.avatar
               });
             }
           }
@@ -127,52 +127,63 @@ export class Social {
       this.notifications.splice(0, 0, n);
 
       if (n.type === "friend") {
+				const rel = processRelationship(n.data.relationship, this.client.user.id);
         this.client.emit("client.friended", {
-          id: n.data.relationship.from._id,
-          name: n.data.relationship.from.username,
-          avatar: n.data.relationship.from.avatar_revision
+					id: rel.user.id,
+					name: rel.user.username,
+					avatar: rel.user.avatar
         });
 
-				const user = this.get({ id: n.data.relationship.from._id });
+        const user = this.get({ id: rel.user.id });
 
-				if (!user) {
-					this.other.push({
-						id: n.data.relationship.from._id,
-						username: n.data.relationship.from.username,
-						avatar: n.data.relationship.from.avatar_revision,
-						dm: async (content: string) => {
-							await this.dm(n.data.relationship.from._id, content);
-						},
-						markAsRead: async () => this.client.emit("social.relationships.ack", n.data.relationship._id),
-						dms: await this.api.social.dms(n.data.relationship.from._id),
-						relationshipID: n.data.relationship._id,
-						invite: async () => await this.invite(n.data.relationship.from._id)
-					});
-				}
+        if (!user) {
+          this.other.push(
+            new Relationship(
+              {
+								id: rel.user.id,
+								username: rel.user.username,
+								avatar: rel.user.avatar,
+								relationshipID: ""
+              },
+              this,
+              this.client
+            )
+          );
+        }
       }
     });
 
     this.client.on("social.dm", async (dm) => {
-      const user = this.get({ id: dm.data.user });
-      if (user) user.dms.push(dm);
-      else {
+      let user = this.get({ id: dm.data.user });
+      if (user) {
+        if (!user.dmsLoaded) await user.loadDms();
+        else user.dms.push(dm);
+      } else {
         const u = await this.who(dm.data.user);
-        this.other.push({
-          id: dm.data.user,
-          username: u.username,
-          avatar: u.avatar_revision,
-          dm: async (content: string) => {
-            await this.dm(u._id, content);
-          },
-          markAsRead: async () =>
-            this.client.emit("social.relationships.ack", u._id),
+        this.other.push(
+          new Relationship(
+            {
+              id: u._id,
+              username: u.username,
+              avatar: u.avatar_revision,
+              relationshipID: ""
+            },
+            this,
+            this.client
+          )
+        );
 
-          dms: await this.api.social.dms(u._id),
-
-          relationshipID: "",
-          invite: async () => await this.invite(u._id)
-        });
+        user = this.get({ id: dm.data.user })!;
+        await user.loadDms();
       }
+
+      this.client.emit("client.dm", {
+        user,
+        content: dm.data.content,
+        reply: async (content: string) => {
+          await this.dm(dm.data.user, content);
+        }
+      });
     });
   }
 
@@ -200,12 +211,12 @@ export class Social {
    * await user.dm('wanna play?');
    * await user.invite();
    */
-  get(target: string): SocialTypes.Interaction | null;
-  get(target: { id: string }): SocialTypes.Interaction | null;
-  get(target: { username: string }): SocialTypes.Interaction | null;
+  get(target: string): Relationship | null;
+  get(target: { id: string }): Relationship | null;
+  get(target: { username: string }): Relationship | null;
   get(
     target: string | { id: string } | { username: string }
-  ): SocialTypes.Interaction | null {
+  ): Relationship | null {
     if (typeof target === "string")
       return (
         this.friends.find((r) => r.id === target || r.username === target) ||
@@ -262,50 +273,51 @@ export class Social {
    * Send a user a friend request
    * @example
    * await client.social.friend(client.social.resolve('halp'));
-	 * @returns false if the user is already friended, true otherwise
-	 * @throws {Error} If an error occurs (such as the user has blocked the client, etc)
+   * @returns false if the user is already friended, true otherwise
+   * @throws {Error} If an error occurs (such as the user has blocked the client, etc)
    */
   async friend(userID: string) {
-		if (this.friends.find((r) => r.id === userID)) return false;
+    if (this.friends.find((r) => r.id === userID)) return false;
     await this.api.social.friend(userID);
-		this.friends.push({
-			id: userID,
-			username: (await this.who(userID)).username,
-			avatar: (await this.who(userID)).avatar_revision,
-			dm: async (content: string) => {
-				await this.dm(userID, content);
-			},
-			markAsRead: async () => this.client.emit("social.relationships.ack", userID),
-			dms: await this.api.social.dms(userID),
-			relationshipID: "",
-			invite: async () => await this.invite(userID)
-		});
+    const userData = await this.who(userID);
+    this.friends.push(
+      new Relationship(
+        {
+          id: userData._id,
+          relationshipID: "",
+          username: userData.username,
+          avatar: userData.avatar_revision
+        },
+        this,
+        this.client
+      )
+    );
 
-		return true;
+    return true;
   }
 
   /**
    * Unfriend a user. Note: unfriending a user will unblock them if they are blocked.
    * @example
    * await client.social.unfriend(client.social.resolve('halp'));
-	 * @returns false if the user is not unfriended, true otherwise
+   * @returns false if the user is not unfriended, true otherwise
    */
   async unfriend(userID: string) {
-		if (!this.friends.find((r) => r.id === userID)) return false;
+    if (!this.friends.find((r) => r.id === userID)) return false;
     await this.api.social.unfriend(userID);
-		this.friends = this.friends.filter((r) => r.id !== userID);
+    this.friends = this.friends.filter((r) => r.id !== userID);
 
-		return true;
+    return true;
   }
 
   /**
    * Block a user
    * @example
    * await client.social.block(client.social.resolve('halp'));
-	 * @returns false if the user is already blocked, true otherwise
+   * @returns false if the user is already blocked, true otherwise
    */
   async block(userID: string) {
-		if (this.blocked.find((r) => r.id === userID)) return false;
+    if (this.blocked.find((r) => r.id === userID)) return false;
     await this.api.social.block(userID);
   }
 
@@ -313,19 +325,18 @@ export class Social {
    * Unblock a user. Note: unblocking a user will unfriend them if they are friended.
    * @example
    * await client.social.unblock(client.social.resolve('halp'));
-	 * @returns false if the user is not unblocked, true otherwise
+   * @returns false if the user is not unblocked, true otherwise
    */
   async unblock(userID: string) {
-		
     await this.api.social.unblock(userID);
   }
 
   /**
    * Invite a user to your room
    * @example
-   * await client.social.invite(client.social.resolve('halp'));
+   * client.social.invite(client.social.resolve('halp'));
    */
-  async invite(userID: string) {
+  invite(userID: string) {
     this.client.emit("social.invite", userID);
   }
 
@@ -338,3 +349,5 @@ export class Social {
     this.client.emit("social.presence", { status, detail });
   }
 }
+
+export * from "./relationship";

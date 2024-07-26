@@ -11,6 +11,8 @@ export type ClientOptions = (
 ) & {
   handling?: Game.Handling;
   userAgent?: string;
+	/** a cf_clearance Cloudflare turnstile token. */
+	turnstile?: string;
 };
 
 export interface ClientUser {

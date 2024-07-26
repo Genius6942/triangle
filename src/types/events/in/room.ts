@@ -11,6 +11,8 @@ export interface Room {
     id: string;
   };
 
+	"room.kick": 'hostkick' | 'hostban';
+
   "room.update": {
     id: string;
     public: boolean;

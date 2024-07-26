@@ -196,6 +196,6 @@ File an issue and make a pull request on github
 
 - [halp](https://github.com/Genius6942) [(website under construction)](https://haelp.dev)
 
-Thanks to [luke](https://github.com/encryptluke) and [redstone576](https://github.com/redstone576)for testing this library on MochBot.
+Thanks to [luke](https://github.com/encryptluke) and [redstone576] (https://github.com/redstone576)for testing this library on MochBot.
 
 Interested in contribute to the project? Contact `haelp` on discord (Please come with some experience with TETR.IO api and an understanding of this library).

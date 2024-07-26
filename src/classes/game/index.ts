@@ -17,6 +17,7 @@ export class Game {
   private frameQueue: GameTypes.Replay.Frame[] = [];
   private timeout: NodeJS.Timeout | null = null;
   private messageQueue: GameTypes.Client.Events[] = [];
+  // private igeBuffer: Events.in.Game["game.ige"][] = [];
   private startTime: number | null = null;
   private _target: GameTypes.Target = { strategy: "even" };
   private tick?: GameTypes.Tick.Func;
@@ -95,6 +96,10 @@ export class Game {
     delete this.client.game;
   }
 
+  // private addIGE(data: Events.in.Game["game.ige"]) {
+  //   this.igeBuffer.push(data);
+  // }
+
   private init() {
     this.listen(
       "game.start",
@@ -107,12 +112,12 @@ export class Game {
             this.options.precountdown +
             this.options.prestart
         );
-
         this.listen("game.abort", () => clearTimeout(timeout), true);
       },
       true
     );
 
+    // this.listen("game.ige", (data) => this.addIGE(data));
     this.listen("game.ige", (data) => this.handleIGE(data));
     this.listen("replay", ({ gameid, frames, provisioned }) => {
       const game = this.opponents.find((player) => player.id === gameid);
@@ -248,18 +253,20 @@ export class Game {
   }
 
   private async tickGame() {
+		let runAfter: GameTypes.Tick.Out["runAfter"] = [];
     if (this.tick) {
       const res = await this.tick({
         frame: this.frame,
         events: this.messageQueue.splice(0, this.messageQueue.length),
         engine: this.engine!
       });
-
+  
       if (res.keys) this.keyQueue.push(...res.keys);
+			if (res.runAfter) runAfter.push(...res.runAfter);
     }
-
+  
     const keys: typeof this.keyQueue = [];
-
+  
     for (let i = this.keyQueue.length - 1; i >= 0; i--) {
       const key = this.keyQueue[i];
       if (Math.floor(key.frame) === this.frame) {
@@ -267,28 +274,33 @@ export class Game {
         this.keyQueue.splice(i, 1);
       }
     }
-
+  
     keys.splice(0, keys.length, ...keys.reverse());
-
+  
     const { garbage, pieces } = this.engine.tick([...keys]);
-
+  
     this.stats.piecesPlaced += pieces;
-
+  
     garbage.sent.forEach((g) => {
       this.serverTargets.forEach((target) => {
         this.igeHandler.send({ playerID: target, amount: g });
       });
     });
-
+  
     this.messageQueue.push(
       ...garbage.recieved.map((g) => ({
         type: "garbage" as const,
         ...g
       }))
     );
-
+  
     this.pipe(...keys);
-
+  
+    // // handle buffered IGE data
+    // const flattenedIGEBuffer = this.igeBuffer.flat();
+    // this.handleIGE(flattenedIGEBuffer);
+    // this.igeBuffer = [];
+  
     if (this.frame !== 0 && this.frame % Game.fpm === 0) {
       const frames = this.flushFrames();
       this.client.emit("replay", {
@@ -296,7 +308,7 @@ export class Game {
         frames,
         provisioned: this.frame
       });
-
+  
       this.messageQueue.push({
         type: "frameset",
         provisioned: this.frame,
@@ -304,6 +316,8 @@ export class Game {
       });
     }
 
+		runAfter.forEach((f) => f());
+  
     this.timeout = setTimeout(
       this.tickGame.bind(this),
       ((this.frame + 1) / Game.fps) * 1000 -
