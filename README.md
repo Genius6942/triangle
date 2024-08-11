@@ -44,6 +44,8 @@ To do this, add the following to the "compilerOptions" object in your `tsconfig.
 
 The following usage examples assume you are using Typescript. If you are not, you will need to compile the source code before running your project. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
 
+Triangle.js also uses the 'puppeteer' package to open TETR.IO for the use of the encoder/decoder. Because TETR.IO is constantly changing the encoding and decoding process for the network protocol, it is not feasible to hardcode the encoding/decoding process. Instead, the client uses puppeteer to open TETR.IO and get the encoding/decoding functions. This is done automatically when you create a client, and one instance of puppeteer is shared between all clients. In the future, we plan to transition to a node:vm based solution to avoid the need for a full headless browser. For more information, you can visit the [puppeteer](https:pptr.dev) website.
+
 ### Import
 
 Bun:
