@@ -17,7 +17,7 @@
 		"test": "tsc --noEmit",
 		"format": "prettier --write \"./**/*.ts\"",
 		"docs": "typedoc",
-		"build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --outfile=bun.js && esbuild src/engine/index.ts --minify --bundle --platform=node --outfile=engine.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
+		"build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node --external:puppeteer --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --external=puppeteer --outfile=bun.js && esbuild src/engine/index.ts --minify --bundle --platform=node --external:puppteeer --outfile=engine.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
 		"pub": "npm publish --access public"
 	},
 	"files": [
@@ -51,5 +51,8 @@
 		"typedoc": "^0.25.13",
 		"typescript": "^5.4.5",
 		"ws": "^8.16.0"
+	},
+	"dependencies": {
+		"puppeteer": "^23.0.2"
 	}
 }

@@ -1,4 +1,5 @@
 import { Game, User } from "../../types";
+import { CodecType } from "../ribbon/codec";
 
 export type ClientOptions = (
   | {
