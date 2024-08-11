@@ -1,1 +1,1 @@
-export type Piece = "I" | "J" | "L" | "O" | "S" | "T" | "Z";
+export type Piece = "i" | "j" | "l" | "o" | "s" | "t" | "z";

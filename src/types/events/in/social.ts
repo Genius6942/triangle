@@ -14,8 +14,8 @@ export interface Social {
     };
   };
 
-  "social.relationships.remove": string;
-  "social.relationships.add": {
+  "social.relation.remove": string;
+  "social.relation.add": {
     _id: string;
     from: {
       _id: string;

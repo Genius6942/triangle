@@ -34,14 +34,14 @@ export class Relationship {
     social: Social,
     client: Client
   ) {
-		this.id = options.id;
+    this.id = options.id;
     this.relationshipID = options.relationshipID;
     this.username = options.username;
     this.avatar = options.avatar;
-		
+
     this.social = social;
     this.client = client;
-		
+
     this.dms = [];
 
     this.ready = Relationship.lazyLoadDms
@@ -67,7 +67,7 @@ export class Relationship {
    * relationship.markAsRead();
    */
   markAsRead() {
-    this.client.emit("social.relationships.ack", this.id);
+    this.client.emit("social.relation.ack", this.id);
   }
 
   /**

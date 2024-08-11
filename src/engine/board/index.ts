@@ -6,7 +6,7 @@ export interface BoardInitializeParams {
   buffer: number;
 }
 
-export type BoardSquare = Piece | "G" | null;
+export type BoardSquare = Piece | "gb" | null;
 
 export class Board {
   state: BoardSquare[][];
@@ -91,7 +91,7 @@ export class Board {
       0,
       ...Array.from({ length: amount }, () =>
         Array.from({ length: this.width }, (_, idx) =>
-          idx >= column && idx < column + size ? null : ("G" as "G" | null)
+          idx >= column && idx < column + size ? null : ("gb" as const)
         )
       )
     );

@@ -32,7 +32,7 @@ export const garbageCalcV2 = (
   data: {
     lines: number;
     spin: undefined | "none" | "mini" | "normal" | "full";
-    piece: "L" | "J" | "T" | "S" | "Z" | "I" | "O";
+    piece: "l" | "j" | "t" | "s" | "z" | "i" | "o";
     b2b: number;
     combo: number;
     enemies: number;

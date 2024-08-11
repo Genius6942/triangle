@@ -1,4 +1,3 @@
-import * as ping from "ping";
 import { APIDefaults } from ".";
 import type { Get, Post } from "./basic";
 
@@ -43,49 +42,67 @@ export namespace Server {
   }
 }
 
-async function findLowestPingSpool(
-  spools: { name: string; host: string; flag: string; location: string }[]
-): Promise<{ name: string; host: string; flag: string; location: string }> {
-  const pingResults = await Promise.all(
-    spools.map(async (spool) => {
-      const res = await ping.promise.probe(spool.host);
-      return { spool, time: res.time === "unknown" ? Infinity : res.time };
-    })
-  );
-
-  pingResults.sort((a, b) => a.time - b.time);
-
-  return pingResults[0].spool;
-}
-
 export const server = (get: Get, _: Post, options: APIDefaults) => {
-  const getDespool = async (endpoint: string) => {
-    const req = await fetch(encodeURI("https://" + endpoint + "/spool"), {
-      method: "GET",
-      headers: {
-        Authorization: "Bearer " + options.token,
-        "User-Agent": options.userAgent
+  const getDespool = async (endpoint: string, index: string) => {
+    const req = await fetch(
+      encodeURI(
+        `https://${endpoint}/spool?${Date.now()}-${index}-${Math.floor(1e6 * Math.random())}`
+      ),
+      {
+        method: "GET",
+        headers: {
+          // Authorization: `Bearer ${options.token}`,
+          "User-Agent": options.userAgent
+        }
       }
-    });
+    );
     const res = new Uint8Array(await req.arrayBuffer());
 
-    const despool = {
-      version: res[0],
-      load1: res[2],
-      load5: res[3],
-      load15: res[4],
-      online: (res[1] & 0b10000000) >> 7 === 1,
-      overloaded: (res[1] & 0b01000000) >> 6 === 1,
-      cold: (res[1] & 0b00100000) >> 5 === 1,
-      reserved1: (res[1] & 0b00010000) >> 4 === 1,
-      reserved2: (res[1] & 0b00001000) >> 3 === 1,
-      reserved3: (res[1] & 0b00000100) >> 2 === 1,
-      reserved4: (res[1] & 0b00000010) >> 1 === 1,
-      reserved5: (res[1] & 0b00000001) >> 0 === 1
+    const parseSpoolData = (e: Uint8Array) => {
+      const t = e[0],
+        n = {
+          online: 128 & e[1],
+          avoidDueToHighLoad: 64 & e[1],
+          recentlyRestarted: 32 & e[1],
+          backhaulDisrupted: 16 & e[1]
+        },
+        s = [0, 0, 0];
+      (s[0] = (e[2] / 256) * 4),
+        (s[1] = (e[3] / 256) * 4),
+        (s[2] = (e[4] / 256) * 4);
+      return {
+        version: t,
+        flags: n,
+        load: s,
+        latency: e[5],
+        str: `v${t} /${n.avoidDueToHighLoad ? "Av" : ""}${n.recentlyRestarted ? "Rr" : ""}${n.backhaulDisrupted ? "Bd" : ""}/ ${s[0]}, ${s[1]}, ${s[2]}`
+      };
     };
 
-    return despool;
+    return parseSpoolData(res);
   };
+
+  const findLowestPingSpool = async (
+    spools: { name: string; host: string; flag: string; location: string }[]
+  ): Promise<{
+    name: string;
+    host: string;
+    flag: string;
+    location: string;
+  }> => {
+    const pingResults = await Promise.all(
+      spools.map(async (spool, index) => {
+        const start = performance.now();
+        await getDespool(spool.host, index.toString());
+        return { spool, time: performance.now() - start };
+      })
+    );
+
+    pingResults.sort((a, b) => a.time - b.time);
+
+    return pingResults[0].spool;
+  };
+
   return {
     environment: async (): Promise<Server.Environment> => {
       const result = await get<Server.Environment>({
@@ -119,13 +136,10 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
         return { endpoint: `tetr.io${res.endpoint}`, token: "" };
       else {
         const lowestPingSpool = await findLowestPingSpool(res.spools.spools);
-        const spool = await getDespool(lowestPingSpool.host);
-        if (spool.online && !spool.overloaded) {
-          return {
-            endpoint: `${lowestPingSpool.host}${res.endpoint}`,
-            token: res.spools.token
-          };
-        }
+        return {
+          endpoint: `${lowestPingSpool.host}${res.endpoint}`,
+          token: res.spools.token
+        };
       }
     }
   };

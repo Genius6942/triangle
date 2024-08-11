@@ -13,6 +13,7 @@ export type ClientOptions = (
   userAgent?: string;
 	/** a cf_clearance Cloudflare turnstile token. */
 	turnstile?: string;
+	codec?: CodecType;
 };
 
 export interface ClientUser {

@@ -24,29 +24,52 @@ export interface Game {
     xpPerUser: number;
   };
   "game.replay.state": {
-    gameid: string;
+    gameid: number;
     data: "wait";
   };
 
-  "game.ige": GameTypes.IGE[];
+  "game.replay.ige": {
+		gameid: number,
+		iges: GameTypes.IGE[];
+	};
+
   "game.replay.board": {
-    gameid: string;
-    board: {
-      /** Board state */
-      b: GameTypes.BoardSquare[][];
-      // TODO: what is this
-      f: number;
-      // TODO: what is this
-      g: number;
-      /** Board width */
-      w: number;
-      /** Board height */
-      h: number;
-    };
-  }[];
-  replay: {
-    gameid: string;
+  boards: {
+    0: {
+      board: {
+        /** Board state */
+        b: GameTypes.BoardSquare[][],
+        /** Frame number or turn */
+        f: number,
+        /** Game status or flag */
+        g: number,
+        /** Board width */
+        w: number,
+        /** Board height */
+        h: number,
+      },
+      gameid: number,
+    },
+    1: {
+      board: {
+        /** Board state */
+        b: GameTypes.BoardSquare[][],
+        /** Frame number or turn */
+        f: number,
+        /** Game status or flag */
+        g: number,
+        /** Board width */
+        w: number,
+        /** Board height */
+        h: number,
+      },
+      gameid: number,
+      }
+    }
+  };
+  "game.replay": {
+    gameid: number;
+		provisioned: number;
     frames: GameTypes.Replay.Frame[];
-    provisioned: number;
   };
 }

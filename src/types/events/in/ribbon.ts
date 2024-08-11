@@ -1,7 +1,16 @@
 import { Social } from "../../social";
 
 export interface Ribbon {
-  authorize: {
+	session: {
+		ribbonid: string,
+		tokenid: string
+	};
+	
+	ping: {
+		recvid: number;
+	};
+
+  "server.authorize": {
     success: boolean;
     maintenance: boolean;
     worker: {
@@ -22,13 +31,17 @@ export interface Ribbon {
     };
   };
 
-  migrate: {
+  "server.migrate": {
     endpoint: string;
   };
+
+  "server.migrated": {};
 
   kick: {
     reason: string;
   };
+
+	nope: any;
 
   error: any;
   err: any;

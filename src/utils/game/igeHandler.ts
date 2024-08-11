@@ -8,14 +8,14 @@ interface GarbageRecord {
  */
 export class IGEHandler {
   /** @hidden */
-  private players: Map<string, { incoming: number; outgoing: GarbageRecord[] }>;
+  private players: Map<number, { incoming: number; outgoing: GarbageRecord[] }>;
   /** @hidden */
   private iid = 0;
   /**
    * Manages network IGE cancelling
    * @param players - list of player ids
    */
-  constructor(players: string[]) {
+  constructor(players: number[]) {
     this.players = new Map();
     players.forEach((player) => {
       this.players.set(player, { incoming: 0, outgoing: [] });
@@ -29,7 +29,7 @@ export class IGEHandler {
    * @param options.amount - The amount of the message.
    * @throws {Error} If the player is not found.
    */
-  send({ playerID, amount }: { playerID: string; amount: number }) {
+  send({ playerID, amount }: { playerID: number; amount: number }) {
     const player = this.players.get(playerID);
     const iid = ++this.iid;
 
@@ -61,7 +61,7 @@ export class IGEHandler {
     iid,
     amount
   }: {
-    playerID: string;
+    playerID: number;
     ackiid: number;
     iid: number;
     amount: number;

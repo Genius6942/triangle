@@ -1,10 +1,10 @@
 import { Game as GameTypes } from "../../../types";
 
 export interface Game {
-  "game.scope.start": string;
+  "game.scope.start": number;
 
-  replay: {
-    gameid: string;
+  "game.replay": {
+    gameid: number;
     frames: GameTypes.Replay.Frame[];
     provisioned: number;
   };

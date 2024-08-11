@@ -102,12 +102,12 @@ export class Room {
 
     this.listen("room.update", this.handleUpdate.bind(this));
 
-    this.listen("room.addplayer", (data) => {
+    this.listen("room.player.add", (data) => {
       this.players.push(data);
       emitPlayers();
     });
 
-    this.listen("room.removeplayer", (data) => {
+    this.listen("room.player.remove", (data) => {
       this.players = this.players.filter((p) => p._id !== data);
       emitPlayers();
     });
@@ -128,7 +128,7 @@ export class Room {
               }
             : { multi: false }),
           players: data.players.map((p) => ({
-            id: p.gameid,
+            id: p.userid,
             name: p.options.username,
             points: 0 as const
           }))
@@ -164,9 +164,9 @@ export class Room {
     // chat
     this.listen("room.chat", this.chats.push.bind(this.chats));
 
-		// get booted
-		this.listen("room.kick", () => this.destroy());
-		this.listen('room.leave', () => this.destroy());
+    // get booted
+    this.listen("room.kick", () => this.destroy());
+    this.listen("room.leave", () => this.destroy());
   }
 
   /** Whether or not the client is the host */
@@ -202,7 +202,7 @@ export class Room {
     return await this.client.wrap(
       "room.kick",
       { uid: id, duration },
-      "room.removeplayer"
+      "room.player.remove"
     );
   }
 

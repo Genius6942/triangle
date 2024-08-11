@@ -193,7 +193,7 @@ export class Social {
    * client.social.markNotificationsAsRead();
    */
   markNotificationsAsRead() {
-    this.client.emit("social.notifications.ack");
+    this.client.emit("social.notification.ack");
   }
 
   /**

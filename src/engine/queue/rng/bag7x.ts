@@ -5,7 +5,7 @@ import { Piece } from "../types";
 export const bag7plusX = (seed: number) => {
   const gen = rng(seed);
   return () => {
-    let bag = gen.shuffleArray(["Z", "L", "O", "S", "I", "J", "T"] as Piece[]);
+    let bag = gen.shuffleArray(["z", "l", "o", "s", "i", "j", "t"] as Piece[]);
     let result = [];
     let bagSizes = [10, 9, 8, 8]; // total pieces in each bag for the first 4 bags
 

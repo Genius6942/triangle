@@ -273,14 +273,14 @@ export class Engine {
   }
 
   detectSpin(finOrTst: boolean): SpinType {
-    if (this.falling.symbol === "T") {
+    if (this.falling.symbol === "t") {
       return this.detectTSpin(finOrTst);
     }
     return "none";
   }
 
   detectTSpin(finOrTst: boolean): SpinType {
-    if (this.falling.symbol !== "T") return "none";
+    if (this.falling.symbol !== "t") return "none";
 
     if (finOrTst) return "normal";
 
@@ -618,14 +618,14 @@ export class Engine {
   }
 
   private static colorMap = {
-    I: chalk.bgCyan,
-    J: chalk.bgBlue,
-    L: chalk.bgYellow,
-    O: chalk.bgWhite,
-    S: chalk.bgGreenBright,
-    T: chalk.bgMagentaBright,
-    Z: chalk.bgRedBright,
-    G: chalk.bgBlack
+    i: chalk.bgCyan,
+    j: chalk.bgBlue,
+    l: chalk.bgYellow,
+    o: chalk.bgWhite,
+    s: chalk.bgGreenBright,
+    t: chalk.bgMagentaBright,
+    z: chalk.bgRedBright,
+    gb: chalk.bgBlack
   };
 
   get text() {

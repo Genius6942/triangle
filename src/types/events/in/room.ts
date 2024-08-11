@@ -38,8 +38,8 @@ export interface Room {
     maxtime: number;
   };
 
-  "room.addplayer": RoomTypes.Player;
-  "room.removeplayer": string;
+  "room.player.add": RoomTypes.Player;
+  "room.player.remove": string;
   "room.update.host": string;
   /** Fires when a player's bracket is moved */
   "room.update.bracket": {

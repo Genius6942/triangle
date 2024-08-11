@@ -13,6 +13,6 @@ export interface Social {
 
   "social.invite": string;
 
-  "social.notifications.ack": void;
-	"social.relationships.ack": string;
+  "social.notification.ack": void;
+	"social.relation.ack": string;
 }

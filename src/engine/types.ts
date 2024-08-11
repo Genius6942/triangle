@@ -55,7 +55,7 @@ export type Frame = {
             }
           | {
               type: "interaction" | "interaction_confirm";
-              gameid: string;
+              gameid: number;
               data: {
                 type: "garbage";
                 iid: number;
