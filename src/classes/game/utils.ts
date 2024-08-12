@@ -1,7 +1,9 @@
 import { Queue } from "../../engine";
 import { Game } from "../../types";
 
-export const getFullFrame = (options: Game.ReadyOptions): Game.Replay.Frames.Full & { frame: number } => ({
+export const getFullFrame = (
+  options: Game.ReadyOptions
+): Game.Replay.Frames.Full & { frame: number } => ({
   type: "full",
   frame: 0,
   data: {
@@ -37,11 +39,7 @@ export const getFullFrame = (options: Game.ReadyOptions): Game.Replay.Frames.Ful
         inputSoftdrop: false
       },
       falling: {
-        type: new Queue({
-          type: options.bagtype,
-          minLength: 7,
-          seed: options.seed
-        }).next,
+        type: "i",
         x: 0,
         y: 0,
         r: 0,

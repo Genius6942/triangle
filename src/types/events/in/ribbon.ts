@@ -1,14 +1,14 @@
 import { Social } from "../../social";
 
 export interface Ribbon {
-	session: {
-		ribbonid: string,
-		tokenid: string
-	};
-	
-	ping: {
-		recvid: number;
-	};
+  session: {
+    ribbonid: string;
+    tokenid: string;
+  };
+
+  ping: {
+    recvid: number;
+  };
 
   "server.authorize": {
     success: boolean;
@@ -41,7 +41,7 @@ export interface Ribbon {
     reason: string;
   };
 
-	nope: any;
+  nope: any;
 
   error: any;
   err: any;

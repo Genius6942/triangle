@@ -418,10 +418,11 @@ export class Ribbon {
     }
   }
 
-  destroy() {
+  async destroy() {
     (this.emitter as unknown as EventEmitter).removeAllListeners();
     this.spool.authed = false;
     this.ws?.removeAllListeners();
     this.die(true);
+		if (this.pptr) await this.pptr.shutdown();
   }
 }

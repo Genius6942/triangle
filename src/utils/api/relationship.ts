@@ -14,19 +14,19 @@ export const relationship = (get: Get, post: Post, __: APIDefaults) => {
   };
 
   return {
-		/** Block a user */
-		block: async (id: string) => {
-			const res = await post<{}>({
-				uri: "relationships/block",
-				body: { user: id }
-			});
+    /** Block a user */
+    block: async (id: string) => {
+      const res = await post<{}>({
+        uri: "relationships/block",
+        body: { user: id }
+      });
 
-			if (res.success === false) throw new Error(res.error.msg);
-			return res.success;
-		},
+      if (res.success === false) throw new Error(res.error.msg);
+      return res.success;
+    },
 
-		/** Unblock a user. Note: unblocking a user will unfriend them if they are friended. */
-		unblock: removeRelationship,
+    /** Unblock a user. Note: unblocking a user will unfriend them if they are friended. */
+    unblock: removeRelationship,
 
     /** Friend a user */
     friend: async (id: string) => {

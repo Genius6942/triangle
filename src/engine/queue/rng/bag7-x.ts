@@ -8,17 +8,17 @@ export const bag7_X = (seed: number): (() => Piece[]) => {
   let extraBag: Piece[] = [];
   return () => {
     const extra = extraPieceCount[bagid++] ?? 0;
-		if (extraBag.length < extra)
-			extraBag = gen.shuffleArray(["z", "l", "o", "s", "i", "j", "t"] as const);
-		return gen.shuffleArray([
-			"z",
-			"l",
-			"o",
-			"s",
-			"i",
-			"j",
-			"t",
-			...extraBag.splice(0, extra)
-		] as const);
+    if (extraBag.length < extra)
+      extraBag = gen.shuffleArray(["z", "l", "o", "s", "i", "j", "t"] as const);
+    return gen.shuffleArray([
+      "z",
+      "l",
+      "o",
+      "s",
+      "i",
+      "j",
+      "t",
+      ...extraBag.splice(0, extra)
+    ] as const);
   };
 };

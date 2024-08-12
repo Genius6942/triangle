@@ -5,7 +5,10 @@ import { Ribbon } from "./ribbon";
 
 export interface Client {
   /** Fires inside Client.create(), will never fire afterwards. */
-  "client.ready": { endpoint: string; social: Ribbon["server.authorize"]["social"] };
+  "client.ready": {
+    endpoint: string;
+    social: Ribbon["server.authorize"]["social"];
+  };
   /** Never fires yet */
   "client.error": any;
   /** Fires when the client dies. */
@@ -44,10 +47,10 @@ export interface Client {
   "client.game.abort": void;
 
   /** Fires when a message is recived from the server. Contains the raw data of the server message. Useful for logging, do not use for handling events for functionality. Instead, use `client.on(<event>)`. */
-  "client.ribbon.receive": { command: string; data?: any; };
+  "client.ribbon.receive": { command: string; data?: any };
 
   /** Fires when a message is sent to the server. Contains the raw data of the server message. Useful for logging. */
-  "client.ribbon.send": { command: string; data?: any; };
+  "client.ribbon.send": { command: string; data?: any };
 
   // relationship stuff
   /** Fires whenever the client is friended */

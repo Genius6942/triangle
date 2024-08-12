@@ -34,8 +34,8 @@ export namespace Game {
   export type Passthrough = "zero" | "limited" | "consistent" | "full";
   /** Only `T-spins` supported */
   export type SpinBonuses = "T-spins" | "all" | "handheld" | "stupid" | "none";
-	/** Whether decimal garbage is rounded down or weighted RNG rounding */
-	export type RoundingMode = "down" | "rng";
+  /** Whether decimal garbage is rounded down or weighted RNG rounding */
+  export type RoundingMode = "down" | "rng";
   /** Only `multiplier` is currently supported */
   export type ComboTable =
     | "none"

@@ -30,7 +30,7 @@ export class API {
   social!: ReturnType<typeof relationship>;
 
   /** @hideconstructor */
-  constructor(options: Partial<APIDefaults> = {}){
+  constructor(options: Partial<APIDefaults> = {}) {
     this.update(options);
   }
 

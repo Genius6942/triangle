@@ -34,9 +34,13 @@ export const basic = (defaults: APIDefaults) => {
           ? await res.json()
           : pack.unpack(Buffer.from(await res.arrayBuffer()));
       } catch {
-				if (res.status === 429) throw new Error(`Rate limit (429) on GET to ${uri}`);
-				else throw new Error(`Blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. You can get one by solving the captcha at https://tetr.io/admin`);
-			}
+        if (res.status === 429)
+          throw new Error(`Rate limit (429) on GET to ${uri}`);
+        else
+          throw new Error(
+            `Blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. You can get one by solving the captcha at https://tetr.io/admin`
+          );
+      }
     },
 
     post: async <T = any>({

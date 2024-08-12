@@ -343,7 +343,6 @@ export class Game {
   }
 
   private handleIGE(data: Events.in.Game["game.replay.ige"]) {
-    console.log("handle ige:", data);
     const passthrough = {
       network: ["consistent", "zero"].includes(this.options.passthrough),
       replay: this.options.passthrough !== "full",

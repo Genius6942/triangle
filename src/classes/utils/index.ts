@@ -16,7 +16,7 @@ export class ClientUtils {
 
   /**
    * Get the userid based on username
-	 * @deprecated in favor of `client.social.resolve`
+   * @deprecated in favor of `client.social.resolve`
    */
   async getID(username: string) {
     return this.api.users.resolve(username);

@@ -29,47 +29,47 @@ export interface Game {
   };
 
   "game.replay.ige": {
-		gameid: number,
-		iges: GameTypes.IGE[];
-	};
+    gameid: number;
+    iges: GameTypes.IGE[];
+  };
 
   "game.replay.board": {
-  boards: {
-    0: {
-      board: {
-        /** Board state */
-        b: GameTypes.BoardSquare[][],
-        /** Frame number or turn */
-        f: number,
-        /** Game status or flag */
-        g: number,
-        /** Board width */
-        w: number,
-        /** Board height */
-        h: number,
-      },
-      gameid: number,
-    },
-    1: {
-      board: {
-        /** Board state */
-        b: GameTypes.BoardSquare[][],
-        /** Frame number or turn */
-        f: number,
-        /** Game status or flag */
-        g: number,
-        /** Board width */
-        w: number,
-        /** Board height */
-        h: number,
-      },
-      gameid: number,
-      }
-    }
+    boards: {
+      0: {
+        board: {
+          /** Board state */
+          b: GameTypes.BoardSquare[][];
+          /** Frame number or turn */
+          f: number;
+          /** Game status or flag */
+          g: number;
+          /** Board width */
+          w: number;
+          /** Board height */
+          h: number;
+        };
+        gameid: number;
+      };
+      1: {
+        board: {
+          /** Board state */
+          b: GameTypes.BoardSquare[][];
+          /** Frame number or turn */
+          f: number;
+          /** Game status or flag */
+          g: number;
+          /** Board width */
+          w: number;
+          /** Board height */
+          h: number;
+        };
+        gameid: number;
+      };
+    };
   };
   "game.replay": {
     gameid: number;
-		provisioned: number;
+    provisioned: number;
     frames: GameTypes.Replay.Frame[];
   };
 }

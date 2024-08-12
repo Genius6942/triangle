@@ -14,5 +14,5 @@ export interface Social {
   "social.invite": string;
 
   "social.notification.ack": void;
-	"social.relation.ack": string;
+  "social.relation.ack": string;
 }

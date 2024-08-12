@@ -107,11 +107,14 @@ export class Social {
         this.notifications.forEach((n) => {
           if (n.type === "friend") {
             if (!n.seen) {
-							const rel = processRelationship(n.data.relationship, this.client.user.id);
+              const rel = processRelationship(
+                n.data.relationship,
+                this.client.user.id
+              );
               this.client.emit("client.friended", {
-								id: rel.user.id,
-								name: rel.user.username,
-								avatar: rel.user.avatar
+                id: rel.user.id,
+                name: rel.user.username,
+                avatar: rel.user.avatar
               });
             }
           }
@@ -127,11 +130,14 @@ export class Social {
       this.notifications.splice(0, 0, n);
 
       if (n.type === "friend") {
-				const rel = processRelationship(n.data.relationship, this.client.user.id);
+        const rel = processRelationship(
+          n.data.relationship,
+          this.client.user.id
+        );
         this.client.emit("client.friended", {
-					id: rel.user.id,
-					name: rel.user.username,
-					avatar: rel.user.avatar
+          id: rel.user.id,
+          name: rel.user.username,
+          avatar: rel.user.avatar
         });
 
         const user = this.get({ id: rel.user.id });
@@ -140,10 +146,10 @@ export class Social {
           this.other.push(
             new Relationship(
               {
-								id: rel.user.id,
-								username: rel.user.username,
-								avatar: rel.user.avatar,
-								relationshipID: ""
+                id: rel.user.id,
+                username: rel.user.username,
+                avatar: rel.user.avatar,
+                relationshipID: ""
               },
               this,
               this.client

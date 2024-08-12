@@ -12,11 +12,11 @@ export type * from "./types";
 export class Client {
   /** User information */
   public user: ClientUser;
-	/**
-	 * Utils for the client.
-	 * @deprecated - functionality has been moved to other sections. This may be removed in the future.
-	 */
-	public utils: ClientUtils;
+  /**
+   * Utils for the client.
+   * @deprecated - functionality has been moved to other sections. This may be removed in the future.
+   */
+  public utils: ClientUtils;
   /** The client's token */
   public token: string;
   /** @hidden */
@@ -137,9 +137,9 @@ export class Client {
     if (options.userAgent) {
       api.update({ userAgent: options.userAgent });
     }
-		if (options.turnstile) {
-			api.update({ turnstile: options.turnstile });
-		}
+    if (options.turnstile) {
+      api.update({ turnstile: options.turnstile });
+    }
 
     const sessionID = `SESS-${Math.floor(
       Math.random() * Number.MAX_SAFE_INTEGER
@@ -281,6 +281,6 @@ export class Client {
   /** Clean up the client */
   async destroy() {
     if (this.room) await this.room.leave();
-    this.ribbon.destroy();
+    await this.ribbon.destroy();
   }
 }

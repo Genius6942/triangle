@@ -552,7 +552,11 @@ export class Codec {
   encodeAsync(
     msg: string,
     data?: any,
-    options: { batched?: boolean; id?: number, pack?: (data: any) => Promise<Buffer> } = {}
+    options: {
+      batched?: boolean;
+      id?: number;
+      pack?: (data: any) => Promise<Buffer>;
+    } = {}
   ) {
     const cmd = this.commands.get(msg) ?? this.commands.get("__pack__")!;
     let code = cmd.code;

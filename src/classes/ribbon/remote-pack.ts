@@ -11,6 +11,7 @@ let globalRemotePack: Awaited<ReturnType<typeof remotePack>>;
 export const remotePack = (): Promise<{
   encode: (msg: string, data?: any) => Promise<Buffer>;
   decode: (data: Buffer) => Promise<any>;
+  shutdown: () => Promise<void>;
 }> => {
   if (globalRemotePack) return Promise.resolve(globalRemotePack);
   else
@@ -18,6 +19,7 @@ export const remotePack = (): Promise<{
       const browser = await puppeteer.launch({
         ignoreDefaultArgs: ["--disable-extensions"]
       });
+      let shutdown = false;
 
       const serverVersion = await basic({
         userAgent: await browser.userAgent(),
@@ -115,6 +117,7 @@ export const remotePack = (): Promise<{
       await page.goto("https://tetr.io");
 
       const encode = async (msg: string, data?: any) => {
+				if (shutdown) return Buffer.from([]);
         const result = await page.evaluate(
           async (msg, data) => {
             // @ts-expect-error
@@ -128,6 +131,7 @@ export const remotePack = (): Promise<{
       };
 
       const decode = async (data: any) => {
+				if (shutdown) return {};
         const result = await page.evaluate(async (data) => {
           // @ts-expect-error
           return await window.__decode__(await window.Buffer.from(data));
@@ -140,7 +144,16 @@ export const remotePack = (): Promise<{
         return result;
       };
 
-      const res = { encode, decode };
+      const res = {
+        encode,
+        decode,
+        shutdown: async () => {
+          if (shutdown) return;
+          try {
+            await browser.close();
+          } catch {}
+        }
+      };
       globalRemotePack = res;
 
       resolve(res);
