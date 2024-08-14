@@ -190,7 +190,6 @@ export class Game {
       },
       kickTable: options.kickset as any,
       options: {
-        b2bChaining: options.b2bchaining,
         comboTable: options.combotable as any,
         garbageBlocking: options.garbageblocking as any,
         garbageMultiplier: {
@@ -226,8 +225,19 @@ export class Game {
           timeout: options.messiness_timeout,
           within: options.messiness_inner
         },
-        seed: options.seed
+        seed: options.seed,
+				rounding: options.roundmode
       },
+      pc: options.allclears
+        ? {
+            garbage: options.allclear_garbage,
+						b2b: options.allclear_b2b
+          }
+        : false,
+			b2b: {
+				chaining: options.b2bchaining,
+				charging: options.b2bcharging ? { at: options.b2bcharge_at - 1, base: options.b2bcharge_base } : false,
+			},
       gravity: {
         value: options.g,
         increase: options.gincrease,

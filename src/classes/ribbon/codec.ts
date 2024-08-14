@@ -2,7 +2,7 @@
 
 import { pack } from "../../utils";
 
-export type CodecType = "pptr" | "custom";
+export type CodecType = "vm" | "custom";
 
 export type Command = {
   flags: number;

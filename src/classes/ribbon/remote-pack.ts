@@ -34,7 +34,7 @@ export const remotePack = (): Promise<{
 
       const triangleDir = path.join(homedir(), ".trianglejs");
       const fileName = `tetrio-${serverVersion.signature.build.id}.js`;
-
+			
       let tetrioOverride: string;
       try {
         tetrioOverride = await fs.readFile(
@@ -93,7 +93,7 @@ export const remotePack = (): Promise<{
           tetrioOverride.slice(classIdx);
         await fs.writeFile(path.join(triangleDir, fileName), tetrioOverride);
       }
-
+			
       const page = await browser.newPage();
 
       await page.setRequestInterception(true);

@@ -281,6 +281,6 @@ export class Client {
   /** Clean up the client */
   async destroy() {
     if (this.room) await this.room.leave();
-    await this.ribbon.destroy();
+    this.ribbon.destroy();
   }
 }

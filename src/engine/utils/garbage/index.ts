@@ -1,4 +1,5 @@
 import { calculateIncrease } from "..";
+import { B2BOptions } from "../..";
 
 export const garbageData = {
   single: 0,
@@ -34,6 +35,7 @@ export const garbageCalcV2 = (
     spin: undefined | "none" | "mini" | "normal" | "full";
     piece: "l" | "j" | "t" | "s" | "z" | "i" | "o";
     b2b: number;
+    brokeB2B: false | number;
     combo: number;
     enemies: number;
     frame: number;
@@ -41,7 +43,6 @@ export const garbageCalcV2 = (
   config: {
     spinBonuses: string;
     comboTable: keyof (typeof garbageData)["comboTable"] | "multiplier";
-    b2bChaining: boolean;
     garbageTargetBonus: "none" | "normal" | string;
     garbageMultiplier: {
       value: number;
@@ -50,18 +51,19 @@ export const garbageCalcV2 = (
     };
     garbageAttackCap?: number;
     garbageBlocking: "combo blocking" | "limited blocking" | "none";
+    b2b: B2BOptions;
   }
 ) => {
   let garbage = 0;
-  const { spin: rawSpin, lines, piece, combo, b2b, enemies } = data;
+  const { spin: rawSpin, lines, piece, combo, b2b, brokeB2B, enemies } = data;
   const {
     spinBonuses,
     comboTable,
-    b2bChaining,
     garbageMultiplier,
     garbageTargetBonus,
     garbageAttackCap,
-    garbageBlocking
+    garbageBlocking,
+    b2b: b2bOptions
   } = config;
 
   const spin: "mini" | "normal" | null | undefined =
@@ -113,7 +115,7 @@ export const garbageCalcV2 = (
   }
 
   if (lines > 0 && b2b > 0) {
-    if (b2bChaining) {
+    if (b2bOptions.chaining) {
       const b2bGains =
         garbageData.backtobackBonus *
         (Math.floor(1 + Math.log1p(b2b * garbageData.backtobackBonusLog)) +
@@ -125,6 +127,10 @@ export const garbageCalcV2 = (
     } else {
       garbage += garbageData.backtobackBonus;
     }
+  }
+
+  if (brokeB2B && b2bOptions.charging && brokeB2B >= b2bOptions.charging.at) {
+    garbage += Math.max(0, brokeB2B + b2bOptions.charging.base);
   }
 
   if (combo > 0) {

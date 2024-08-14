@@ -4,7 +4,7 @@ import { EventEmitter } from "node:events";
 import { WebSocket } from "ws";
 import { RibbonEvents } from "./types";
 import { Bits, Codec, CodecType } from "./codec";
-import { remotePack } from "./remote-pack";
+import { vmPack } from "./vm-pack";
 
 const RIBBON_CLOSE_CODES = {
   1000: "Ribbon closed normally",
@@ -31,18 +31,7 @@ export class Ribbon {
   private api: API;
   private codec = new Codec();
   private codecMethod: CodecType;
-  private pptr?: Awaited<ReturnType<typeof remotePack>>;
-  private codecQueue = {
-    send: {
-      latest: -1,
-      last: -1,
-      queue: [] as { id: number; data: Buffer }[]
-    },
-    receive: {
-      last: -1,
-      queue: [] as { id: number; data: any }[]
-    }
-  };
+  private codecVM?: Awaited<ReturnType<typeof vmPack>>;
 
   private spool: {
     endpoint?: string;
@@ -79,6 +68,7 @@ export class Ribbon {
 
   emitter: Emitter<Events.in.all> = new EventEmitter();
   handling: Game.Handling;
+	verbose: boolean = false;
 
   private listeners: {
     type: "send" | "receive";
@@ -98,18 +88,21 @@ export class Ribbon {
     token,
     userAgent,
     handling,
-    codec = "pptr"
+    codec = "vm",
+		verbose = true,
   }: {
     token: string;
     userAgent: string;
     handling: Game.Handling;
     codec?: CodecType;
+		verbose?: boolean;
   }) {
     this.token = token;
     this.handling = handling;
     this.userAgent = userAgent;
     this.codecMethod = codec;
     this.api = new API({ token, userAgent });
+		this.verbose = verbose;
   }
 
   async connect() {
@@ -121,9 +114,10 @@ export class Ribbon {
     this.spool = { ...this.spool, ...spool };
     this.spool.signature = (await this.api.server.environment()).signature;
 
-    if (this.codecMethod === "pptr") {
-      this.pptr = await remotePack();
+    if (this.codecMethod === "vm") {
+      this.codecVM = await vmPack(this.userAgent);
     }
+
 
     this.ws = new WebSocket(`wss:${this.spool.endpoint}`, this.spool.token, {
       headers: {
@@ -136,89 +130,29 @@ export class Ribbon {
     this.ws.on("close", this.onWSClose.bind(this));
   }
 
-  async encode(msg: string, data?: Record<string, any>) {
-    return this.codecMethod === "pptr"
-      ? await this.pptr!.encode(msg, data)
+  encode(msg: string, data?: Record<string, any>): Buffer {
+    return this.codecMethod === "vm"
+      ? this.codecVM!.encode(msg, data)
       : this.codec.encode(msg, data);
   }
 
-  async decode(data: Buffer) {
-    if (this.codecMethod === "pptr") {
-      const queueItem = {
-        id: ++this.codecQueue.receive.last,
-        data: undefined as any
-      };
-      this.codecQueue.receive.queue.push(queueItem);
-      queueItem.data = await this.pptr!.decode(data);
-
-      if (queueItem.data.command === "packets") {
-        const packets = queueItem.data.data.packets;
-        queueItem.data = undefined;
-        this.codecQueue.receive.queue.forEach((item) => {
-          if (item.id > queueItem.id) item.id += packets.length;
-        });
-        await Promise.all(
-          packets.map(async (packet: Buffer, i: number) => {
-            const q = { id: queueItem.id + i + 1, data: undefined };
-            this.codecQueue.receive.queue.push(q);
-            this.codecQueue.receive.queue = this.codecQueue.receive.queue.sort(
-              (a, b) => a.id - b.id
-            );
-            const decoded = await this.pptr!.decode(packet);
-            q.data = decoded;
-          })
-        );
-        queueItem.data = { command: "packets", data: packets };
-      }
-      while (
-        this.codecQueue.receive.queue[0] &&
-        this.codecQueue.receive.queue[0].data !== undefined
-      ) {
-        const item = this.codecQueue.receive.queue.shift()!;
-        if (item.data.command !== "packets") this.handleMessage(item.data);
-      }
-    } else {
-      const item = this.codec.decode(data);
-      if (item.command === "packets") {
-        for (const packet of item.data.packets) {
-          const decodedPacket = await this.decode(packet);
-          this.handleMessage(decodedPacket);
-        }
-      } else this.handleMessage(item);
-    }
+  decode(data: Buffer) {
+    return this.codecMethod === "vm"
+      ? this.codecVM!.decode(data)
+      : this.codec.decode(data);
   }
 
-  private async pipe(msg: string, data?: Record<string, any>) {
+  private pipe(msg: string, data?: Record<string, any>) {
     if (!this.ws) return this.session.messageQueue.push({ command: msg, data });
 
-    const queueItem = {
-      id: ++this.codecQueue.send.last,
-      data: await this.encode(msg, data)
-    };
+    const encoded = this.encode(msg, data);
 
-    if (queueItem.data[0] & Codec.FLAGS.F_ID) {
+    if (encoded[0] & Codec.FLAGS.F_ID) {
       const id = ++this.session.lastSent!;
-      new Bits(queueItem.data).seek(8).write(id, 24);
+      new Bits(encoded).seek(8).write(id, 24);
     }
 
-    if (this.codecMethod === "pptr") {
-      if (this.codecQueue.send.latest === queueItem.id - 1) {
-        this.ws.send(queueItem.data);
-        this.codecQueue.send.latest = queueItem.id;
-        while (
-          this.codecQueue.send.queue[0] &&
-          this.codecQueue.send.queue[0].id === this.codecQueue.send.latest + 1
-        ) {
-          const item = this.codecQueue.send.queue.shift()!;
-          this.ws.send(item.data);
-          this.codecQueue.send.latest++;
-        }
-      } else {
-        this.codecQueue.send.queue.push(queueItem);
-      }
-    } else {
-      this.ws.send(queueItem.data);
-    }
+    this.ws.send(encoded);
     if (msg !== "ping")
       this.listeners
         .filter((l) => l.type === "send")
@@ -232,6 +166,7 @@ export class Ribbon {
   }
 
   private async onWSOpen() {
+		if (this.verbose) console.log("[Ribbon]: Connected");
     this.session.open = true;
     this.session.flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
     this.session.flags &= ~Ribbon.FLAGS.TIMING_OUT;
@@ -265,8 +200,14 @@ export class Ribbon {
     await this.connect();
   };
 
-  private async onWSMessage(data: any) {
-    await this.decode(data);
+  private onWSMessage(data: any) {
+    const item = this.decode(data);
+    if (item.command === "packets") {
+      for (const packet of item.data.packets) {
+        const decodedPacket = this.decode(packet);
+        this.handleMessage(decodedPacket);
+      }
+    } else this.handleMessage(item);
   }
 
   private onWSClose(e: number) {
@@ -418,11 +359,10 @@ export class Ribbon {
     }
   }
 
-  async destroy() {
+  destroy() {
     (this.emitter as unknown as EventEmitter).removeAllListeners();
     this.spool.authed = false;
     this.ws?.removeAllListeners();
     this.die(true);
-		if (this.pptr) await this.pptr.shutdown();
   }
 }

@@ -21,6 +21,7 @@ export interface GarbageQueueInitializeParams {
   };
   seed: number;
   boardWidth: number;
+  rounding: "down" | "rng";
 }
 
 export interface Garbage {
@@ -172,5 +173,15 @@ export class GarbageQueue {
     }
 
     return res;
+  }
+
+  round(amount: number): number {
+    if (this.options.rounding === "down") return Math.floor(amount);
+    else if (this.options.rounding === "rng") {
+      const floored = Math.floor(amount);
+      if (floored === amount) return floored;
+      const decimal = amount - floored;
+      return this.rngex() < decimal ? floored + 1 : floored;
+    } else throw new Error(`Invalid rounding mode ${this.options.rounding}`);
   }
 }

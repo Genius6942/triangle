@@ -93,8 +93,12 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
     const pingResults = await Promise.all(
       spools.map(async (spool, index) => {
         const start = performance.now();
-        await getDespool(spool.host, index.toString());
-        return { spool, time: performance.now() - start };
+        try {
+          await getDespool(spool.host, index.toString());
+          return { spool, time: performance.now() - start };
+        } catch (e) {
+          return { spool, time: Infinity };
+        }
       })
     );
 

@@ -42,6 +42,39 @@ export class Tetromino {
     this._rotation = (value % 4) as any;
   }
 
+  isAllSpinPosition(board: BoardSquare[][]) {
+    return (
+      !legal(
+        this.blocks.map((block) => [
+          block[0] + this.location[0] - 1,
+          -block[1] + this.location[1]
+        ]),
+        board
+      ) &&
+      !legal(
+        this.blocks.map((block) => [
+          block[0] + this.location[0] + 1,
+          -block[1] + this.location[1]
+        ]),
+        board
+      ) &&
+      !legal(
+        this.blocks.map((block) => [
+          block[0] + this.location[0],
+          -block[1] + this.location[1] + 1
+        ]),
+        board
+      ) &&
+      !legal(
+        this.blocks.map((block) => [
+          block[0] + this.location[0],
+          -block[1] + this.location[1] - 1
+        ]),
+        board
+      )
+    );
+  }
+
   rotate(board: BoardSquare[][], kickTable: KickTable, amt: Rotation) {
     const rotatedBlocks = this.states[(this.rotation + amt) % 4];
     const kickRes = performKick(
@@ -128,6 +161,7 @@ export class Tetromino {
   }
 
   softDrop(board: BoardSquare[][]) {
+		const start = this.location[1];
     while (
       legal(
         this.blocks.map((block) => [
@@ -139,6 +173,8 @@ export class Tetromino {
     ) {
       this.location[1]--;
     }
+
+		return start !== this.location[1];
   }
 }
 

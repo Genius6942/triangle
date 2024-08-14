@@ -18,9 +18,8 @@ import { calculateIncrease, deepCopy } from "./utils";
 import chalk from "chalk";
 
 export interface GameOptions {
-  spinBonuses: string;
+  spinBonuses: "T-spins" | "all" | "all-mini" | "handheld" | "stupid" | "none";
   comboTable: keyof (typeof garbageData)["comboTable"] | "multiplier";
-  b2bChaining: boolean;
   garbageTargetBonus: "none" | "normal" | string;
   garbageMultiplier: {
     value: number;
@@ -32,6 +31,23 @@ export interface GameOptions {
   garbageBlocking: "combo blocking" | "limited blocking" | "none";
 }
 
+export type PCOptions =
+  | false
+  | {
+      garbage: number;
+      b2b: number;
+    };
+
+export interface B2BOptions {
+  chaining: boolean;
+  charging:
+    | false
+    | {
+        at: number;
+        base: number;
+      };
+}
+
 export interface EngineInitializeParams {
   queue: QueueInitializeParams;
   board: BoardInitializeParams;
@@ -40,6 +56,8 @@ export interface EngineInitializeParams {
   gravity: IncreasableValue;
   garbage: GarbageQueueInitializeParams;
   handling: Handling;
+  pc: PCOptions;
+  b2b: B2BOptions;
 }
 
 export class Engine {
@@ -75,6 +93,8 @@ export class Engine {
     soft: [-1, -1]
   };
 
+  pc!: PCOptions;
+  b2b!: B2BOptions;
   gravity!: IncreasableValue;
   constructor(options: EngineInitializeParams) {
     this.initializer = options;
@@ -99,6 +119,12 @@ export class Engine {
     this.stats = {
       combo: -1,
       b2b: -1
+    };
+
+    this.pc = options.pc;
+    this.b2b = {
+      chaining: options.b2b.chaining,
+      charging: options.b2b.charging
     };
 
     this.gravity = options.gravity;
@@ -253,28 +279,58 @@ export class Engine {
   }
 
   moveRight() {
-    return this.falling.moveRight(this.board.state);
+    const res = this.falling.moveRight(this.board.state);
+    if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
+    return res;
   }
 
   moveLeft() {
-    return this.falling.moveLeft(this.board.state);
+    const res = this.falling.moveLeft(this.board.state);
+    if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
+    return res;
   }
 
   dasRight() {
-    return this.falling.dasRight(this.board.state);
+    const res = this.falling.dasRight(this.board.state);
+    if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
+    return res;
   }
 
   dasLeft() {
-    return this.falling.dasLeft(this.board.state);
+    const res = this.falling.dasLeft(this.board.state);
+    if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
+    return res;
   }
 
   softDrop() {
-    this.falling.softDrop(this.board.state);
+    const res = this.falling.softDrop(this.board.state);
+    if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
+    return res;
   }
 
   detectSpin(finOrTst: boolean): SpinType {
-    if (this.falling.symbol === "t") {
+    if (this.gameOptions.spinBonuses === "none") return "none";
+    if (
+      (
+        [
+          "all",
+          "all-mini",
+          "T-spins"
+        ] as (typeof this.gameOptions.spinBonuses)[]
+      ).includes(this.gameOptions.spinBonuses) &&
+      this.falling.symbol === "t"
+    ) {
       return this.detectTSpin(finOrTst);
+    }
+    if (
+      this.gameOptions.spinBonuses === "all" ||
+      this.gameOptions.spinBonuses === "all-mini"
+    ) {
+      return this.falling.isAllSpinPosition(this.board.state)
+        ? this.gameOptions.spinBonuses === "all-mini"
+          ? "mini"
+          : "normal"
+        : "none";
     }
     return "none";
   }
@@ -325,6 +381,7 @@ export class Engine {
       getLocation(x - 1, y - 1)
     ];
   }
+
   hardDrop() {
     this.softDrop();
 
@@ -342,11 +399,15 @@ export class Engine {
 
     const lines = this.board.clearLines();
 
+    let brokeB2B: false | number = false;
     if (lines > 0) {
       this.stats.combo++;
       if ((this.lastSpin && this.lastSpin.type !== "none") || lines >= 4) {
         this.stats.b2b++;
-      } else this.stats.b2b = -1;
+      } else {
+        brokeB2B = this.stats.b2b;
+        this.stats.b2b = -1;
+      }
     } else {
       this.stats.combo = -1;
     }
@@ -354,6 +415,7 @@ export class Engine {
     const garbage = garbageCalcV2(
       {
         b2b: Math.max(this.stats.b2b, 0),
+        brokeB2B,
         combo: Math.max(this.stats.combo, 0),
         enemies: 0,
         lines,
@@ -361,17 +423,21 @@ export class Engine {
         spin: this.lastSpin ? this.lastSpin.type : "none",
         frame: this.frame
       },
-      this.gameOptions
+      { ...this.gameOptions, b2b: this.b2b }
     );
     const pc = this.board.perfectClear;
-    const gEvents = garbage.garbage > 0 ? [garbage.garbage] : [];
+    const gEvents =
+      garbage.garbage > 0 ? [this.garbageQueue.round(garbage.garbage)] : [];
     const m = this.gameOptions.garbageMultiplier;
-    if (pc)
+    if (pc && this.pc) {
       gEvents.push(
-        Math.floor(
-          10 * calculateIncrease(m.value, this.frame, m.increase, m.marginTime)
+        this.garbageQueue.round(
+          this.pc.garbage *
+            calculateIncrease(m.value, this.frame, m.increase, m.marginTime)
         )
       );
+      this.stats.b2b += this.pc.b2b;
+    }
 
     const res = {
       lines,
