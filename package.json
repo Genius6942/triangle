@@ -26,8 +26,8 @@
     "bun.d.ts",
     "engine.js",
     "engine.d.ts",
-		"ch.js",
-		"ch.d.ts"
+    "ch.js",
+    "ch.d.ts"
   ],
   "types": "dist/types/index.d.ts",
   "keywords": [
@@ -50,7 +50,7 @@
     "node-fetch": "^2.7.0",
     "ping": "^0.4.4",
     "prettier": "^3.2.5",
-    "typedoc": "^0.25.13",
+    "typedoc": "^0.26.6",
     "typescript": "^5.4.5",
     "ws": "^8.16.0"
   }

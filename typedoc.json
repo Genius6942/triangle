@@ -5,5 +5,6 @@
   "sort": ["kind", "instance-first", "alphabetical"],
   "navigationLinks": {
     "GitHub": "https://github.com/Genius6942/triangle.js"
-  }
+  },
+  "projectDocuments": ["Channel.md"]
 }

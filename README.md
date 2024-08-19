@@ -14,8 +14,8 @@ or
 git clone https://github.com/Genius6942/triangle triangle
 ```
 
-> [!NOTE]
-Only looking to use the `ch.tetr.io` api? Check out the documentation [here](/Channel.md).
+> Note:
+> Only looking to use the `ch.tetr.io` api? Check out the documentation [here](/documents/Channel.html).
 
 ## Setup (git installation only)
 
@@ -48,8 +48,8 @@ Bun:
 ```ts
 import { Client } from "@haelp/teto/bun";
 ```
-> [!WARNING]
-Bun currently segfaults when running the codec vm required for ribbon. This will not be fixed, the issue will only be resovled if a new bun version fixes this bug. For now, we recommend using 'esbuild' to run your code if you use typescript.
+> Warning:
+> Bun currently segfaults when running the codec vm required for ribbon. This will not be fixed, the issue will only be resovled if a new bun version fixes this bug. For now, we recommend using 'esbuild' to compile/run your code if you use typescript.
 
 Node:
 
