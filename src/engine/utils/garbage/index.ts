@@ -51,7 +51,7 @@ export const garbageCalcV2 = (
     };
     garbageAttackCap?: number;
     garbageBlocking: "combo blocking" | "limited blocking" | "none";
-    b2b: B2BOptions;
+    b2b: boolean;
   }
 ) => {
   let garbage = 0;
@@ -115,7 +115,7 @@ export const garbageCalcV2 = (
   }
 
   if (lines > 0 && b2b > 0) {
-    if (b2bOptions.chaining) {
+    if (b2bOptions) {
       const b2bGains =
         garbageData.backtobackBonus *
         (Math.floor(1 + Math.log1p(b2b * garbageData.backtobackBonusLog)) +
@@ -129,9 +129,6 @@ export const garbageCalcV2 = (
     }
   }
 
-  if (brokeB2B && b2bOptions.charging && brokeB2B >= b2bOptions.charging.at) {
-    garbage += Math.max(0, brokeB2B + b2bOptions.charging.base);
-  }
 
   if (combo > 0) {
     if (comboTable === "multiplier") {

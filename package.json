@@ -51,8 +51,5 @@
     "typedoc": "^0.25.13",
     "typescript": "^5.4.5",
     "ws": "^8.16.0"
-  },
-  "dependencies": {
-    "puppeteer": "^23.0.2"
   }
 }

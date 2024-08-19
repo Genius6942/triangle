@@ -14,7 +14,11 @@ export type ClientOptions = (
   userAgent?: string;
   /** a cf_clearance Cloudflare turnstile token. */
   turnstile?: string;
-  codec?: CodecType;
+  ribbon?: {
+    codec?: CodecType;
+    verbose?: boolean;
+    globalVM?: boolean;
+  };
 };
 
 export interface ClientUser {

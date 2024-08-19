@@ -9,12 +9,15 @@ import { Server } from "../../utils/api/server";
 let globalVM: Awaited<ReturnType<typeof vmPack>>;
 
 export const vmPack = (
-  userAgent: string
+  userAgent: string,
+  options: {
+    globalVM: boolean;
+  } = { globalVM: true }
 ): Promise<{
   encode: (msg: string, data?: any) => Buffer;
   decode: (data: Buffer) => any;
 }> => {
-  if (globalVM) return Promise.resolve(globalVM);
+  if (globalVM && options.globalVM) return Promise.resolve(globalVM);
 
   return new Promise(async (resolve) => {
     const serverVersion = await basic({
@@ -81,7 +84,7 @@ export const vmPack = (
 
       tetrioOverride =
         tetrioOverride.slice(0, idx) +
-        `;exports.__encode__=(d)=>this.Encode(d).toJSON().data;exports.__decode__=(b)=>{const c=exports.__buffer__.allocUnsafe(b.length);b.forEach((v,i)=>{c[i]=v});return this.Decode(c)};exports.__codec__=this;` +
+        `;exports.__encode__=(...d)=>this.Encode(...d).toJSON().data;exports.__decode__=(b)=>{const c=exports.__buffer__.allocUnsafe(b.length);b.forEach((v,i)=>{c[i]=v});return this.Decode(c)};exports.__codec__=this;` +
         tetrioOverride.slice(idx);
       tetrioOverride =
         tetrioOverride.slice(0, classIdx) +
@@ -135,9 +138,7 @@ export const vmPack = (
         setItem: (key: string, value: string) =>
           tetrio.localStorage.items.set(key, value)
       },
-
       addEventListener: () => {},
-
       exports: {}
     };
 

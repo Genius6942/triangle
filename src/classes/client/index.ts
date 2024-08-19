@@ -170,10 +170,20 @@ export class Client {
       sdf: 41
     };
 
+    const ribbonConfig = {
+      verbose: false,
+      globalVM: true,
+      codec: "vm" as const,
+      ...(options.ribbon || {})
+    };
+
     const ribbon = new Ribbon({
       token,
       handling,
-      userAgent: options.userAgent || CONSTANTS.userAgent
+      userAgent: options.userAgent || CONSTANTS.userAgent,
+      verbose: ribbonConfig.verbose,
+      globalVM: ribbonConfig.globalVM,
+      codec: ribbonConfig.codec
     });
 
     await ribbon.connect();

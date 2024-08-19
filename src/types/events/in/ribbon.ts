@@ -41,7 +41,9 @@ export interface Ribbon {
     reason: string;
   };
 
-  nope: any;
+  nope: {
+		reason: string;
+	};
 
   error: any;
   err: any;

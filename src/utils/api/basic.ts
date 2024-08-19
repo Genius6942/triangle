@@ -1,3 +1,6 @@
+import path from "node:path";
+import os from "node:os";
+import fs from "node:fs/promises";
 import { pack } from "../../utils";
 import { APIDefaults } from ".";
 
@@ -29,6 +32,7 @@ export const basic = (defaults: APIDefaults) => {
         } as any
       });
 
+      const copy = res.clone();
       try {
         return json
           ? await res.json()
@@ -36,10 +40,39 @@ export const basic = (defaults: APIDefaults) => {
       } catch {
         if (res.status === 429)
           throw new Error(`Rate limit (429) on GET to ${uri}`);
-        else
-          throw new Error(
-            `Blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. You can get one by solving the captcha at https://tetr.io/admin`
+        else {
+          try {
+            await fs.readdir(path.join(os.homedir(), ".trianglejs", "errors"));
+          } catch {
+            await fs.mkdir(path.join(os.homedir(), ".trianglejs", "errors"), {
+              recursive: true
+            });
+          }
+          const now = Date.now();
+          const text = await copy.text();
+          await fs.writeFile(
+            path.join(os.homedir(), ".trianglejs", "errors", `${now}.html`),
+            text
           );
+          if (text.includes("<title>Maintenance</title>"))
+            throw new Error(
+              `The TETR.IO Servers are under maintanence. Check https://status.osk.sh for updates. You can view more information at ${path.join(
+                os.homedir(),
+                ".trianglejs",
+                "errors",
+                `${now}.html`
+              )}`
+            );
+          else
+            throw new Error(
+              `An error occured. This was likely because it the request was blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. View the error at ${path.join(
+                os.homedir(),
+                ".trianglejs",
+                "errors",
+                `${now}.html`
+              )}`
+            );
+        }
       }
     },
 
@@ -73,6 +106,7 @@ export const basic = (defaults: APIDefaults) => {
         } as any
       });
 
+      const copy = res.clone();
       try {
         return json
           ? await res.json()
@@ -80,10 +114,39 @@ export const basic = (defaults: APIDefaults) => {
       } catch {
         if (res.status === 429)
           throw new Error(`Rate limit (429) on GET to ${uri}`);
-        else
-          throw new Error(
-            `Blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. You can get one by solving the captcha at https://tetr.io/admin`
+        else {
+          try {
+            await fs.readdir(path.join(os.homedir(), ".trianglejs", "errors"));
+          } catch {
+            await fs.mkdir(path.join(os.homedir(), ".trianglejs", "errors"), {
+              recursive: true
+            });
+          }
+          const now = Date.now();
+          const text = await copy.text();
+          await fs.writeFile(
+            path.join(os.homedir(), ".trianglejs", "errors", `${now}.html`),
+            text
           );
+          if (text.includes("<title>Maintenance</title>"))
+            throw new Error(
+              `The TETR.IO Servers are under maintanence. Check https://status.osk.sh for updates. You can view more information at ${path.join(
+                os.homedir(),
+                ".trianglejs",
+                "errors",
+                `${now}.html`
+              )}`
+            );
+          else
+            throw new Error(
+              `An error occured. This was likely because it the request was blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. View the error at ${path.join(
+                os.homedir(),
+                ".trianglejs",
+                "errors",
+                `${now}.html`
+              )}`
+            );
+        }
       }
     }
   };

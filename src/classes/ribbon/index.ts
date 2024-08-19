@@ -5,6 +5,7 @@ import { WebSocket } from "ws";
 import { RibbonEvents } from "./types";
 import { Bits, Codec, CodecType } from "./codec";
 import { vmPack } from "./vm-pack";
+import chalk from "chalk";
 
 const RIBBON_CLOSE_CODES = {
   1000: "Ribbon closed normally",
@@ -32,6 +33,7 @@ export class Ribbon {
   private codec = new Codec();
   private codecMethod: CodecType;
   private codecVM?: Awaited<ReturnType<typeof vmPack>>;
+	private globalVM: boolean;
 
   private spool: {
     endpoint?: string;
@@ -68,7 +70,7 @@ export class Ribbon {
 
   emitter: Emitter<Events.in.all> = new EventEmitter();
   handling: Game.Handling;
-	verbose: boolean = false;
+  verbose: boolean = false;
 
   private listeners: {
     type: "send" | "receive";
@@ -89,20 +91,43 @@ export class Ribbon {
     userAgent,
     handling,
     codec = "vm",
-		verbose = true,
+    verbose = false,
+		globalVM = true
   }: {
     token: string;
     userAgent: string;
     handling: Game.Handling;
     codec?: CodecType;
-		verbose?: boolean;
+    verbose?: boolean;
+		globalVM?: boolean;
   }) {
     this.token = token;
     this.handling = handling;
     this.userAgent = userAgent;
     this.codecMethod = codec;
     this.api = new API({ token, userAgent });
-		this.verbose = verbose;
+    this.verbose = verbose;
+		this.globalVM = globalVM;
+  }
+
+  log(
+    msg: string,
+    {
+      force = false,
+      level = "info"
+    }: { force: boolean; level: "info" | "warning" | "error" } = {
+      force: false,
+      level: "info"
+    }
+  ) {
+    if (!this.verbose && !force) return;
+    const func =
+      level === "info"
+        ? chalk.blue
+        : level === "warning"
+          ? chalk.yellow
+          : chalk.red;
+    console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
   async connect() {
@@ -115,9 +140,8 @@ export class Ribbon {
     this.spool.signature = (await this.api.server.environment()).signature;
 
     if (this.codecMethod === "vm") {
-      this.codecVM = await vmPack(this.userAgent);
+      this.codecVM = await vmPack(this.userAgent, {globalVM: this.globalVM});
     }
-
 
     this.ws = new WebSocket(`wss:${this.spool.endpoint}`, this.spool.token, {
       headers: {
@@ -130,16 +154,38 @@ export class Ribbon {
     this.ws.on("close", this.onWSClose.bind(this));
   }
 
+  static SLOW_CODEC_THRESHOLD = 100;
+
   encode(msg: string, data?: Record<string, any>): Buffer {
-    return this.codecMethod === "vm"
-      ? this.codecVM!.encode(msg, data)
-      : this.codec.encode(msg, data);
+    const start = performance.now();
+    const res =
+      this.codecMethod === "vm"
+        ? this.codecVM!.encode(msg, data)
+        : this.codec.encode(msg, data);
+    const end = performance.now();
+    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
+      this.log(`Slow encode: ${msg} (${end - start}ms)`, {
+        force: true,
+        level: "warning"
+      });
+    }
+    return res;
   }
 
   decode(data: Buffer) {
-    return this.codecMethod === "vm"
-      ? this.codecVM!.decode(data)
-      : this.codec.decode(data);
+    const start = performance.now();
+    const res =
+      this.codecMethod === "vm"
+        ? this.codecVM!.decode(data)
+        : this.codec.decode(data);
+    const end = performance.now();
+    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
+      this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
+        force: true,
+        level: "warning"
+      });
+    }
+    return res;
   }
 
   private pipe(msg: string, data?: Record<string, any>) {
@@ -166,7 +212,10 @@ export class Ribbon {
   }
 
   private async onWSOpen() {
-		if (this.verbose) console.log("[Ribbon]: Connected");
+    if (this.verbose)
+      this.log(
+        `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+      );
     this.session.open = true;
     this.session.flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
     this.session.flags &= ~Ribbon.FLAGS.TIMING_OUT;
@@ -258,6 +307,7 @@ export class Ribbon {
         return;
       case "server.authorize":
         if (m.data.success) {
+          this.log("Authorized");
           this.spool.authed = true;
           this.emit("social.presence", {
             status: "online",
@@ -276,6 +326,7 @@ export class Ribbon {
         break;
       case "server.migrate":
         this.handleMigrate(m.data.endpoint);
+        this.log(`Migrating to ${m.data.endpoint}`);
         break;
       case "server.migrated":
         while (this.session.messageQueue.length > 0) {
@@ -285,7 +336,10 @@ export class Ribbon {
         break;
       case "kick":
       case "nope":
-        console.log(m);
+        this.log(
+          `${m.command}${m.command === "kick" ? "ed" : "d"}: ${m.data.reason}`,
+          { force: true, level: "error" }
+        );
         this.die(true);
         break;
     }

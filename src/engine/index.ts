@@ -423,19 +423,33 @@ export class Engine {
         spin: this.lastSpin ? this.lastSpin.type : "none",
         frame: this.frame
       },
-      { ...this.gameOptions, b2b: this.b2b }
+      { ...this.gameOptions, b2b: this.b2b.chaining }
     );
     const pc = this.board.perfectClear;
     const gEvents =
       garbage.garbage > 0 ? [this.garbageQueue.round(garbage.garbage)] : [];
     const m = this.gameOptions.garbageMultiplier;
-    if (pc && this.pc) {
-      gEvents.push(
-        this.garbageQueue.round(
-          this.pc.garbage *
-            calculateIncrease(m.value, this.frame, m.increase, m.marginTime)
-        )
+
+    const gMultiplier = calculateIncrease(
+      m.value,
+      this.frame,
+      m.increase,
+      m.marginTime
+    );
+    if (brokeB2B !== false && this.b2b.charging) {
+      const value = Math.floor(
+        (this.stats.b2b - this.b2b.charging.at + this.b2b.charging.base + 1) *
+          gMultiplier
       );
+      const garbages = [
+        Math.round(value / 3),
+        Math.round(value / 3),
+        value - 2 * Math.round(value / 3)
+      ].filter((g) => g !== 0);
+      gEvents.splice(0, 0, ...garbages);
+    }
+    if (pc && this.pc) {
+      gEvents.push(this.garbageQueue.round(this.pc.garbage * gMultiplier));
       this.stats.b2b += this.pc.b2b;
     }
 
