@@ -14,6 +14,9 @@ or
 git clone https://github.com/Genius6942/triangle triangle
 ```
 
+> [!NOTE]
+Only looking to use the `ch.tetr.io` api? Check out the documentation [here](/Channel.md).
+
 ## Setup (git installation only)
 
 It is _highly_ recommended that you use a Typescript project for this library if you choose to clone from source. If you are not using Typescript, you will need to use a tool like `tsc` to compile the source code. This is because the TETR.IO api is complex and being able to use type checking will greatly reduce the chance of errors. Incorrectly formatted messages sent to the server may cause an account ban.
@@ -34,7 +37,7 @@ To do this, add the following to the "compilerOptions" object in your `tsconfig.
 
 ## Usage
 
-The following usage examples assume you are using Typescript. If you are not, you will need to compile the source code before running your project. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
+The following usage examples assume you are using Typescript. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
 
 
 
@@ -190,8 +193,8 @@ File an issue and make a pull request on github
 
 ## Credits
 
-- [halp](https://github.com/Genius6942) [(website under construction)](https://haelp.dev)
+- Made by [halp](https://github.com/Genius6942) [(website under construction)](https://haelp.dev)
 
-Thanks to [luke](https://github.com/encryptluke) and [redstone576] (https://github.com/redstone576)for testing this library on MochBot.
+- Thanks to [luke](https://github.com/encryptluke) and [redstone576](https://github.com/redstone576) for testing this library.
 
 Interested in contribute to the project? Contact `haelp` on discord (Please come with some experience with TETR.IO api and an understanding of this library).

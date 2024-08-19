@@ -1018,11 +1018,6 @@ export namespace ChannelAPI {
         limit?: number;
       }
     }
-    // export const latest = createAPIMethod<
-    //   Latest.Request,
-    //   Latest.Response,
-    //   Latest.QueryParams
-    // >("news/:stream", ["stream"], ["limit"]);
     export const latest: {
       (stream: Latest.Request["stream"]): Promise<Latest.Response>;
       ({
