@@ -415,7 +415,6 @@ export class Engine {
     const garbage = garbageCalcV2(
       {
         b2b: Math.max(this.stats.b2b, 0),
-        brokeB2B,
         combo: Math.max(this.stats.combo, 0),
         enemies: 0,
         lines,

@@ -1,3 +1,4 @@
+export { CH, ch, ChannelAPI } from "./channel";
 export * as Utils from "./utils";
 export * as Types from "./types";
 export { Client } from "./classes";

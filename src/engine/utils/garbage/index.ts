@@ -1,5 +1,4 @@
 import { calculateIncrease } from "..";
-import { B2BOptions } from "../..";
 
 export const garbageData = {
   single: 0,
@@ -35,7 +34,6 @@ export const garbageCalcV2 = (
     spin: undefined | "none" | "mini" | "normal" | "full";
     piece: "l" | "j" | "t" | "s" | "z" | "i" | "o";
     b2b: number;
-    brokeB2B: false | number;
     combo: number;
     enemies: number;
     frame: number;
@@ -55,7 +53,7 @@ export const garbageCalcV2 = (
   }
 ) => {
   let garbage = 0;
-  const { spin: rawSpin, lines, piece, combo, b2b, brokeB2B, enemies } = data;
+  const { spin: rawSpin, lines, piece, combo, b2b, enemies } = data;
   const {
     spinBonuses,
     comboTable,
