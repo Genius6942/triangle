@@ -243,8 +243,7 @@ export class Client {
     return new Promise<Events.in.all[I]>((resolve, reject) => {
       const disband = () => {
         this.off(listen, rs);
-        this.off("error", rj);
-        this.off("err", rj);
+        this.off("client.error", rj);
       };
       const rs = (data: Events.in.all[I]) => {
         disband();
@@ -257,8 +256,7 @@ export class Client {
       };
 
       this.once(listen, rs);
-      this.once("error", rj);
-      this.once("err", rj);
+      this.once("client.error", rj);
 
       // @ts-expect-error
       this.emit(event, data);
@@ -270,6 +268,12 @@ export class Client {
     this.on("room.join", async () => {
       const data = await this.wait("room.update");
       this.room = new Room(this, data);
+    });
+
+    this.on("notify", (notif) => {
+      if (notif.type === "err") {
+        this.emit("client.error", notif.msg);
+      }
     });
   }
 

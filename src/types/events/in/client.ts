@@ -2,6 +2,7 @@ import { Relationship } from "../../../classes";
 import { Engine } from "../../../engine";
 import { Game, Room } from "../../../types";
 import { Ribbon } from "./ribbon";
+import { Game as GameEvents } from "./game";
 
 export interface Client {
   /** Fires inside Client.create(), will never fire afterwards. */
@@ -9,8 +10,8 @@ export interface Client {
     endpoint: string;
     social: Ribbon["server.authorize"]["social"];
   };
-  /** Never fires yet */
-  "client.error": any;
+  /** Fires when recieving an "err" notification. Data is the "msg" of the notification */
+  "client.error": string;
   /** Fires when the client dies. */
   "client.dead": any;
   /** Never fires yet */
@@ -33,6 +34,21 @@ export interface Client {
     Engine,
     { name: string; gameid: number; engine: Engine }[]
   ];
+  /** Fires when the client's game ends (topout). Finish = game.replay.end, abort = game.abort, end = game.end or game.advance or game.score */
+  "client.game.over":
+    | {
+        reason: "finish";
+        data: GameEvents["game.replay.end"]["data"];
+      }
+    | {
+        reason: "abort";
+      }
+    | {
+        reason: "end";
+      }
+    | {
+        reason: "leave";
+      };
   /** Fires when a round is over, sends the gameid of the winning player. */
   "client.game.round.end": string;
   /**

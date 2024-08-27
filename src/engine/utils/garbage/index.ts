@@ -127,7 +127,6 @@ export const garbageCalcV2 = (
     }
   }
 
-
   if (combo > 0) {
     if (comboTable === "multiplier") {
       garbage *= 1 + garbageData.comboBonus * combo;

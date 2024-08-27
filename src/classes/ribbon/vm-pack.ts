@@ -48,7 +48,10 @@ export const vmPack = (
       // empty triangle folder
       const files = await fs.readdir(triangleDir);
       for (const file of files) {
-        await fs.unlink(path.join(triangleDir, file));
+        await fs.rm(path.join(triangleDir, file), {
+          recursive: true,
+          force: true
+        });
       }
 
       const response = await fetch("https://tetr.io/js/tetrio.js");

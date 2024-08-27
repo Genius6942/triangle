@@ -15,7 +15,7 @@ git clone https://github.com/Genius6942/triangle triangle
 ```
 
 > Note:
-> Only looking to use the `ch.tetr.io` api? Check out the documentation [here](/documents/Channel.html).
+> Only looking to use the `ch.tetr.io` api? Check out the documentation [here](https://triangle.haelp.dev/documents/Channel.html).
 
 ## Setup (git installation only)
 
@@ -39,8 +39,6 @@ To do this, add the following to the "compilerOptions" object in your `tsconfig.
 
 The following usage examples assume you are using Typescript. They also assume you can use top level await. If you cannot, you will need to wrap the code in an async function.
 
-
-
 ### Import
 
 Bun:
@@ -48,6 +46,7 @@ Bun:
 ```ts
 import { Client } from "@haelp/teto/bun";
 ```
+
 > Warning:
 > Bun currently segfaults when running the codec vm required for ribbon. This will not be fixed, the issue will only be resovled if a new bun version fixes this bug. For now, we recommend using 'esbuild' to compile/run your code if you use typescript.
 
@@ -159,7 +158,7 @@ For events that you might want to handle multiple times, you can use `client.on`
 
 Client events are not sent by TETR.IO. They are events sent by the triangle.js client itself, to help make creating a bot easier.
 
-For example the `client.room.players` event fires every time a player moves their bracket, joins, or leaves. Rather than listening to several events and managing a players list yourself (with `room.addplayer`, `room.removeplayer`, `room.update`, `room.update.bracket`, etc) you can use the single `client.room.players`. See src/types/events/in/client for more events you can use.
+For example the `client.room.players` event fires every time a player moves their bracket, joins, or leaves. Rather than listening to several events and managing a players list yourself (with `room.player.add`, `room.player.remove`, `room.update`, `room.update.bracket`, etc) you can use the single `client.room.players`. See src/types/events/in/client for more events you can use.
 
 ## Other notes
 

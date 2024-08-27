@@ -54,6 +54,8 @@ export const basic = (defaults: APIDefaults) => {
             path.join(os.homedir(), ".trianglejs", "errors", `${now}.html`),
             text
           );
+          if (copy.status === 404) throw new Error(`404 on GET to ${uri}`);
+
           if (text.includes("<title>Maintenance</title>"))
             throw new Error(
               `The TETR.IO Servers are under maintanence. Check https://status.osk.sh for updates. You can view more information at ${path.join(
@@ -128,6 +130,7 @@ export const basic = (defaults: APIDefaults) => {
             path.join(os.homedir(), ".trianglejs", "errors", `${now}.html`),
             text
           );
+          if (copy.status === 404) throw new Error(`404 on POST to ${uri}`);
           if (text.includes("<title>Maintenance</title>"))
             throw new Error(
               `The TETR.IO Servers are under maintanence. Check https://status.osk.sh for updates. You can view more information at ${path.join(

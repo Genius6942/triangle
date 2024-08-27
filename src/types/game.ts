@@ -33,7 +33,13 @@ export namespace Game {
   /** Only `zero` passthrough supported */
   export type Passthrough = "zero" | "limited" | "consistent" | "full";
   /** Only `T-spins` supported */
-  export type SpinBonuses = "T-spins" | "all" | "all-mini" | "handheld" | "stupid" | "none";
+  export type SpinBonuses =
+    | "T-spins"
+    | "all"
+    | "all-mini"
+    | "handheld"
+    | "stupid"
+    | "none";
   /** Whether decimal garbage is rounded down or weighted RNG rounding */
   export type RoundingMode = "down" | "rng";
   /** Only `multiplier` is currently supported */
@@ -44,6 +50,9 @@ export namespace Game {
     | "modern guideline";
   /** Only `versus` supported. Client will run in `practice` but undoing is not yet implemented. */
   export type GameMode = "versus" | "royale" | "practice";
+
+	/** Topout: Player tops themself out. Garbage smash: Player recieves garbage that causes them to top out. Winner: Player wins (does not die) */
+	export type GameOverReason = "topout" | "garbagesmash" | "winner";
 
   export interface Options {
     version: number;
@@ -617,6 +626,7 @@ export namespace Game {
 
   export namespace Tick {
     export interface In {
+			gameid: number;
       frame: number;
       events: Client.Events[];
       engine: Engine;

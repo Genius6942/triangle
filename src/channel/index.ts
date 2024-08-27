@@ -1,4 +1,3 @@
-
 const NodeError = Error;
 
 export namespace ChannelAPI {
@@ -8,15 +7,34 @@ export namespace ChannelAPI {
     }
   }
 
-  let sessionID: string | null = null;
-  export const setSessionID = (id: string) => {
-    sessionID = id;
+  export const randomSessionID = (length = 20) =>
+    Array.from(
+      { length },
+      () =>
+        ["qwertyuiop[asdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"][
+          Math.floor(Math.random() * (26 + 26 + 10))
+        ]
+    ).join("");
+
+  const config: Types.Config = {
+    sessionID: randomSessionID(),
+    host: "https://ch.tetr.io/api/",
+    caching: true
   };
 
-  export const getSessionID = () => sessionID;
+  export const getConfig = () => config;
+  export const setConfig = (newConfig: Partial<Types.Config>) => {
+    Object.assign(config, newConfig);
+  };
+
+  const cache: { [key: string]: { until: number; data: any } } = {};
+  export const clearCache = () => {
+    Object.keys(cache).forEach((k) => delete cache[k]);
+  };
 
   export interface GetOptions {
     sessionID?: string | null;
+    host?: string;
   }
 
   export const get = async <Res = any>({
@@ -26,9 +44,7 @@ export namespace ChannelAPI {
       format: []
     },
     query = {},
-    options = {
-      sessionID
-    }
+    options = config
   }: {
     route: string;
     args?: {
@@ -55,18 +71,33 @@ export namespace ChannelAPI {
       uri += `?${key}=${query[key]}`;
     });
 
+    if (config.caching && cache[uri]) {
+      if (cache[uri].until > Date.now()) {
+        return cache[uri].data;
+      } else {
+        delete cache[uri];
+      }
+    }
+
     let res: ChannelAPI.Types.Response;
     try {
-      res = (await fetch(`https://ch.tetr.io/api/${uri}`, {
-        headers: options.sessionID
-          ? {
-              "X-Session-ID": options.sessionID
-            }
-          : {}
+      res = (await fetch(`${options.host || config.host}${uri}`, {
+        headers:
+          options.sessionID || config.sessionID
+            ? {
+                "X-Session-ID": options.sessionID || config.sessionID!
+              }
+            : {}
       }).then((r) => r.json())) as any;
       if (res.success === false) {
         throw new Error("Server Error", res.error.msg);
       } else {
+        if (config.caching) {
+          cache[uri] = {
+            until: res.cache.cached_until,
+            data: res.data
+          };
+        }
         return res.data;
       }
     } catch (e: any) {
@@ -299,7 +330,8 @@ export namespace ChannelAPI {
         /**
          * An object describing a summary of the user's 40 LINES games.
          */
-        export interface Response extends ChannelAPI.Types.BaseSummaryResponse {}
+        export interface Response
+          extends ChannelAPI.Types.BaseSummaryResponse {}
         export interface Request {
           /**
            *  The lowercase username or user ID to look up.
@@ -319,7 +351,8 @@ export namespace ChannelAPI {
         /**
          * An object describing a summary of the user's BLITZ games.
          */
-        export interface Response extends ChannelAPI.Types.BaseSummaryResponse {}
+        export interface Response
+          extends ChannelAPI.Types.BaseSummaryResponse {}
         export interface Request {
           /**
            * The lowercase username or user ID to look up.
@@ -1167,8 +1200,15 @@ export namespace ChannelAPI {
     "achievements/:k"
   );
 
-	// TYPES
-	export namespace Types {
+  // TYPES
+  export namespace Types {
+    export interface Config {
+      sessionID: string | null;
+      /** Must include the trailing slash. Include the full url. Example: https://ch.tetr.io/api/ */
+      host: string;
+      caching: boolean;
+    }
+
     /**
      * Cache is not shared between workers. Load balancing may therefore give you unexpected responses. To use the same worker, pass the same X-Session-ID header for all requests that should use the same cache.
      */
@@ -2148,8 +2188,4 @@ export namespace ChannelAPI {
   }
 }
 
-export {
-  ChannelAPI as CH,
-  ChannelAPI as ch,
-  ChannelAPI as default,
-};
+export { ChannelAPI as CH, ChannelAPI as ch, ChannelAPI as default };

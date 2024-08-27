@@ -1,3 +1,26 @@
+// const write = (data: any) =>
+//   require("fs").writeFileSync(
+//     require("path").join(process.cwd(), "ige.json"),
+//     JSON.stringify(
+//       [
+//         ...JSON.parse(
+//           require("fs").readFileSync(
+//             require("path").join(process.cwd(), "ige.json"),
+//             "utf-8"
+//           )
+//         ),
+//         data
+//       ],
+//       null,
+//       2
+//     ),
+//     "utf8"
+//   );
+// require("fs").writeFileSync(
+//   require("path").join(process.cwd(), "ige.json"),
+//   "[]",
+//   "utf8"
+// );
 interface GarbageRecord {
   amount: number;
   iid: number;
@@ -11,6 +34,7 @@ export class IGEHandler {
   private players: Map<number, { incoming: number; outgoing: GarbageRecord[] }>;
   /** @hidden */
   private iid = 0;
+
   /**
    * Manages network IGE cancelling
    * @param players - list of player ids
@@ -43,6 +67,7 @@ export class IGEHandler {
       incoming: player.incoming,
       outgoing: [...player.outgoing, { iid, amount }]
     });
+    // write({ iid: this.iid, players: Object.fromEntries(this.players) });
   }
 
   /**
@@ -88,6 +113,8 @@ export class IGEHandler {
     });
 
     this.players.set(playerID, { incoming: incomingIID, outgoing: newIGEs });
+    // write({ iid: this.iid, players: Object.fromEntries(this.players) });
+
     return runningAmount;
   }
 }

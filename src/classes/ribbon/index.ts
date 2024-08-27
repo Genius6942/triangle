@@ -33,7 +33,7 @@ export class Ribbon {
   private codec = new Codec();
   private codecMethod: CodecType;
   private codecVM?: Awaited<ReturnType<typeof vmPack>>;
-	private globalVM: boolean;
+  private globalVM: boolean;
 
   private spool: {
     endpoint?: string;
@@ -92,14 +92,14 @@ export class Ribbon {
     handling,
     codec = "vm",
     verbose = false,
-		globalVM = true
+    globalVM = true
   }: {
     token: string;
     userAgent: string;
     handling: Game.Handling;
     codec?: CodecType;
     verbose?: boolean;
-		globalVM?: boolean;
+    globalVM?: boolean;
   }) {
     this.token = token;
     this.handling = handling;
@@ -107,7 +107,7 @@ export class Ribbon {
     this.codecMethod = codec;
     this.api = new API({ token, userAgent });
     this.verbose = verbose;
-		this.globalVM = globalVM;
+    this.globalVM = globalVM;
   }
 
   log(
@@ -140,7 +140,7 @@ export class Ribbon {
     this.spool.signature = (await this.api.server.environment()).signature;
 
     if (this.codecMethod === "vm") {
-      this.codecVM = await vmPack(this.userAgent, {globalVM: this.globalVM});
+      this.codecVM = await vmPack(this.userAgent, { globalVM: this.globalVM });
     }
 
     this.ws = new WebSocket(`wss:${this.spool.endpoint}`, this.spool.token, {

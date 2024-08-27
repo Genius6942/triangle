@@ -21,6 +21,7 @@ export class Game {
   private startTime: number | null = null;
   private _target: GameTypes.Target = { strategy: "even" };
   private tick?: GameTypes.Tick.Func;
+  private over = false;
 
   /** The client's engine */
   public engine!: Engine;
@@ -97,7 +98,9 @@ export class Game {
   /** Kill the game. This is called automatically by the Room class when a game ends/is aborted, you don't need to use this. */
   destroy(): undefined {
     this.listeners.forEach((l) => this.client.off(l[0], l[1]));
-    if (this.timeout) clearTimeout(this.timeout);
+    if (this.timeout)
+      this.timeout = (clearTimeout(this.timeout) as any) || null;
+    this.over = true;
     delete this.client.game;
   }
 
@@ -226,18 +229,20 @@ export class Game {
           within: options.messiness_inner
         },
         seed: options.seed,
-				rounding: options.roundmode
+        rounding: options.roundmode
       },
       pc: options.allclears
         ? {
             garbage: options.allclear_garbage,
-						b2b: options.allclear_b2b
+            b2b: options.allclear_b2b
           }
         : false,
-			b2b: {
-				chaining: options.b2bchaining,
-				charging: options.b2bcharging ? { at: options.b2bcharge_at - 1, base: options.b2bcharge_base } : false,
-			},
+      b2b: {
+        chaining: options.b2bchaining,
+        charging: options.b2bcharging
+          ? { at: options.b2bcharge_at - 1, base: options.b2bcharge_base }
+          : false
+      },
       gravity: {
         value: options.g,
         increase: options.gincrease,
@@ -272,9 +277,11 @@ export class Game {
   }
 
   private async tickGame() {
+    if (this.over) return;
     let runAfter: GameTypes.Tick.Out["runAfter"] = [];
     if (this.tick) {
       const res = await this.tick({
+        gameid: this.gameid,
         frame: this.frame,
         events: this.messageQueue.splice(0, this.messageQueue.length),
         engine: this.engine!
@@ -283,6 +290,7 @@ export class Game {
       if (res.keys) this.keyQueue.push(...res.keys);
       if (res.runAfter) runAfter.push(...res.runAfter);
     }
+    if (this.over) return;
 
     const keys: typeof this.keyQueue = [];
 

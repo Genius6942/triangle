@@ -135,22 +135,36 @@ export class Room {
         });
     });
 
+    this.listen("game.replay.end", async ({ gameid, data }) => {
+      if (!this.client.game || this.client.game.gameid !== gameid) return;
+      this.client.game = this.client.game.destroy();
+      this.client.emit("client.game.over", { reason: "finish", data });
+    });
+
+    this.listen("game.advance", () => {
+      if (this.client.game) {
+        this.client.game = this.client.game.destroy();
+        this.client.emit("client.game.over", { reason: "end" });
+      }
+    });
+
     this.listen("game.score", (data) => {
-      if (this.client.game) this.client.game.destroy();
+      if (this.client.game) {
+        this.client.game = this.client.game.destroy();
+        this.client.emit("client.game.over", { reason: "end" });
+      }
 
       this.client.emit("client.game.round.end", data.victor);
     });
 
-    const d = () => {
+    this.listen("game.abort", () => {
+      this.client.emit("client.game.abort");
+
       if (!this.client.game) return;
       this.client.game = this.client.game.destroy();
-    };
-
-    this.listen("game.abort", d);
-    this.listen("game.end", d);
-
-    this.listen("game.abort", () => this.client.emit("client.game.abort"));
-    this.listen("game.end", (data) =>
+      this.client.emit("client.game.over", { reason: "abort" });
+    });
+    this.listen("game.end", (data) => {
       this.client.emit("client.game.end", {
         players: data.leaderboard.map((item) => ({
           id: item.id,
@@ -158,8 +172,12 @@ export class Room {
           points: item.wins,
           won: !!item.success
         }))
-      })
-    );
+      });
+
+      if (!this.client.game) return;
+      this.client.game = this.client.game.destroy();
+      this.client.emit("client.game.over", { reason: "end" });
+    });
 
     // chat
     this.listen("room.chat", this.chats.push.bind(this.chats));
@@ -176,7 +194,10 @@ export class Room {
 
   private destroy() {
     this.listeners.forEach((l) => this.client.off(l[0], l[1]));
-    if (this.client.game) this.client.game.destroy();
+    if (this.client.game) {
+      this.client.game.destroy();
+      this.client.emit("client.game.over", { reason: "leave" });
+    }
 
     delete this.client.room;
   }

@@ -13,6 +13,30 @@ export interface Game {
     leaderboard: GameTypes.Leaderboard[];
   };
   "game.start": void;
+  "game.advance": {
+    scoreboard: {
+      id: string;
+      username: string;
+      active: boolean;
+      naturalorder: number;
+      shadows: [];
+      shadowedBy: [null, null];
+      alive: boolean;
+      lifetime: number;
+      stats: {
+        apm: number;
+        pps: number;
+        vsscore: number;
+        garbagesent: number;
+        garbagereceived: number;
+        kills: 1;
+        altitude: 0;
+        rank: 1;
+        targetingfactor: 3;
+        targetinggrace: 0;
+      };
+    }[];
+  };
   "game.score": {
     refereedata: { ft: number; wb: number; modename: string };
     leaderboard: GameTypes.Leaderboard[];
@@ -71,5 +95,12 @@ export interface Game {
     gameid: number;
     provisioned: number;
     frames: GameTypes.Replay.Frame[];
+  };
+  "game.replay.end": {
+    gameid: number;
+    data: {
+      gameoverreason: GameTypes.GameOverReason;
+      killer: { gameid: number; type: "sizzle"; username: null | string };
+    };
   };
 }

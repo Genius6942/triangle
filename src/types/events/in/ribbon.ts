@@ -42,16 +42,14 @@ export interface Ribbon {
   };
 
   nope: {
-		reason: string;
-	};
+    reason: string;
+  };
 
   error: any;
   err: any;
 
   notify: {
+    type: string;
     msg: string;
-    color: string;
-    icon: string;
-    timeout?: number;
   };
 }

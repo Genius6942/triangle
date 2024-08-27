@@ -161,7 +161,7 @@ export class Tetromino {
   }
 
   softDrop(board: BoardSquare[][]) {
-		const start = this.location[1];
+    const start = this.location[1];
     while (
       legal(
         this.blocks.map((block) => [
@@ -174,7 +174,7 @@ export class Tetromino {
       this.location[1]--;
     }
 
-		return start !== this.location[1];
+    return start !== this.location[1];
   }
 }
 
