@@ -51,8 +51,8 @@ export namespace Game {
   /** Only `versus` supported. Client will run in `practice` but undoing is not yet implemented. */
   export type GameMode = "versus" | "royale" | "practice";
 
-	/** Topout: Player tops themself out. Garbage smash: Player recieves garbage that causes them to top out. Winner: Player wins (does not die) */
-	export type GameOverReason = "topout" | "garbagesmash" | "winner";
+  /** Topout: Player tops themself out. Garbage smash: Player recieves garbage that causes them to top out. Winner: Player wins (does not die) */
+  export type GameOverReason = "topout" | "garbagesmash" | "winner";
 
   export interface Options {
     version: number;
@@ -626,7 +626,7 @@ export namespace Game {
 
   export namespace Tick {
     export interface In {
-			gameid: number;
+      gameid: number;
       frame: number;
       events: Client.Events[];
       engine: Engine;
