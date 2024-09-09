@@ -344,18 +344,18 @@ export class Social {
    */
   invite(userID: string) {
     return new Promise<void>(async (resolve, reject) => {
-			let r = false;
+      let r = false;
       this.client.emit("social.invite", userID);
-			const l = (e: string) => {
-				if (r) return;
-				r = true;
-				reject(e);
-			}
+      const l = (e: string) => {
+        if (r) return;
+        r = true;
+        reject(e);
+      };
       this.client.once("client.error", l);
       await new Promise((r) => setTimeout(r, 100));
       this.client.off("client.error", l);
-			r = true;
-			resolve();
+      r = true;
+      resolve();
     });
   }
 

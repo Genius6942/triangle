@@ -294,7 +294,11 @@ export class Client {
 
   /** Clean up the client */
   async destroy() {
-    if (this.room) { try {await this.room.leave();} catch (e) {}}
+    if (this.room) {
+      try {
+        await this.room.leave();
+      } catch (e) {}
+    }
     this.ribbon.destroy();
     if (this.room) delete this.room;
     if (this.game) delete this.game; // long shot lmfao
