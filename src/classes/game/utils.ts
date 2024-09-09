@@ -119,6 +119,7 @@ export const getFullFrame = (
         totalbonus: 0,
         revives: 0,
         revivesTotal: 0,
+        revivesMaxOfBoth: 0,
         speedrun: false,
         speedrun_seen: false,
         splits: [0, 0, 0, 0, 0, 0, 0, 0, 0]

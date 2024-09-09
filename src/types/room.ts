@@ -103,6 +103,7 @@ export namespace Room {
       room_handling_sdf: number | string;
       manual_allowed: boolean;
       b2bchaining: boolean;
+      b2bcharging: boolean;
       allclears: boolean;
       clutch: boolean;
       nolockout: boolean;

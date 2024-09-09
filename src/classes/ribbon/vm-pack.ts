@@ -12,7 +12,7 @@ export const vmPack = (
   userAgent: string,
   options: {
     globalVM: boolean;
-  } = { globalVM: true }
+  } = { globalVM: false }
 ): Promise<{
   encode: (msg: string, data?: any) => Buffer;
   decode: (data: Buffer) => any;

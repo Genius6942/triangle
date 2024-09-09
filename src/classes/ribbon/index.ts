@@ -92,7 +92,7 @@ export class Ribbon {
     handling,
     codec = "vm",
     verbose = false,
-    globalVM = true
+    globalVM = false
   }: {
     token: string;
     userAgent: string;
@@ -340,7 +340,7 @@ export class Ribbon {
           `${m.command}${m.command === "kick" ? "ed" : "d"}: ${m.data.reason}`,
           { force: true, level: "error" }
         );
-        this.die(true);
+        this.destroy();
         break;
     }
     this.emitter.emit(m.command, (m as any).data);

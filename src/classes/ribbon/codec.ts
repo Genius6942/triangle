@@ -515,7 +515,7 @@ export class Codec {
         const i = pack.pack(t),
           o = Buffer.allocUnsafe(1 + i.length),
           a = Codec.TABLES.__pack__.getValue(s!);
-        if (s === "social.presence") console.log("pack presence as", i);
+        // if (s === "social.presence") console.log("pack presence as", i);
         return o.writeUInt8(a, 0), o.set(i, 1), o;
       },
       decode: (e) => {

@@ -340,10 +340,23 @@ export class Social {
   /**
    * Invite a user to your room
    * @example
-   * client.social.invite(client.social.resolve('halp'));
+   * await client.social.invite(client.social.resolve('halp'));
    */
   invite(userID: string) {
-    this.client.emit("social.invite", userID);
+    return new Promise<void>(async (resolve, reject) => {
+			let r = false;
+      this.client.emit("social.invite", userID);
+			const l = (e: string) => {
+				if (r) return;
+				r = true;
+				reject(e);
+			}
+      this.client.once("client.error", l);
+      await new Promise((r) => setTimeout(r, 100));
+      this.client.off("client.error", l);
+			r = true;
+			resolve();
+    });
   }
 
   /**

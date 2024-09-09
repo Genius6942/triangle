@@ -546,6 +546,7 @@ export namespace Game {
               totalbonus: number;
               revives: number;
               revivesTotal: number;
+              revivesMaxOfBoth: number;
               speedrun: boolean;
               speedrun_seen: boolean;
               splits: number[];

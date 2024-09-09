@@ -49,7 +49,7 @@ export const roomConfigPresets: {
     { index: "options.usebombs", value: 0 }
   ],
   "tetra league": [
-    { index: "options.presets", value: "tetra league" },
+    { index: "options.presets", value: "tetra league (season 1)" },
     { index: "match.modename", value: "TETRA LEAGUE" },
     { index: "gamebgm", value: "RANDOMbattle" },
     { index: "userLimit", value: "2" },
@@ -89,6 +89,7 @@ export const roomConfigPresets: {
     { index: "options.combotable", value: "multiplier" },
     { index: "options.clutch", value: true },
     { index: "options.passthrough", value: "zero" },
+    { index: "options.b2bcharging", value: false },
     { index: "options.nolockout", value: true },
     { index: "options.boardwidth", value: "10" },
     { index: "options.boardheight", value: "20" },
