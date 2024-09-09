@@ -15,8 +15,5 @@
   },
   "include": [
     "./src/**/*",
-    "../jsarchive/vm-context.mjs",
-    "../jsarchive/tetrio.js",
-    "../jsarchive/tetrio-prettierd.js"
   ]
 }
