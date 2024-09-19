@@ -82,8 +82,8 @@ export class Social {
     const data: SocialInitData = {
       online: initData.total_online,
       notifications: initData.notifications,
-      friends: await Promise.all(rel.filter((r) => r.type === "friend")),
-      other: await Promise.all(rel.filter((r) => r.type === "pending")),
+      friends: rel.filter((r) => r.type === "friend"),
+      other: rel.filter((r) => r.type === "pending"),
 
       blocked: rel
         .filter((r) => r.type === "block")

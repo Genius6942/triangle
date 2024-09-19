@@ -44,7 +44,7 @@ export class Ribbon {
     detail?: string;
     token?: string;
     tokenid?: string;
-    signature?: APITypes.Server.Signature;
+    signature?: Promise<APITypes.Server.Signature>;
     authed: boolean;
     migrated?: boolean;
   } = {
@@ -135,17 +135,25 @@ export class Ribbon {
   }
 
   async connect() {
+    const envPromise = this.api.server.environment();
+    const vmPromise =
+      this.codecMethod === "vm"
+        ? vmPack(this.userAgent, { globalVM: this.globalVM })
+        : Promise.resolve(undefined);
     const spool = this.spool.endpoint
-      ? { endpoint: this.spool.endpoint, token: this.spool.token }
-      : await this.api.server.spool();
+      ? Promise.resolve({
+          endpoint: this.spool.endpoint,
+          token: this.spool.token
+        })
+      : this.api.server.spool();
 
     this.session.lastPong = performance.now();
-    this.spool = { ...this.spool, ...spool };
-    this.spool.signature = (await this.api.server.environment()).signature;
+    this.spool.signature = new Promise<APITypes.Server.Signature>(
+      async (r) => await envPromise.then((s) => r(s.signature))
+    );
 
-    if (this.codecMethod === "vm") {
-      this.codecVM = await vmPack(this.userAgent, { globalVM: this.globalVM });
-    }
+    this.codecVM = await vmPromise;
+    this.spool = { ...this.spool, ...(await spool) };
 
     this.ws = new WebSocket(`wss:${this.spool.endpoint}`, this.spool.token, {
       headers: {
@@ -230,6 +238,13 @@ export class Ribbon {
 
     if (!this.spool.authed) {
       this.pipe("new");
+      this.pipe("server.authorize", {
+        token: this.token,
+        handling: this.handling,
+        signature: await this.spool.signature,
+        i: undefined
+      });
+      this.spool.authed = true;
     } else {
       this.pipe("session", {
         ribbonid: this.session.id,
@@ -285,7 +300,7 @@ export class Ribbon {
     this.emitter.emit("client.close", closeReason);
   }
 
-  private handleMessage(msg: any): void {
+  private async handleMessage(msg: any): Promise<void> {
     if (msg.id) {
       this.session.lastReceived = msg.id;
     }
@@ -308,7 +323,7 @@ export class Ribbon {
           this.pipe("server.authorize", {
             token: this.token,
             handling: this.handling,
-            signature: this.spool.signature,
+            signature: await this.spool.signature,
             i: undefined
           });
         }
@@ -322,7 +337,6 @@ export class Ribbon {
             detail: "menus"
           });
           this.ping();
-
           this.emitter.emit("client.ready", {
             endpoint: this.spool.endpoint!,
             social: m.data.social

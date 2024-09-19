@@ -159,6 +159,7 @@ export class Client {
     const token = self.token;
 
     api.update({ token });
+		const me = api.users.me()
 
     const handling = options.handling || {
       arr: 0,
@@ -187,12 +188,12 @@ export class Client {
     });
 
     await ribbon.connect();
-
+		
     const data = await new Promise<Events.in.Client["client.ready"]>(
-      (resolve, reject) => {
-        setTimeout(() => reject("Failed to connect"), 5000);
+			(resolve, reject) => {
+				setTimeout(() => reject("Failed to connect"), 5000);
         ribbon.emitter.once("client.ready", (d) => {
-          if (d) resolve(d);
+					if (d) resolve(d);
         });
       }
     );
@@ -201,7 +202,7 @@ export class Client {
       token,
       sessionID,
       ribbon,
-      await api.users.me(),
+      await me,
       options.userAgent || CONSTANTS.userAgent,
       handling
     );

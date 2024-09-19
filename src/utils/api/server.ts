@@ -90,21 +90,12 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
     flag: string;
     location: string;
   }> => {
-    const pingResults = await Promise.all(
+    return await Promise.any(
       spools.map(async (spool, index) => {
-        const start = performance.now();
-        try {
-          await getDespool(spool.host, index.toString());
-          return { spool, time: performance.now() - start };
-        } catch (e) {
-          return { spool, time: Infinity };
-        }
+        await getDespool(spool.host, index.toString());
+        return spool;
       })
     );
-
-    pingResults.sort((a, b) => a.time - b.time);
-
-    return pingResults[0].spool;
   };
 
   return {
