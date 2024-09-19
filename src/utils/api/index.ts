@@ -1,5 +1,4 @@
 // export * as API from "./wrapper";
-
 import { CONSTANTS } from "../constants";
 import { Get, Post, basic } from "./basic";
 import { relationship } from "./relationship";

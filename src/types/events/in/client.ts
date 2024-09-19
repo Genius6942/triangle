@@ -1,8 +1,10 @@
 import { Relationship } from "../../../classes";
 import { Engine } from "../../../engine";
 import { Game, Room } from "../../../types";
-import { Ribbon } from "./ribbon";
 import { Game as GameEvents } from "./game";
+import { Ribbon } from "./ribbon";
+
+export type Hex = `#${string}`;
 
 export interface Client {
   /** Fires inside Client.create(), will never fire afterwards. */
@@ -16,6 +18,22 @@ export interface Client {
   "client.dead": any;
   /** Never fires yet */
   "client.close": string;
+
+  /** Any notification popup */
+  "client.notify": {
+    msg: string;
+    timeout?: number;
+    subcolor?: Hex;
+    fcolor?: Hex;
+    color?: Hex;
+    bgcolor?: Hex;
+    icon?: string;
+    subicon?: string;
+    header?: string;
+    classes?: string;
+    buttons?: { icon?: string; label: string; classes?: string }[];
+    id?: string;
+  };
 
   /** Fires whenever the players state changes. */
   "client.room.players": Room.Player[];

@@ -364,6 +364,7 @@ export namespace Game {
         x: number;
         y: number;
         size: number;
+        zthalt?: any; // TODO: what is this? something with zenith (qp)
       }
 
       export interface Targeted {
@@ -430,7 +431,14 @@ export namespace Game {
     | "hold";
   export namespace Replay {
     export namespace Frames {
-      export type all = Start | Full | IGE | Keypress | End | Target;
+      export type all =
+        | Start
+        | Full
+        | IGE
+        | Keypress
+        | End
+        | Strategy
+        | ManualTarget;
 
       export interface Start {
         type: "start";
@@ -568,6 +576,7 @@ export namespace Game {
           key: Key;
           subframe: number;
         };
+        hoisted?: boolean;
       }
 
       export interface End {
@@ -575,21 +584,15 @@ export namespace Game {
         data: any; // TODO: type this
       }
 
-      export interface Target {
-        type: "target";
-        data: {
-          id: "diyusi";
-          frame: number;
-        } & (
-          | {
-              type: "target";
-              data: string;
-            }
-          | {
-              type: "strategy";
-              data: 0 | 1 | 2 | 3;
-            }
-        );
+      export interface Strategy {
+        type: "strategy";
+        /** Even, Eliminations, Random, and Payback (0, 1, 2, 3) */
+        data: 0 | 1 | 2 | 3;
+      }
+
+      export interface ManualTarget {
+        type: "manual_target";
+        data: number;
       }
     }
 
@@ -622,7 +625,7 @@ export namespace Game {
       }
     | {
         strategy: "manual";
-        target: string;
+        target: number;
       };
 
   export namespace Tick {

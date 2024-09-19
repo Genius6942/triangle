@@ -1,11 +1,11 @@
+import { Events, Game as GameTypes } from "../../types";
 import { API, CONSTANTS, parseToken } from "../../utils";
-import { ClientUser, ClientOptions } from "./types";
-import { Game as GameTypes, Events } from "../../types";
+import { Game } from "../game";
 import { Ribbon } from "../ribbon";
+import { Room } from "../room";
 import { Social } from "../social";
 import { ClientUtils } from "../utils";
-import { Room } from "../room";
-import { Game } from "../game";
+import { ClientOptions, ClientUser } from "./types";
 
 export type * from "./types";
 
@@ -271,8 +271,51 @@ export class Client {
     });
 
     this.on("notify", (notif) => {
-      if (notif.type === "err") {
-        this.emit("client.error", notif.msg);
+      if (typeof notif === "string") {
+        return this.emit("client.notify", { msg: notif });
+      } else if ("type" in notif) {
+        switch (notif.type) {
+          case "deny":
+            this.emit("client.notify", {
+              msg: notif.msg,
+              color: "#FF2200",
+              icon: "denied",
+              timeout: notif.timeout
+            });
+            break;
+          case "warn":
+            this.emit("client.notify", {
+              msg: notif.msg,
+              color: "#FFF43C",
+              icon: "warning"
+            });
+            break;
+          case "err":
+            this.emit("client.error", notif.msg);
+            this.emit("client.notify", {
+              msg: notif.msg,
+              color: "#FF4200",
+              icon: "error"
+            });
+            break;
+          case "announce":
+            this.emit("client.notify", {
+              msg: notif.msg,
+              color: "#FFCC00",
+              icon: "announcement",
+              timeout: 1e4
+            });
+            break;
+          case "ok":
+            this.emit("client.notify", {
+              msg: notif.msg,
+              color: "#6AFF3C",
+              icon: "ok"
+            });
+            break;
+        }
+      } else {
+        this.emit("client.notify", notif);
       }
     });
   }
@@ -301,6 +344,6 @@ export class Client {
     }
     this.ribbon.destroy();
     if (this.room) delete this.room;
-    if (this.game) delete this.game; // long shot lmfao
+    if (this.game) delete this.game;
   }
 }

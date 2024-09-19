@@ -1,11 +1,14 @@
-import { Emitter, Game, Events } from "../../types";
+import { Emitter, Events, Game } from "../../types";
 import { API, APITypes } from "../../utils";
-import { EventEmitter } from "node:events";
-import { WebSocket } from "ws";
-import { RibbonEvents } from "./types";
 import { Bits, Codec, CodecType } from "./codec";
+import { FullCodec } from "./codec-full";
+import { RibbonEvents } from "./types";
 import { vmPack } from "./vm-pack";
+
+import { EventEmitter } from "node:events";
+
 import chalk from "chalk";
+import { WebSocket } from "ws";
 
 const RIBBON_CLOSE_CODES = {
   1000: "Ribbon closed normally",
@@ -31,6 +34,7 @@ export class Ribbon {
   private userAgent: string;
   private api: API;
   private codec = new Codec();
+  private codec2 = FullCodec;
   private codecMethod: CodecType;
   private codecVM?: Awaited<ReturnType<typeof vmPack>>;
   private globalVM: boolean;
@@ -161,7 +165,9 @@ export class Ribbon {
     const res =
       this.codecMethod === "vm"
         ? this.codecVM!.encode(msg, data)
-        : this.codec.encode(msg, data);
+        : this.codecMethod === "codec-2"
+          ? this.codec2.encode(msg, data)
+          : this.codec.encode(msg, data);
     const end = performance.now();
     if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
       this.log(`Slow encode: ${msg} (${end - start}ms)`, {
@@ -177,7 +183,9 @@ export class Ribbon {
     const res =
       this.codecMethod === "vm"
         ? this.codecVM!.decode(data)
-        : this.codec.decode(data);
+        : this.codecMethod === "codec-2"
+          ? this.codec2.decode(data)
+          : this.codec.decode(data);
     const end = performance.now();
     if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
       this.log(`Slow decode: ${res.command} (${end - start}ms)`, {

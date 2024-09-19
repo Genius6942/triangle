@@ -1,8 +1,8 @@
-import { Client } from "../client";
+import { Engine } from "../../engine";
 import { Events, Game as GameTypes } from "../../types";
 import { IGEHandler } from "../../utils";
+import { Client } from "../client";
 import { getFullFrame } from "./utils";
-import { Engine } from "../../engine";
 
 const moveElementToFirst = <T>(arr: T[], n: number) => [
   arr[n],
@@ -256,7 +256,11 @@ export class Game {
     let returnFrames = this.frameQueue.filter((f) => f.frame <= this.frame);
     this.frameQueue = this.frameQueue.filter((f) => f.frame > this.frame);
     if (!this.canTarget)
-      returnFrames = returnFrames.filter((f) => f.type !== "target");
+      returnFrames = returnFrames.filter(
+        (f) => f.type !== "strategy" && f.type !== "manual_target"
+      );
+    if (!this.options.manual_allowed)
+      returnFrames = returnFrames.filter((f) => f.type !== "manual_target");
 
     // move the full frame to the front as a precaution
     const fullFrameIndex = returnFrames.findIndex(
@@ -421,31 +425,22 @@ export class Game {
       even: 0,
       elims: 1,
       random: 2,
-      payback: 3
+      payback: 3,
+      manual: 4
     } as const;
 
     const frame = this.frame;
     if (t.strategy === "manual") {
       this.pipe({
         frame,
-        type: "target",
-        data: {
-          id: "diyusi",
-          frame,
-          type: "target",
-          data: t.target + this.gameid
-        }
+        type: "manual_target",
+        data: t.target
       });
     } else {
       this.pipe({
         frame,
-        type: "target",
-        data: {
-          id: "diyusi",
-          frame,
-          type: "strategy",
-          data: strategyMap[t.strategy]
-        }
+        type: "strategy",
+        data: strategyMap[t.strategy]
       });
     }
 

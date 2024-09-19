@@ -17,7 +17,7 @@
     "test": "tsc --noEmit",
     "format": "prettier --write \"./**/*.ts\"",
     "docs": "typedoc",
-    "build": "rm -rf dist && esbuild src/index.ts --minify --bundle --platform=node  --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --outfile=bun.js && esbuild src/engine/index.ts --minify --bundle --platform=node --outfile=engine.js && esbuild src/channel/index.ts --minify --bundle --platform=node --outfile=ch.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
+    "build": "rm -rf dist && bun version.js && esbuild src/index.ts --minify --bundle --platform=node  --outfile=dist/index.js && bun build src/index.ts --minify --target=bun --outfile=bun.js && esbuild src/engine/index.ts --minify --bundle --platform=node --outfile=engine.js && esbuild src/channel/index.ts --minify --bundle --platform=node --outfile=ch.js && tsc --declaration --emitDeclarationOnly --outdir dist/types",
     "pub": "npm publish --access public"
   },
   "files": [
@@ -40,6 +40,7 @@
   "author": "halp",
   "license": "MIT",
   "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
     "@types/node": "^20.12.7",
     "chalk": "^5.3.0",
     "esbuild": "^0.23.0",

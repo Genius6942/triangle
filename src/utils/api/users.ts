@@ -1,6 +1,6 @@
 import { APIDefaults } from ".";
-import type { Get, Post } from "./basic";
 import { User as UserTypes } from "../../types";
+import type { Get, Post } from "./basic";
 
 export namespace Users {
   /** Data returned from /api/users/me */

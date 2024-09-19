@@ -70,7 +70,7 @@ export class GarbageQueue {
   }
 
   receive(...args: Garbage[]) {
-    this.queue.push(...args);
+    this.queue.push(...args.filter((arg) => arg.amount > 0));
 
     while (this.size > this.options.cap.absolute) {
       const total = this.size;

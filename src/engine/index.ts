@@ -1,20 +1,23 @@
-import { Frame, Handling, IncreasableValue, KeyPress } from "./types";
-import { Queue, QueueInitializeParams } from "./queue";
-import { Piece } from "./queue/types";
-import { EngineCheckpoint, SpinType } from "./types";
+import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
-import { KickTable } from "./utils/kicks";
-import { KickTableName, kicks } from "./utils/kicks/data";
-import { Tetromino, tetrominoes } from "./utils/tetromino";
-import { garbageCalcV2, garbageData } from "./utils/garbage";
-import { bfs } from "./search";
 import {
   Garbage,
   GarbageQueue,
   GarbageQueueInitializeParams,
   OutgoingGarbage
 } from "./garbage";
+import { IGEHandler, MultiplayerOptions } from "./multiplayer";
+import { Queue, QueueInitializeParams } from "./queue";
+import { Piece } from "./queue/types";
+import { bfs } from "./search";
+import { Handling, IncreasableValue, KeyPress } from "./types";
+import { EngineCheckpoint, SpinType } from "./types";
 import { calculateIncrease, deepCopy } from "./utils";
+import { garbageCalcV2, garbageData } from "./utils/garbage";
+import { KickTable } from "./utils/kicks";
+import { KickTableName, kicks } from "./utils/kicks/data";
+import { Tetromino, tetrominoes } from "./utils/tetromino";
+
 import chalk from "chalk";
 
 export interface GameOptions {
@@ -58,6 +61,7 @@ export interface EngineInitializeParams {
   handling: Handling;
   pc: PCOptions;
   b2b: B2BOptions;
+  multiplayer?: MultiplayerOptions;
 }
 
 export class Engine {
@@ -96,6 +100,12 @@ export class Engine {
   pc!: PCOptions;
   b2b!: B2BOptions;
   gravity!: IncreasableValue;
+
+  multiplayer?: {
+    options: MultiplayerOptions;
+    targets: number[];
+  };
+  igeHandler!: IGEHandler;
   constructor(options: EngineInitializeParams) {
     this.initializer = options;
     this.init();
@@ -111,6 +121,13 @@ export class Engine {
     this.board = new Board(options.board);
 
     this.garbageQueue = new GarbageQueue(options.garbage);
+
+    this.igeHandler = new IGEHandler(options.multiplayer?.opponents || []);
+    if (options.multiplayer)
+      this.multiplayer = {
+        options: options.multiplayer,
+        targets: []
+      };
 
     this.nextPiece();
     this.held = null;
@@ -524,27 +541,37 @@ export class Engine {
     return res;
   }
 
-  tick(frames: Frame[]) {
+  tick(frames: Game.Replay.Frame[]) {
     this.frame++;
 
     if (this.frame > this.gravity.marginTime)
       this.gravity.value += this.gravity.increase;
 
     const r = (n: number) => Math.round(n * 10) / 10;
+    let spin = "none";
     // array of arrays of frames, each arr has a subframe
-    const f: Frame[][] = Array.from({ length: 10 }, () => []);
+    const f: Game.Replay.Frame[][] = Array.from({ length: 10 }, () => []);
     frames.forEach((frame) => {
       if (frame.type === "keyup" || frame.type === "keydown")
         f[Math.round(frame.data.subframe * 10)].push(frame);
-      else if (
-        frame.type === "ige" &&
-        frame.data.data.type === "interaction_confirm"
-      ) {
-        this.receiveGarbage({
-          frame: frame.frame,
-          amount: frame.data.data.data.amt,
-          size: frame.data.data.data.size
-        });
+      else if (frame.type === "ige") {
+        if (
+          frame.data.type === "interaction_confirm" &&
+          frame.data.data.type === "garbage"
+        ) {
+          this.receiveGarbage({
+            frame: frame.frame,
+            amount: this.multiplayer
+              ? this.igeHandler.receive({
+                  playerID: frame.data.data.gameid,
+                  ackiid: frame.data.data.ackiid,
+                  amount: frame.data.data.amt,
+                  iid: frame.data.data.iid
+                })
+              : frame.data.data.amt,
+            size: frame.data.data.size
+          });
+        }
       }
     });
 
@@ -566,7 +593,10 @@ export class Engine {
       subf = r(subf / 10);
       frames.forEach((frame) => {
         if (frame.type === "keydown") {
-          const { subframe, key, hoisted } = frame.data;
+          const {
+            hoisted,
+            data: { subframe, key }
+          } = frame;
           if (key === "moveRight") {
             if (hoisted) {
               if (this.handling.arr === 0) {
@@ -602,10 +632,17 @@ export class Engine {
           } else if (key === "softDrop") {
             this.keys.soft = [frame.frame, subframe];
           } else if (key === "hardDrop") {
-            const { garbage: g, garbageAdded } = this.hardDrop();
+            const { garbage: g, garbageAdded, spin: s } = this.hardDrop();
             res.garbage.sent.push(...g);
+            if (this.multiplayer)
+              this.multiplayer.targets.forEach((target) =>
+                g.forEach((g) =>
+                  this.igeHandler.send({ amount: g, playerID: target })
+                )
+              );
             res.garbage.recieved.push(...(garbageAdded || []));
             res.pieces++;
+            spin = s;
           } else if (key === "hold") {
             this.hold();
           } else if (key === "rotateCW") {
@@ -664,7 +701,7 @@ export class Engine {
       }
     });
 
-    return res;
+    return { ...res, spin };
   }
 
   receiveGarbage(...garbage: Garbage[]) {

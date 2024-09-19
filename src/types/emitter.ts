@@ -22,4 +22,5 @@ export interface EmitterOverload<E extends Record<string, any>> {
   emit<T extends Exclude<string, keyof E>>(event: T, data: any): boolean;
 }
 
-export type Emitter<E extends object> = TypedEmitter<E> & EmitterOverload<E>;
+export type Emitter<E extends object> = TypedEmitter<E> &
+  EmitterOverload<E> & { removeAllListeners: () => void };

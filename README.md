@@ -1,6 +1,13 @@
 # Triangle.js
 
-### A Typescript library and client for interacting with the TETR.IO main game API
+### A Typescript library and client for interacting with the TETR.IO main game API and the ch.tetr.io channel API.
+
+## Disclaimer:
+
+> This library is not officially supported nor endorsed by TETR.IO. Use of the main game API is only permitted with an official bot account. You assume all responsibility for any actions that result in staff action (warnings/bans, etc). The main game API is not documented and this library may break at any time.
+> This restriction includes the use of the `Client` class and the `API` class.
+
+> The Tetra Channel section of this library (imported through '@haelp/teto/ch') is open to use by anyone.
 
 ## Installation
 

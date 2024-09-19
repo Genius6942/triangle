@@ -1,5 +1,5 @@
-import { Piece } from "../../queue/types";
 import { BoardSquare } from "../../board";
+import { Piece } from "../../queue/types";
 import { KickTable, legal, performKick } from "../kicks";
 import { tetrominoes } from "./data";
 import { Rotation } from "./types";

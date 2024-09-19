@@ -164,6 +164,7 @@ export class Room {
       this.client.game = this.client.game.destroy();
       this.client.emit("client.game.over", { reason: "abort" });
     });
+
     this.listen("game.end", (data) => {
       this.client.emit("client.game.end", {
         players: data.leaderboard.map((item) => ({

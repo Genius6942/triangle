@@ -1,12 +1,12 @@
 import { Piece } from "../types";
-import { bag14 } from "./bag14";
 import { bag7 } from "./bag7";
-import { classic } from "./classic";
-import { pairs } from "./pairs";
-import { random } from "./random";
 import { bag7_1 } from "./bag7-1";
 import { bag7_2 } from "./bag7-2";
 import { bag7_X } from "./bag7-x";
+import { bag14 } from "./bag14";
+import { classic } from "./classic";
+import { pairs } from "./pairs";
+import { random } from "./random";
 
 export const rng = (seed: number) => {
   let t = seed % 2147483647;

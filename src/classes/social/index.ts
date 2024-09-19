@@ -1,6 +1,6 @@
 import { Events, Social as SocialTypes } from "../../types";
-import type { Client } from "../client";
 import { APITypes } from "../../utils";
+import type { Client } from "../client";
 import { Relationship } from "./relationship";
 
 interface SocialInitData {

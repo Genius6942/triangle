@@ -35,59 +35,6 @@ export interface Handling {
   may20g: boolean;
 }
 
-export type Frame = {
-  frame: number;
-} & (
-  | {
-      type: "ige";
-      data: {
-        id: number;
-        frame: number;
-        type: "ige";
-        data: { frame: number } & (
-          | {
-              type: "target";
-              targets: string[];
-            }
-          | {
-              type: "allow_targeting";
-              value: boolean;
-            }
-          | {
-              type: "interaction" | "interaction_confirm";
-              gameid: number;
-              data: {
-                type: "garbage";
-                iid: number;
-                amt: number;
-                ackiid: number;
-                x: number;
-                y: number;
-                size: number;
-                username: string;
-              }; // TODO: complete this also
-              cid: number;
-            }
-        ); // TODO: complete this
-      };
-    }
-  | {
-      type: "keydown";
-      data: {
-        key: KeyPress;
-        subframe: number;
-        hoisted?: boolean;
-      };
-    }
-  | {
-      type: "keyup";
-      data: {
-        key: KeyPress;
-        subframe: number;
-      };
-    }
-);
-
 export interface IncreasableValue {
   value: number;
   increase: number;

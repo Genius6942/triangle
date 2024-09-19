@@ -1,4 +1,5 @@
 import { Social } from "../../social";
+import { Client } from "./client";
 
 export interface Ribbon {
   session: {
@@ -48,8 +49,16 @@ export interface Ribbon {
   error: any;
   err: any;
 
-  notify: {
-    type: string;
-    msg: string;
-  };
+  notify:
+    | {
+        type: "err" | "warn" | "ok" | "announce";
+        msg: string;
+      }
+    | {
+        type: "deny";
+        msg: string;
+        timeout?: number;
+      }
+    | Client["client.notify"]
+    | string;
 }

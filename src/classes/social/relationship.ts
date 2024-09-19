@@ -1,6 +1,6 @@
 import { Social } from ".";
-import { Client } from "../client";
 import { Social as SocialTypes } from "../../types";
+import { Client } from "../client";
 
 export class Relationship {
   private social: Social;

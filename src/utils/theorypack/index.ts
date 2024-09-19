@@ -1,4 +1,4 @@
-import { addExtension, Packr, Unpackr } from "./ts-wrap";
+import { Packr, Unpackr, addExtension } from "./ts-wrap";
 
 // require theorypack extensions
 addExtension({

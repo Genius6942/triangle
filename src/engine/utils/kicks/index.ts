@@ -1,5 +1,5 @@
-import { Piece } from "../../queue/types";
 import { BoardSquare } from "../../board";
+import { Piece } from "../../queue/types";
 import { Rotation } from "../tetromino/types";
 import { kicks } from "./data";
 

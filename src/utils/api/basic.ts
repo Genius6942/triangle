@@ -1,8 +1,9 @@
-import path from "node:path";
-import os from "node:os";
-import fs from "node:fs/promises";
-import { pack } from "../../utils";
 import { APIDefaults } from ".";
+import { pack } from "../../utils";
+
+import fs from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 export type Res<T = any> =
   | { success: false; error: { msg: string; [key: string]: any } }
