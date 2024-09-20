@@ -51,5 +51,8 @@
     "typedoc": "^0.26.6",
     "typescript": "^5.4.5",
     "ws": "^8.16.0"
+  },
+  "dependencies": {
+    "@types/ws": "^8.5.12"
   }
 }
