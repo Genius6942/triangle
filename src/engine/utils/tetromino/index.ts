@@ -42,6 +42,22 @@ export class Tetromino {
     this._rotation = (value % 4) as any;
   }
 
+  get x() {
+    return this.location[0];
+  }
+
+  set x(value: number) {
+    this.location[0] = value;
+  }
+
+  get y() {
+    return this.location[1];
+  }
+
+  set y(value: number) {
+    this.location[1] = value;
+  }
+
   isAllSpinPosition(board: BoardSquare[][]) {
     return (
       !legal(

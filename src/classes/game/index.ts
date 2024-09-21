@@ -75,6 +75,8 @@ export class Game {
         .map((player) => player.gameid)
     );
 
+    this.engine = this.createEngine(this.options);
+
     ready.players.forEach((player) =>
       this.client.emit("game.scope.start", player.gameid)
     );
@@ -164,8 +166,6 @@ export class Game {
     try {
       this.target = this.target;
     } catch {}
-
-    this.engine = this.createEngine(this.options);
 
     this.client.emit("client.game.round.start", [
       (f) => {
