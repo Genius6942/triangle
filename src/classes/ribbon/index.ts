@@ -165,7 +165,7 @@ export class Ribbon {
       `Connecting to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
     );
 
-    if (this.codecMethod === "json" && false) {
+    if (this.codecMethod === "json") {
       const wsClient = new WebSocket();
 
       wsClient.on("connectFailed", (error: { toString: () => string }) => {
@@ -281,7 +281,7 @@ export class Ribbon {
       const id = ++this.session.lastSent!;
       new Bits(encoded).seek(8).write(id, 24);
     }
-    if (this.codecMethod === "json" && false) {
+    if (this.codecMethod === "json") {
       this.websocket!.sendUTF(encoded.toString());
     } else {
       this.ws!.send(encoded);
