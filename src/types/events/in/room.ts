@@ -77,4 +77,7 @@ export interface Room {
     target: number;
     months: number;
   };
+
+	// TODO: find out what is this?
+	"party.members": any[];
 }

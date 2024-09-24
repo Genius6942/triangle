@@ -8,7 +8,12 @@ import { vmPack } from "./vm-pack";
 import { EventEmitter } from "node:events";
 
 import chalk from "chalk";
-import { WebSocket } from "ws";
+import {
+  client as WebSocket,
+  connection as WebSocketConnection
+} from "websocket";
+import { WebSocket as WS } from "ws";
+import { findLastIndex } from "lodash";
 
 const RIBBON_CLOSE_CODES = {
   1000: "Ribbon closed normally",
@@ -29,7 +34,8 @@ const RIBBON_CLOSE_CODES = {
 } as const;
 
 export class Ribbon {
-  private ws: WebSocket | null = null;
+  private ws: WS | null = null;
+  private websocket: WebSocketConnection | null = null;
   private token: string;
   private userAgent: string;
   private api: API;
@@ -119,18 +125,18 @@ export class Ribbon {
     {
       force = false,
       level = "info"
-    }: { force: boolean; level: "info" | "warning" | "error" } = {
+    }: { force?: boolean; level?: "info" | "warning" | "error" } = {
       force: false,
       level: "info"
     }
   ) {
     if (!this.verbose && !force) return;
     const func =
-      level === "info"
-        ? chalk.blue
+      level === "error"
+        ? chalk.red
         : level === "warning"
           ? chalk.yellow
-          : chalk.red;
+          : chalk.blue;
     console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
@@ -155,27 +161,88 @@ export class Ribbon {
     this.codecVM = await vmPromise;
     this.spool = { ...this.spool, ...(await spool) };
 
-    this.ws = new WebSocket(`wss:${this.spool.endpoint}`, this.spool.token, {
-      headers: {
-        "user-agent": this.userAgent
-      }
-    });
+    this.log(
+      `Connecting to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+    );
 
-    this.ws.on("open", this.onWSOpen.bind(this));
-    this.ws.on("message", this.onWSMessage.bind(this));
-    this.ws.on("close", this.onWSClose.bind(this));
+    if (this.codecMethod === "json" && false) {
+      const wsClient = new WebSocket();
+
+      wsClient.on("connectFailed", (error: { toString: () => string }) => {
+        this.log("Connect error: " + error.toString(), {
+          force: true,
+          level: "error"
+        });
+        setTimeout(() => this.connect(), 1000);
+      });
+
+      wsClient.on("connect", (connection) => {
+        this.websocket = connection;
+        this.onWSOpen();
+
+        connection.on("error", (error) => {
+          this.log("connection error: " + error.toString(), {
+            force: true,
+            level: "error"
+          });
+          this.die();
+        });
+
+        connection.on("close", (code) => {
+          this.onWSClose(code);
+        });
+
+        connection.on("message", (message) => {
+          if (message.type === "utf8" && message.utf8Data) {
+            this.onWSMessage(Buffer.from(message.utf8Data));
+          } else if (message.type === "binary" && message.binaryData) {
+            // amadeus
+            this.onWSMessage(Buffer.from(message.binaryData));
+          } else {
+            this.log(`unkown message type: ${message.type}`, {
+              force: true,
+              level: "error"
+            });
+          }
+        });
+      });
+
+      wsClient.connect(`wss://${this.spool.endpoint}`, undefined, undefined, {
+        // why does this work
+        "user-agent": this.userAgent,
+        authorization: `Bearer ${this.spool.token}`
+      });
+    } else {
+      this.ws = new WS(`wss:${this.spool.endpoint}`, this.spool.token, {
+        headers: {
+          "user-agent": this.userAgent
+        }
+      });
+
+      this.ws!.on("open", this.onWSOpen.bind(this));
+      this.ws!.on("message", this.onWSMessage.bind(this));
+      this.ws!.on("close", this.onWSClose.bind(this));
+    }
   }
 
   static SLOW_CODEC_THRESHOLD = 100;
 
-  encode(msg: string, data?: Record<string, any>): Buffer {
+  encode(msg: string, data?: Record<string, any>): Buffer | string {
     const start = performance.now();
-    const res =
-      this.codecMethod === "vm"
-        ? this.codecVM!.encode(msg, data)
-        : this.codecMethod === "codec-2"
-          ? this.codec2.encode(msg, data)
-          : this.codec.encode(msg, data);
+    let res;
+    switch (this.codecMethod) {
+      case "vm":
+        res = this.codecVM!.encode(msg, data);
+        break;
+      case "codec-2":
+        res = this.codec2.encode(msg, data);
+        break;
+      case "json":
+        res = JSON.stringify({ command: msg, data });
+        break;
+      default:
+        res = this.codec.encode(msg, data);
+    } // this looks nicer
     const end = performance.now();
     if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
       this.log(`Slow encode: ${msg} (${end - start}ms)`, {
@@ -185,7 +252,6 @@ export class Ribbon {
     }
     return res;
   }
-
   decode(data: Buffer) {
     const start = performance.now();
     const res =
@@ -193,7 +259,9 @@ export class Ribbon {
         ? this.codecVM!.decode(data)
         : this.codecMethod === "codec-2"
           ? this.codec2.decode(data)
-          : this.codec.decode(data);
+          : this.codecMethod === "json"
+            ? JSON.parse(data.toString())
+            : this.codec.decode(data);
     const end = performance.now();
     if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
       this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
@@ -205,16 +273,19 @@ export class Ribbon {
   }
 
   private pipe(msg: string, data?: Record<string, any>) {
-    if (!this.ws) return this.session.messageQueue.push({ command: msg, data });
+    if (!this.ws && !this.websocket)
+      return this.session.messageQueue.push({ command: msg, data });
 
     const encoded = this.encode(msg, data);
-
-    if (encoded[0] & Codec.FLAGS.F_ID) {
+    if (Buffer.isBuffer(encoded) && encoded[0] & Codec.FLAGS.F_ID) {
       const id = ++this.session.lastSent!;
       new Bits(encoded).seek(8).write(id, 24);
     }
-
-    this.ws.send(encoded);
+    if (this.codecMethod === "json" && false) {
+      this.websocket!.sendUTF(encoded.toString());
+    } else {
+      this.ws!.send(encoded);
+    }
     if (msg !== "ping")
       this.listeners
         .filter((l) => l.type === "send")
@@ -228,10 +299,9 @@ export class Ribbon {
   }
 
   private async onWSOpen() {
-    if (this.verbose)
-      this.log(
-        `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
-      );
+    this.log(
+      `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+    );
     this.session.open = true;
     this.session.flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
     this.session.flags &= ~Ribbon.FLAGS.TIMING_OUT;
@@ -254,15 +324,22 @@ export class Ribbon {
     this.session.lastPong = performance.now();
 
     this.heartbeat = setInterval(() => {
-      if (this.ws!.readyState !== 1) return;
-      if (performance.now() - this.session.lastPong! > 30000)
-        return this.ws!.close(3001, "pong timeout");
-      this.ping();
+      if (!this.websocket?.connected && this.ws?.readyState === WS.OPEN) return;
+      if (performance.now() - this.session.lastPong! > 30000) {
+        (this.ws || this.websocket)!.close(3001, "pong timeout");
+      } else {
+        this.ping();
+      }
     }, 2500);
   }
 
   private handleMigrate = async (newEndpoint: string) => {
     if (this.spool.migrated) {
+      this.log(
+        `Already migrated to <${
+          this.spool.endpoint?.split(".")[0]
+        }/${this.spool.endpoint?.split("/").at(-1)}>`
+      );
       return;
     }
     this.spool.endpoint = `${this.spool.endpoint!.split("/ribbon/")[0]}${newEndpoint}`;
@@ -273,30 +350,43 @@ export class Ribbon {
   };
 
   private onWSMessage(data: any) {
-    const item = this.decode(data);
+    this.log(
+      "Received message: " +
+        (data.toString() === "[object Object]"
+          ? JSON.stringify(data, null, 2)
+          : data.toString())
+    );
+    const item =
+      this.codecMethod === "json" && !(data instanceof Buffer)
+        ? data
+        : this.decode(data);
     if (item.command === "packets") {
       for (const packet of item.data.packets) {
-        const decodedPacket = this.decode(packet);
-        this.handleMessage(decodedPacket);
+        this.onWSMessage(packet);
       }
-    } else this.handleMessage(item);
+    } else {
+      this.handleMessage(item);
+    }
   }
 
-  private onWSClose(e: number) {
+  private onWSClose(code: number) {
     if (!this.spool.authed) {
       return this.connect();
     }
 
-    this.ws!.removeAllListeners();
+    (this.ws || this.websocket)!.removeAllListeners();
     this.session.open = false;
     clearInterval(this.heartbeat);
 
-    const code = e.toString();
+    const strCode = code.toString() as any;
     const closeReason =
-      code in RIBBON_CLOSE_CODES
-        ? RIBBON_CLOSE_CODES[code as unknown as keyof typeof RIBBON_CLOSE_CODES]
-        : "Unknown reason: " + code;
+      strCode in RIBBON_CLOSE_CODES
+        ? RIBBON_CLOSE_CODES[
+            strCode as unknown as keyof typeof RIBBON_CLOSE_CODES
+          ]
+        : "Unknown reason: " + strCode;
 
+    this.log("Closed: " + closeReason, { level: "warning" });
     this.emitter.emit("client.close", closeReason);
   }
 
@@ -347,8 +437,8 @@ export class Ribbon {
         this.pipe("ping", { recvid: this.session.lastReceived });
         break;
       case "server.migrate":
-        this.handleMigrate(m.data.endpoint);
         this.log(`Migrating to ${m.data.endpoint}`);
+        this.handleMigrate(m.data.endpoint);
         break;
       case "server.migrated":
         while (this.session.messageQueue.length > 0) {

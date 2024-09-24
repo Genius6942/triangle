@@ -1,7 +1,7 @@
 // amadeus-codec
 import { pack } from "../../utils";
 
-export type CodecType = "vm" | "custom" | "codec-2";
+export type CodecType = "vm" | "custom" | "codec-2" | "json";
 
 export type Command = {
   flags: number;

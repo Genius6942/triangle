@@ -73,4 +73,27 @@ Example:
 const res = await ch.users.leaderboard("xp", { limit: 100 });
 ```
 
+## Proxying
+
+Because the Tetra Channel API does not have cors enabled, you need to proxy requests coming from a browser. This is an example express route that proxies requests to the ch.tetr.io server:
+
+```ts
+app.get("/api/ch-proxy/*", async (req, res) => {
+  const url = req.url.replace("/api/ch-proxy", "");
+  const response = await fetch(`https://ch.tetr.io/api${url}`, {
+    headers: {
+      "X-Session-ID": req.headers["x-session-id"]!
+    }
+  });
+  const json = await response.json();
+  res.json(json);
+});
+```
+
+You can then set the 'host' setting on the client to your proxy:
+
+```ts
+ch.setConfig({ host: "/api/ch-proxy/" });
+```
+
 [View the official docs](https://tetr.io/about/api) for more information on the api.

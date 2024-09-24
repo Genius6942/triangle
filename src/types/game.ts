@@ -97,6 +97,7 @@ export namespace Game {
     garbageentry: GarbageEntry;
     garbageblocking: GarbageBlocking;
     garbagetargetbonus: GarbageTargetBonus;
+		garbagespecialbonus: boolean
     presets: Preset;
     bagtype: BagType;
     spinbonuses: SpinBonuses;
@@ -173,6 +174,7 @@ export namespace Game {
     garbageattackcap: number;
     garbagetargetbonus: GarbageTargetBonus;
     garbageblocking: GarbageBlocking;
+		garbagespecialbonus: boolean;
     passthrough: Passthrough;
     openerphase: number;
     roundmode: RoundingMode;
