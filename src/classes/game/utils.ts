@@ -8,9 +8,8 @@ export const getFullFrame = (
   frame: 0,
   data: {
     game: {
-      board: Array.from(
-        { length: options.boardheight + 20 },
-        () => Array.from({ length: options.boardwidth }, () => null)
+      board: Array.from({ length: options.boardheight + 20 }, () =>
+        Array.from({ length: options.boardwidth }, () => null)
       ),
       bag: new Queue({
         type: options.bagtype,

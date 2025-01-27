@@ -99,7 +99,7 @@ export const roomConfigPresets: {
     { index: "options.openerphase", value: false },
     { index: "options.usebombs", value: false },
     { index: "options.roundmode", value: "down" },
-    { index: "options.garbagespecialbonus", value: false },
+    { index: "options.garbagespecialbonus", value: false }
   ],
   classic: [
     { index: "options.presets", value: "classic" },

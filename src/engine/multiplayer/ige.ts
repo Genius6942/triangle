@@ -44,7 +44,7 @@ export class IGEHandler {
       incoming: player.incoming,
       outgoing: [...player.outgoing, { iid, amount }]
     });
-    // write({ iid: this.iid, players: Object.fromEntries(this.players) });
+    // console.log('sent: ', { iid: this.iid, players: Object.fromEntries(this.players) });
   }
 
   /**
@@ -90,7 +90,7 @@ export class IGEHandler {
     });
 
     this.players.set(playerID, { incoming: incomingIID, outgoing: newIGEs });
-    // write({ iid: this.iid, players: Object.fromEntries(this.players) });
+    // console.log('recieved:', { iid: this.iid, players: Object.fromEntries(this.players) });
 
     return runningAmount;
   }

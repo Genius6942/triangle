@@ -84,15 +84,9 @@ export class GarbageQueue {
     }
   }
 
-  cancel(amount: number, pieceCount: number) {    
-    if (this.options.openerPhase > 0) {
-      if (pieceCount < this.options.openerPhase) {
-        // compare current queue size against the attack being sent
-        if (this.size > amount) {
-          amount *= 2;
-        }
-      }
-    }
+  cancel(amount: number, pieceCount: number) {
+    if (pieceCount < this.options.openerPhase && this.size > amount)
+      amount *= 2;
     while (amount > 0) {
       if (this.queue.length <= 0) break;
       if (amount >= this.queue[0].amount) {
@@ -127,8 +121,6 @@ export class GarbageQueue {
 
   tank(frame: number): OutgoingGarbage[] {
     if (this.queue.length === 0) return [];
-
-    // console.log("call tank", this.queue);
 
     const res: OutgoingGarbage[] = [];
 
@@ -191,7 +183,7 @@ export class GarbageQueue {
         const decimal = amount - floored;
         return floored + (this.rngex() < decimal ? 1 : 0);
       default:
-        throw new Error(`Invalid rounding mode ${this.options.rounding}`); 
+        throw new Error(`Invalid rounding mode ${this.options.rounding}`);
     }
   }
 }

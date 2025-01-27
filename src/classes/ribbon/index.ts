@@ -139,7 +139,7 @@ export class Ribbon {
       this.codecMethod === "vm"
         ? vmPack(this.userAgent, { globalVM: this.globalVM })
         : Promise.resolve(undefined);
-       const spool = this.spool.endpoint
+    const spool = this.spool.endpoint
       ? Promise.resolve({
           endpoint: this.spool.endpoint,
           token: this.spool.token
@@ -233,8 +233,8 @@ export class Ribbon {
     try {
       const start = performance.now();
       let res;
-      
-      if (this.codecMethod === 'codec-2') {
+
+      if (this.codecMethod === "codec-2") {
         try {
           res = this.codec2.decode(data);
           if (res.command === "packets") {
@@ -370,9 +370,12 @@ export class Ribbon {
   private onWSMessage(data: any) {
     try {
       const reProcessPacket = (packetData: any) => {
-        const item = this.codecMethod === "json"
-          ? (packetData instanceof Buffer ? JSON.parse(packetData.toString()) : packetData)
-          : this.decode(packetData);
+        const item =
+          this.codecMethod === "json"
+            ? packetData instanceof Buffer
+              ? JSON.parse(packetData.toString())
+              : packetData
+            : this.decode(packetData);
 
         if (!item) return;
 
@@ -381,10 +384,9 @@ export class Ribbon {
           packets.forEach((packet: any) => {
             let command = "ribbon:unparsed";
             try {
-              const decoded = this.codecMethod === "json"
-                ? packet
-                : this.decode(packet);
-              
+              const decoded =
+                this.codecMethod === "json" ? packet : this.decode(packet);
+
               command = decoded.command;
 
               if (decoded.command === "packets") {

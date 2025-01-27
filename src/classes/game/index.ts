@@ -69,7 +69,7 @@ export class Game {
     this.options = self.options;
     this.readyData = ready;
 
-    this.engine = this.createEngine(this.options);
+    this.engine = this.createEngine(this.options, this.gameid);
 
     ready.players.forEach((player) =>
       this.client.emit("game.scope.start", player.gameid)
@@ -129,7 +129,7 @@ export class Game {
         name: o.options.username,
         userid: o.userid,
         gameid: o.gameid,
-        engine: this.createEngine(o.options)
+        engine: this.createEngine(o.options, o.gameid)
       }));
     }
 
@@ -178,11 +178,13 @@ export class Game {
     this.timeout = setTimeout(this.tickGame.bind(this), 0);
   }
 
-  createEngine(options: GameTypes.ReadyOptions) {
+  createEngine(options: GameTypes.ReadyOptions, gameid: number) {
     return new Engine({
       multiplayer: {
-        opponents: this.readyData.players.map((o) => o.gameid),
-				passthrough: options.passthrough
+        opponents: this.readyData.players
+          .map((o) => o.gameid)
+          .filter((id) => id !== gameid),
+        passthrough: options.passthrough
       },
       board: {
         width: options.boardwidth,
@@ -198,7 +200,7 @@ export class Game {
           increase: options.garbageincrease,
           marginTime: options.garbagemargin
         },
-				clutch: options.clutch,
+        clutch: options.clutch,
         garbageTargetBonus: options.garbagetargetbonus,
         spinBonuses: options.spinbonuses,
         garbageAttackCap: Infinity // TODO idk what but this is wrong
@@ -316,7 +318,6 @@ export class Game {
 
     this.stats.piecesPlaced += pieces;
 
-
     this.messageQueue.push(
       ...garbage.received.map((g) => ({
         type: "garbage" as const,
@@ -372,10 +373,10 @@ export class Game {
       };
 
       this.pipe(frame);
-			this.incomingGarbage.push({ ...frame,});
+      this.incomingGarbage.push({ ...frame });
 
       if (ige.type === "interaction_confirm") {
-       if (ige.data.type === "targeted") {
+        if (ige.data.type === "targeted") {
           // TODO: implement
         }
       } else if (ige.type === "target") {

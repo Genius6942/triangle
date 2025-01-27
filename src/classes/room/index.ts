@@ -159,14 +159,14 @@ export class Room {
     });
 
     this.listen("game.abort", () => {
-      if (abortTimeout) return; 
-    
+      if (abortTimeout) return;
+
       abortTimeout = setTimeout(() => {
         abortTimeout = null;
       }, 50);
-    
+
       this.client.emit("client.game.abort");
-    
+
       if (!this.client.game) return;
       this.client.game = this.client.game.destroy();
       this.client.emit("client.game.over", { reason: "abort" });

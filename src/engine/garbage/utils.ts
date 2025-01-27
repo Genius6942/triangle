@@ -28,9 +28,9 @@ export const garbageRNG = (seed: number) => {
     getCurrentSeed: function () {
       return t;
     },
-		clone: function () {
-			return garbageRNG(t);
-		}
+    clone: function () {
+      return garbageRNG(t);
+    }
   };
 };
 

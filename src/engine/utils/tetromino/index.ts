@@ -34,12 +34,12 @@ export class Tetromino {
     return this.states[Math.min(this.rotation, this.states.length)];
   }
 
-	get absoluteBlocks() {
-		return this.blocks.map((block): [number, number] => [
-			block[0] + this.location[0],
-			-block[1] + this.location[1]
-		]);
-	}
+  get absoluteBlocks() {
+    return this.blocks.map((block): [number, number] => [
+      block[0] + this.location[0],
+      -block[1] + this.location[1]
+    ]);
+  }
 
   get rotation(): Rotation {
     return (this._rotation % 4) as any;

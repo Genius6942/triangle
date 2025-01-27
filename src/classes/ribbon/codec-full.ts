@@ -1,9 +1,8 @@
 // @ts-nocheck
-
+//@ts-ignore
+import * as n from "../../utils/theorypack/msgpackr.js";
 import { Bits as r } from "./codec";
 
-//@ts-ignore
-import * as n from "../../utils/theorypack/msgpackr.js"
 const e = Buffer;
 
 const kicksets = {
@@ -2998,579 +2997,590 @@ const DisplayCountersList = Object.keys({
 
 const OptionsList = {
   version: {
-      default: 11,
-      static: !0
+    default: 11,
+    static: !0
   },
   gameid: {
-      default: 0,
-      min: 0,
-      max: 8192,
-      strict: !0
+    default: 0,
+    min: 0,
+    max: 8192,
+    strict: !0
   },
   seed: {
-      default: 0
+    default: 0
   },
   seed_random: {
-      default: !1
+    default: !1
   },
   score: {
-      default: 0
+    default: 0
   },
   are: {
-      default: 0
+    default: 0
   },
   lineclear_are: {
-      default: 0
+    default: 0
   },
   g: {
-      default: .02
+    default: 0.02
   },
   gincrease: {
-      default: 0
+    default: 0
   },
   gmargin: {
-      default: 0
+    default: 0
   },
   gravitymay20g: {
-      default: !0
+    default: !0
   },
   shielded: {
-      default: !1
+    default: !1
   },
   hasgarbage: {
-      default: !1
+    default: !1
   },
   usebombs: {
-      default: !1
+    default: !1
   },
   garbagespeed: {
-      default: 20,
-      integer: !0,
-      min: 1
+    default: 20,
+    integer: !0,
+    min: 1
   },
   garbagefavor: {
-      default: 0
+    default: 0
   },
   garbagemultiplier: {
-      default: 1
+    default: 1
   },
   receivemultiplier: {
-      default: 1
+    default: 1
   },
   garbagemargin: {
-      default: 0
+    default: 0
   },
   garbageincrease: {
-      default: 0
+    default: 0
   },
   garbageholesize: {
-      default: 1
+    default: 1
   },
   garbagephase: {
-      default: 0
+    default: 0
   },
   garbagequeue: {
-      default: !1
+    default: !1
   },
   garbageentry: {
-      default: "instant",
-      allowed: ["instant", "continuous", "delayed"]
+    default: "instant",
+    allowed: ["instant", "continuous", "delayed"]
   },
   garbageare: {
-      default: 5,
-      integer: !0,
-      min: 1
+    default: 5,
+    integer: !0,
+    min: 1
   },
   garbagecap: {
-      default: 8
+    default: 8
   },
   garbagecapincrease: {
-      default: 0
+    default: 0
   },
   garbagecapmargin: {
-      default: 0
+    default: 0
   },
   garbagecapmax: {
-      default: 40
+    default: 40
   },
   garbageabsolutecap: {
-      default: 0
+    default: 0
   },
   garbageattackcap: {
-      default: 0
+    default: 0
   },
   garbagetargetbonus: {
-      default: "none",
-      allowed: ["none", "defensive", "offensive"]
+    default: "none",
+    allowed: ["none", "defensive", "offensive"]
   },
   garbageblocking: {
-      default: "combo blocking",
-      allowed: ["none", "combo blocking", "limited blocking"]
+    default: "combo blocking",
+    allowed: ["none", "combo blocking", "limited blocking"]
   },
   passthrough: {
-      default: "zero",
-      allowed: ["zero", "limited", "consistent", "full"]
+    default: "zero",
+    allowed: ["zero", "limited", "consistent", "full"]
   },
   openerphase: {
-      default: 0
+    default: 0
   },
   roundmode: {
-      default: "down",
-      allowed: ["down", "rng"]
+    default: "down",
+    allowed: ["down", "rng"]
   },
   garbagespecialbonus: {
-      default: !1
+    default: !1
   },
   spinbonuses: {
-      default: "T-spins",
-      allowed: ["none", "T-spins", "all", "all-mini", "handheld", "stupid"]
+    default: "T-spins",
+    allowed: ["none", "T-spins", "all", "all-mini", "handheld", "stupid"]
   },
   combotable: {
-      default: "multiplier",
-      allowed: ["none", "multiplier", "classic guideline", "modern guideline"]
+    default: "multiplier",
+    allowed: ["none", "multiplier", "classic guideline", "modern guideline"]
   },
   kickset: {
-      default: "SRS+",
-      possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"]
+    default: "SRS+",
+    possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"]
   },
   bagtype: {
-      default: "7-bag",
-      allowed: [
-        "total mayhem",
-        "classic",
-        "pairs",
-        "14-bag",
-        "7+1-bag",
-        "7+2-bag",
-        "7+x-bag",
-        "7-bag+oo",
-        "7+1-lone-bag",
-        "14+1-lone-bag",
-        "7+2-lone-bag",
-        "14+2-lone-bag",
-        "7-bag"
-      ]
-    },
+    default: "7-bag",
+    allowed: [
+      "total mayhem",
+      "classic",
+      "pairs",
+      "14-bag",
+      "7+1-bag",
+      "7+2-bag",
+      "7+x-bag",
+      "7-bag+oo",
+      "7+1-lone-bag",
+      "14+1-lone-bag",
+      "7+2-lone-bag",
+      "14+2-lone-bag",
+      "7-bag"
+    ]
+  },
   messiness_change: {
-      default: 1
+    default: 1
   },
   messiness_inner: {
-      default: 0
+    default: 0
   },
   messiness_nosame: {
-      default: !1
+    default: !1
   },
   messiness_timeout: {
-      default: 0
+    default: 0
   },
   b2bchaining: {
-      default: !1
+    default: !1
   },
   b2bcharging: {
-      default: !1
+    default: !1
   },
   b2bextras: {
-      default: !1
+    default: !1
   },
   b2bcharge_at: {
-      default: 4,
-      integer: !0,
-      min: 0,
-      max: 10
+    default: 4,
+    integer: !0,
+    min: 0,
+    max: 10
   },
   b2bcharge_base: {
-      default: 0,
-      integer: !0,
-      min: 0,
-      max: 10
+    default: 0,
+    integer: !0,
+    min: 0,
+    max: 10
   },
   allclears: {
-      default: !0
+    default: !0
   },
   allclear_garbage: {
-      default: 10,
-      integer: !0,
-      min: 0
+    default: 10,
+    integer: !0,
+    min: 0
   },
   allclear_b2b: {
-      default: 0,
-      integer: !0,
-      min: 0
+    default: 0,
+    integer: !0,
+    min: 0
   },
   allclear_b2b_sends: {
-      default: !1
+    default: !1
   },
   allclear_b2b_dupes: {
-      default: !0
+    default: !0
   },
   allclear_charges: {
-      default: !1
+    default: !1
   },
   allow_harddrop: {
-      default: !0
+    default: !0
   },
   allow180: {
-      default: !1
+    default: !1
   },
   infinite_hold: {
-      default: !1
+    default: !1
   },
   infinite_movement: {
-      default: !1
+    default: !1
   },
   nextcount: {
-      default: 5,
-      integer: !0,
-      min: 1,
-      max: 6
+    default: 5,
+    integer: !0,
+    min: 1,
+    max: 6
   },
   clutch: {
-      default: !0
+    default: !0
   },
   no_szo: {
-      default: !1
+    default: !1
   },
   nolockout: {
-      default: !1
+    default: !1
   },
   manual_allowed: {
-      default: !0
+    default: !0
   },
   new_payback: {
-      default: !1
+    default: !1
   },
   can_undo: {
-      default: !1
+    default: !1
   },
   boardwidth: {
-      default: 10,
-      min: 4,
-      max: 100
+    default: 10,
+    min: 4,
+    max: 100
   },
   boardheight: {
-      default: 20,
-      min: 1,
-      max: 100
+    default: 20,
+    min: 1,
+    max: 100
   },
   boardbuffer: {
-      default: 20,
-      min: 0,
-      max: 100
+    default: 20,
+    min: 0,
+    max: 100
   },
   stock: {
-      default: 0,
-      min: 0,
-      max: 10
+    default: 0,
+    min: 0,
+    max: 10
   },
   infinite_stock: {
-      default: !1
+    default: !1
   },
   locktime: {
-      default: 30
+    default: 30
   },
   lockresets: {
-      default: 15,
-      min: 0,
-      max: 30
+    default: 15,
+    min: 0,
+    max: 30
   },
   prestart: {
-      default: 0
+    default: 0
   },
   precountdown: {
-      default: 0
+    default: 0
   },
   countdown: {
-      default: !1
+    default: !1
   },
   countdown_count: {
-      default: 3
+    default: 3
   },
   countdown_interval: {
-      default: 1e3
+    default: 1e3
   },
   inverted: {
-      default: !1
+    default: !1
   },
   mission: {
-      default: ""
+    default: ""
   },
   mission_type: {
-      default: "mission",
-      allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
+    default: "mission",
+    allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
   },
   no_mission_sound: {
-      default: !1
+    default: !1
   },
   objective_type: {
-      default: "none",
-      allowed: ["none", "lines", "timed"]
+    default: "none",
+    allowed: ["none", "lines", "timed"]
   },
   objective_count: {
-      default: 0
+    default: 0
   },
   objective_time: {
-      default: 0
+    default: 0
   },
   objective_result: {
-      default: "",
-      allowed: ["", "score", "time", "lines"]
+    default: "",
+    allowed: ["", "score", "time", "lines"]
   },
   zoominto: {
-      default: "none",
-      allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
+    default: "none",
+    allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
   },
   noextrawidth: {
-      default: !1
+    default: !1
   },
   stride: {
-      default: !1
+    default: !1
   },
   pro: {
-      default: !1
+    default: !1
   },
   pro_alert: {
-      default: !1
+    default: !1
   },
   pro_retry: {
-      default: !1
+    default: !1
   },
   can_retry: {
-      default: !1
+    default: !1
   },
   slot_counter1: {
-      default: "",
-      allowed: ["", ...DisplayCountersList]
+    default: "",
+    allowed: ["", ...DisplayCountersList]
   },
   slot_counter2: {
-      default: "",
-      allowed: ["", ...DisplayCountersList]
+    default: "",
+    allowed: ["", ...DisplayCountersList]
   },
   slot_counter3: {
-      default: "",
-      allowed: ["", ...DisplayCountersList]
+    default: "",
+    allowed: ["", ...DisplayCountersList]
   },
   slot_counter4: {
-      default: "",
-      allowed: ["", ...DisplayCountersList]
+    default: "",
+    allowed: ["", ...DisplayCountersList]
   },
   slot_counter5: {
-      default: "",
-      allowed: ["", ...DisplayCountersList]
+    default: "",
+    allowed: ["", ...DisplayCountersList]
   },
   slot_bar1: {
-      default: "",
-      allowed: ["", "impending", "progress"]
+    default: "",
+    allowed: ["", "impending", "progress"]
   },
   slot_bar2: {
-      default: "",
-      allowed: ["", "impending", "progress"]
+    default: "",
+    allowed: ["", "impending", "progress"]
   },
   absolute_lines: {
-      default: !1
+    default: !1
   },
   display_zen: {
-      default: !1
+    default: !1
   },
   display_username: {
-      default: !1
+    default: !1
   },
   display_fire: {
-      default: !1
+    default: !1
   },
   display_replay: {
-      default: !1
+    default: !1
   },
   display_next: {
-      default: !0
+    default: !0
   },
   display_hold: {
-      default: !0
+    default: !0
   },
   display_shadow: {
-      default: !0
+    default: !0
   },
   levels: {
-      default: !1
+    default: !1
   },
   masterlevels: {
-      default: !1
+    default: !1
   },
   startinglevel: {
-      default: 1
+    default: 1
   },
   levelspeed: {
-      default: 1
+    default: 1
   },
   levelstatic: {
-      default: !1
+    default: !1
   },
   levelstaticspeed: {
-      default: 10
+    default: 10
   },
   levelgbase: {
-      default: .8
+    default: 0.8
   },
   levelgspeed: {
-      default: .007
+    default: 0.007
   },
   minoskin: {
-      default: {
-          z: "tetrio",
-          l: "tetrio",
-          o: "tetrio",
-          s: "tetrio",
-          i: "tetrio",
-          j: "tetrio",
-          t: "tetrio",
-          other: "tetrio",
-          ghost: "tetrio"
-      }
+    default: {
+      z: "tetrio",
+      l: "tetrio",
+      o: "tetrio",
+      s: "tetrio",
+      i: "tetrio",
+      j: "tetrio",
+      t: "tetrio",
+      other: "tetrio",
+      ghost: "tetrio"
+    }
   },
   boardskin: {
-      default: "generic",
-      possibles: ["generic", "tetrio"]
+    default: "generic",
+    possibles: ["generic", "tetrio"]
   },
   map: {
-      default: ""
+    default: ""
   },
   handling: {
-      default: {}
+    default: {}
   },
   room_handling: {
-      default: !1
+    default: !1
   },
   room_handling_arr: {
-      default: 2
+    default: 2
   },
   room_handling_das: {
-      default: 10
+    default: 10
   },
   room_handling_sdf: {
-      default: 6
+    default: 6
   },
   noreplay: {
-      default: !1
+    default: !1
   },
   nosound: {
-      default: !1
+    default: !1
   },
   bgmnoreset: {
-      default: !1
+    default: !1
   },
   neverstopbgm: {
-      default: !1
+    default: !1
   },
   song: {
-      default: "RANDOMcalm",
-      possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"]
+    default: "RANDOMcalm",
+    possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"]
   },
   survivalmode: {
-      default: "none",
-      allowed: ["none", "layer", "timer"]
+    default: "none",
+    allowed: ["none", "layer", "timer"]
   },
   survival_messiness: {
-      default: 0
+    default: 0
   },
   survival_layer_amt: {
-      default: 10
+    default: 10
   },
   survival_layer_non: {
-      default: !1
+    default: !1
   },
   survival_layer_min: {
-      default: 0
+    default: 0
   },
   survival_timer_itv: {
-      default: 1
+    default: 1
   },
   survival_cap: {
-      default: 0
+    default: 0
   },
   usezenconfig: {
-      default: !1
+    default: !1
   },
   zenlevels: {
-      default: !1
+    default: !1
   },
   zenlevel: {
-      default: 1
+    default: 1
   },
   zenprogress: {
-      default: 0
+    default: 0
   },
   nosiren: {
-      default: !1
+    default: !1
   },
   anchorseed: {
-      default: !1
+    default: !1
   },
   forfeit_time: {
-      default: 60
+    default: 60
   },
   username: {
-      default: ""
+    default: ""
   },
   latencymode: {
-      default: "medium",
-      allowed: ["zero", "low", "medium", "high", "xhigh"]
+    default: "medium",
+    allowed: ["zero", "low", "medium", "high", "xhigh"]
   },
   fulloffset: {
-      default: 300
+    default: 300
   },
   fullinterval: {
-      default: 300
+    default: 300
   },
   fromretry: {
-      default: !1
+    default: !1
   },
   retryisclear: {
-      default: !1
+    default: !1
   },
   topoutisclear: {
-      default: !1
+    default: !1
   },
   zenith: {
-      default: !1
+    default: !1
   },
   zenith_expert: {
-      default: !1
+    default: !1
   },
   zenith_doublehole: {
-      default: !1
+    default: !1
   },
   zenith_volatile: {
-      default: !1
+    default: !1
   },
   zenith_gravity: {
-      default: !1
+    default: !1
   },
   zenith_messy: {
-      default: !1
+    default: !1
   },
   zenith_invisible: {
-      default: !1
+    default: !1
   },
   zenith_allspin: {
-      default: !1
+    default: !1
   },
   zenith_duo: {
-      default: !1
+    default: !1
   },
   zenith_mods: {
-      default: [],
-      allowed: ["invisible", "messy", "volatile", "nohold", "doublehole", "allspin", "gravity", "expert", "duo", "snowman"]
+    default: [],
+    allowed: [
+      "invisible",
+      "messy",
+      "volatile",
+      "nohold",
+      "doublehole",
+      "allspin",
+      "gravity",
+      "expert",
+      "duo",
+      "snowman"
+    ]
   },
   zenith_ally: {
-      default: []
+    default: []
   },
   zenith_allyexpert: {
-      default: !1
+    default: !1
   },
   TEMP_zenith_rng: {
-      default: !1
+    default: !1
   },
   TEMP_zenith_grace: {
-      default: ""
+    default: ""
   }
 };
 
@@ -3658,7 +3668,7 @@ const EncodingManager = new (class {
       }
     }
   }
-  encode(key: string, data: any, opts = {batched: false, id: false}): Buffer {
+  encode(key: string, data: any, opts = { batched: false, id: false }): Buffer {
     const cmd = this._commands.get(key) ?? this._commands.get("__pack__");
     let code = cmd.code,
       headerLength = 1;
@@ -4495,10 +4505,7 @@ class Serializable {
   static get LIST() {
     return this._LIST;
   }
-  static AddExtension(
-    t,
-    n = {}
-  ) {
+  static AddExtension(t, n = {}) {
     this._LIST[t.name] = t;
     if ("ownBuffer" in n) {
       t.BUFFER = Buffer.alloc(this._MAX_BUFFER);
@@ -4513,7 +4520,10 @@ class Serializable {
   static LoadExtensions(e) {
     let runningCode = 10;
     function N(e) {
-      return e.encode.call(e, new Transcoder.Encoder(this, e.constructor.BUFFER));
+      return e.encode.call(
+        e,
+        new Transcoder.Encoder(this, e.constructor.BUFFER)
+      );
     }
     function G(e, t, n, s) {
       return e.decode(new Transcoder.Decoder(t, (e) => n(s + e)));
@@ -4524,7 +4534,7 @@ class Serializable {
         Class: t,
         type: t.ext_code,
         pack: N,
-        unpack: G.bind(null, t),
+        unpack: G.bind(null, t)
       });
     }
   }
@@ -4534,12 +4544,9 @@ class Structure extends Serializable {
     this._cstFields = new Map();
     this._fixFields = new Map();
     this._optFields = new Map();
-    for (const [t, {
-      mode: n,
-      type: s,
-      size: i,
-      value: o
-    }] of Object.entries(e)) {
+    for (const [t, { mode: n, type: s, size: i, value: o }] of Object.entries(
+      e
+    )) {
       switch (n) {
         case "static":
           this._cstFields.set(t, o);
@@ -4562,16 +4569,10 @@ class Structure extends Serializable {
     super.AddTable("prop", Array.from(this._optFields.keys()));
   }
   static encode(e, t) {
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._fixFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
       e.writeByType(s, t[n], i);
     }
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._optFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._optFields.entries()) {
       if (t[n] != null) {
         e.writeTable(n, this.$$prop);
         e.writeByType(s, t[n], i);
@@ -4582,18 +4583,12 @@ class Structure extends Serializable {
   static decode(e) {
     const t = {};
     const n = this.$$prop.size;
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._fixFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
       t[n] = e.readByType(s, i);
     }
     for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
       const n = e.readTable(this.$$prop);
-      const {
-        type: s,
-        size: i
-      } = this._optFields.get(n);
+      const { type: s, size: i } = this._optFields.get(n);
       const o = e.readByType(s, i);
       t[n] = o;
     }
@@ -4639,13 +4634,16 @@ class GameReplayBoard extends Serializable {
     const t = [],
       n = e.readUInt(13);
     for (let s = 0; s < n; s++) {
-      const n = { board: {
-        f: 0,
-        g: 0,
-        w: 0,
-        h: 0,
-        b: {},
-      }, gameid: 0 };
+      const n = {
+        board: {
+          f: 0,
+          g: 0,
+          w: 0,
+          h: 0,
+          b: {}
+        },
+        gameid: 0
+      };
       (n.gameid = e.readUInt(13)),
         (n.board.f = e.readUInt(10)),
         (n.board.g = e.readDInt(this.$long)),
@@ -4778,22 +4776,21 @@ class GameReplayFrame extends Serializable {
       t.type)
     ) {
       case "keydown":
-        case "keyup":
-          {
-            // @ts-expect-error
-            const n = e.readTable(this.$$key);
-            const s = e.readBoolean();
-            const i = {
-              key: n,
-              subframe: e.readFloat(4, 10),
-              hoisted: false,
-            };
-            if (s) {
-              i.hoisted = true;
-            }
-            t.data = i;
-            break;
-          }
+      case "keyup": {
+        // @ts-expect-error
+        const n = e.readTable(this.$$key);
+        const s = e.readBoolean();
+        const i = {
+          key: n,
+          subframe: e.readFloat(4, 10),
+          hoisted: false
+        };
+        if (s) {
+          i.hoisted = true;
+        }
+        t.data = i;
+        break;
+      }
       case "start":
         t.data = {};
         break;
@@ -4917,17 +4914,17 @@ class FullFrame extends Serializable {
           dir: -1,
           held: false,
           arr: 0,
-          das: 0,
+          das: 0
         },
         rShift: {
           dir: 1,
           held: false,
           arr: 0,
-          das: 0,
+          das: 0
         },
         inputSoftdrop: false,
         lastshift: 1,
-        falling: {},
+        falling: {}
       },
       board: {},
       handling: {
@@ -4937,13 +4934,13 @@ class FullFrame extends Serializable {
         cancel: false,
         may20g: false,
         das: 0,
-        dcd: 0,
+        dcd: 0
       },
       g: 0,
       hold: {
         locked: false,
         piece: null
-      },
+      }
     };
     const s = n.controlling;
     const i = n.handling;
@@ -5153,7 +5150,7 @@ class GameStats extends Serializable {
       zenprogress: 0,
       clears: {},
       garbage: {},
-      finesse: {},
+      finesse: {}
     };
     (t.lines = e.readDInt(this.$short)),
       (t.level_lines = e.readDInt(this.$short)),
@@ -5212,22 +5209,22 @@ class Zenith extends Serializable {
   }
   static decode(e: any) {
     const t = {};
-      (t.altitude = e.readDouble()),
-        (t.rank = e.readDouble()),
-        (t.peakrank = e.readDouble()),
-        (t.avgrankpts = e.readDouble()),
-        (t.totalbonus = e.readDouble()),
-        (t.targetingfactor = e.readFloat(16, 100)),
-        (t.targetinggrace = e.readFloat(16, 100)),
-        (t.floor = e.readUInt(4)),
-        (t.revives = e.readUInt(8)),
-        (t.revivesTotal = e.readUInt(8)),
-        (t.revivesMaxOfBoth = Math.max(t.revives, t.revivesTotal - t.revives)),
-        (t.speedrun = e.readBoolean()),
-        (t.speedrun_seen = e.readBoolean()),
-        (t.splits = []);
-      for (let n = 0; n < 9; n++) t.splits[n] = e.readDInt(this.$long);
-      return t;
+    (t.altitude = e.readDouble()),
+      (t.rank = e.readDouble()),
+      (t.peakrank = e.readDouble()),
+      (t.avgrankpts = e.readDouble()),
+      (t.totalbonus = e.readDouble()),
+      (t.targetingfactor = e.readFloat(16, 100)),
+      (t.targetinggrace = e.readFloat(16, 100)),
+      (t.floor = e.readUInt(4)),
+      (t.revives = e.readUInt(8)),
+      (t.revivesTotal = e.readUInt(8)),
+      (t.revivesMaxOfBoth = Math.max(t.revives, t.revivesTotal - t.revives)),
+      (t.speedrun = e.readBoolean()),
+      (t.speedrun_seen = e.readBoolean()),
+      (t.splits = []);
+    for (let n = 0; n < 9; n++) t.splits[n] = e.readDInt(this.$long);
+    return t;
   }
 }
 class IgeFrame extends Serializable {
@@ -5306,10 +5303,10 @@ class IgeFrame extends Serializable {
   }
   static decode(e) {
     const t = {};
-      t.id = e.readDInt(this.$byte);
-      t.frame = e.readDInt(this.$byte);
-      t.type = e.readTable(this.$$type);
-      e: switch (t.type) {
+    t.id = e.readDInt(this.$byte);
+    t.frame = e.readDInt(this.$byte);
+    t.type = e.readTable(this.$$type);
+    e: switch (t.type) {
       case "interaction":
         t.data = e.readStruct(IgeInteractionData);
         break;
@@ -5339,17 +5336,16 @@ class IgeFrame extends Serializable {
         }
         break;
       }
-      case "target":
-          {
-            const n = [];
-            const s = e.readUInt(13);
-            for (let t = 0; t < s; t++) {
-              n.push(e.readUInt(13));
-            }
-            t.data = {
-              targets: n
-            };
-            break;
+      case "target": {
+        const n = [];
+        const s = e.readUInt(13);
+        for (let t = 0; t < s; t++) {
+          n.push(e.readUInt(13));
+        }
+        t.data = {
+          targets: n
+        };
+        break;
       }
       case "targeted":
         t.data = {
@@ -5766,11 +5762,22 @@ class Tetrominoes extends Serializable {
   }
 }
 class IgeOptions extends Serializable {
-  static TypeOrders = ["boolean", "number", "table", "object", "array", "string"];
+  static TypeOrders = [
+    "boolean",
+    "number",
+    "table",
+    "object",
+    "array",
+    "string"
+  ];
   static OptsBook = OptionsList;
   static init() {
     super.AddTable("options", Object.keys(this.OptsBook));
-    super.AddTable("minoskin", ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"], "flexible");
+    super.AddTable(
+      "minoskin",
+      ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"],
+      "flexible"
+    );
     super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
     for (const [e, t] of Object.entries(this.OptsBook)) {
       if (t.allowed) {
@@ -5781,11 +5788,10 @@ class IgeOptions extends Serializable {
     }
   }
   static *ParseOptions(e) {
-    const {
-      TypeOrders: t,
-      OptsBook: n
-    } = this;
-    const s = Object.keys(e).sort((e, s) => t.indexOf(n[e].type) - t.indexOf(n[s].type));
+    const { TypeOrders: t, OptsBook: n } = this;
+    const s = Object.keys(e).sort(
+      (e, s) => t.indexOf(n[e].type) - t.indexOf(n[s].type)
+    );
     for (const t of s) {
       const s = e[t];
       const i = n[t];
@@ -5829,7 +5835,9 @@ class IgeOptions extends Serializable {
           e.writeString(s);
           break;
         default:
-          throw new TypeError(`Unknown type for key: ${n} value: ${s} | got -> ${i.type}`);
+          throw new TypeError(
+            `Unknown type for key: ${n} value: ${s} | got -> ${i.type}`
+          );
       }
     }
     e.writeTable(null, this.$$options);
@@ -5888,7 +5896,7 @@ class IgeOptions extends Serializable {
   }
 }
 // i think this is correct? i hope so at least (doesn't seem to help though)
-function strictShallowEqual(t: any , e: any) {
+function strictShallowEqual(t: any, e: any) {
   return t || e ? t === e : t === e || (t != t && e != e);
 }
 class EndFrameOptions extends IgeOptions {

@@ -131,7 +131,6 @@ export class Engine {
 
     this.garbageQueue = new GarbageQueue(options.garbage);
 
-    console.log(options.multiplayer?.opponents);
     this.igeHandler = new IGEHandler(options.multiplayer?.opponents || []);
     if (options.multiplayer)
       this.multiplayer = {
@@ -361,7 +360,13 @@ export class Engine {
     if (this.gameOptions.spinBonuses === "none") return "none";
     const tSpin =
       (
-        ["all", "all-mini", "all-mini+", "all+", "T-spins"] as Game.SpinBonuses[]
+        [
+          "all",
+          "all-mini",
+          "all-mini+",
+          "all+",
+          "T-spins"
+        ] as Game.SpinBonuses[]
       ).includes(this.gameOptions.spinBonuses) && this.falling.symbol === "t"
         ? this.detectTSpin(finOrTst)
         : false;
@@ -454,7 +459,7 @@ export class Engine {
       ]) as any)
     );
 
-    const lines = this.board.clearLines();
+    const { lines, garbageCleared } = this.board.clearLines();
 
     let brokeB2B: false | number = false;
     if (lines > 0) {
@@ -469,6 +474,13 @@ export class Engine {
       this.stats.combo = -1;
     }
 
+    const gSpecialBonus =
+      this.initializer.garbage.specialBonus &&
+      garbageCleared &&
+      ((this.lastSpin && this.lastSpin.type !== "none") || lines >= 4)
+        ? 1
+        : 0;
+
     const garbage = garbageCalcV2(
       {
         b2b: Math.max(this.stats.b2b, 0),
@@ -481,10 +493,11 @@ export class Engine {
       },
       { ...this.gameOptions, b2b: this.b2b.chaining }
     );
-    console.log(garbage);
     const pc = this.board.perfectClear;
     const gEvents =
-      garbage.garbage > 0 ? [this.garbageQueue.round(garbage.garbage)] : []; // TODO: do this after calculating increase instead, margin time issues
+      garbage.garbage > 0
+        ? [this.garbageQueue.round(garbage.garbage + gSpecialBonus)]
+        : []; // TODO: do this after calculating increase instead, margin time issues
     const m = this.gameOptions.garbageMultiplier;
 
     const gMultiplier = calculateIncrease(
@@ -504,7 +517,6 @@ export class Engine {
           Math.round(value / 3),
           value - 2 * Math.round(value / 3)
         ];
-        console.warn("sending surge:", garbages);
         gEvents.push(...garbages);
         brokeB2B = false;
       }
@@ -615,22 +627,23 @@ export class Engine {
           f[ci].push(frame);
         }
       } else if (frame.type === "ige") {
-        if (
-          frame.data.type === "interaction_confirm" &&
-          frame.data.data.type === "garbage"
-        ) {
-          this.receiveGarbage({
-            frame: frame.frame,
-            amount: this.multiplayer?.passthrough?.network
-              ? this.igeHandler.receive({
-                  playerID: frame.data.data.gameid,
-                  ackiid: frame.data.data.ackiid,
-                  amount: frame.data.data.amt,
-                  iid: frame.data.data.iid
-                })
-              : frame.data.data.amt,
-            size: frame.data.data.size
-          });
+        if (frame.data.type === "interaction_confirm") {
+          if (frame.data.data.type === "garbage") {
+            this.receiveGarbage({
+              frame: frame.frame,
+              amount: this.multiplayer?.passthrough?.network
+                ? this.igeHandler.receive({
+                    playerID: frame.data.data.gameid,
+                    ackiid: frame.data.data.ackiid,
+                    amount: frame.data.data.amt,
+                    iid: frame.data.data.iid
+                  })
+                : frame.data.data.amt,
+              size: frame.data.data.size
+            });
+          }
+        } else if (frame.data.type === "target" && this.multiplayer) {
+          this.multiplayer.targets = frame.data.data.targets;
         }
       }
     });
@@ -694,12 +707,14 @@ export class Engine {
           } else if (key === "hardDrop") {
             const { garbage: g, garbageAdded, spin: s } = this.hardDrop();
             res.garbage.sent.push(...g);
-            if (this.multiplayer)
-              this.multiplayer.targets.forEach((target) =>
-                g.forEach((g) =>
-                  this.igeHandler.send({ amount: g, playerID: target })
-                )
-              );
+            if (g.length > 0) {
+              if (this.multiplayer)
+                this.multiplayer.targets.forEach((target) =>
+                  g.forEach((g) =>
+                    this.igeHandler.send({ amount: g, playerID: target })
+                  )
+                );
+            }
             res.garbage.received.push(...(garbageAdded || []));
             res.pieces++;
             spin = s;
