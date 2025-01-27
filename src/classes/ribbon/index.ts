@@ -438,6 +438,7 @@ export class Ribbon {
         : "Unknown reason: " + code;
 
     this.emitter.emit("client.close", closeReason);
+    this.emitter.emit("client.dead", undefined);
   }
 
   private async handleMessage(msg: any): Promise<void> {
