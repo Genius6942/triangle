@@ -38,6 +38,14 @@ export interface Ribbon {
 
   "server.migrated": {};
 
+  "server.announcement": {
+    type: string;
+    msg: string;
+    ts: number;
+  };
+
+  "server.maintenance": {};
+
   kick: {
     reason: string;
   };
@@ -48,6 +56,12 @@ export interface Ribbon {
 
   error: any;
   err: any;
+  packets: {
+    // packets(packets: any): any;
+    data: {
+      packets: Buffer[];
+    };
+  };
 
   notify:
     | {

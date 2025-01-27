@@ -13,15 +13,15 @@ import { bfs } from "./search";
 import { Handling, IncreasableValue, KeyPress } from "./types";
 import { EngineCheckpoint, SpinType } from "./types";
 import { calculateIncrease, deepCopy } from "./utils";
-import { garbageCalcV2, garbageData } from "./utils/garbage";
-import { KickTable } from "./utils/kicks";
+import { garbageCalcV2, garbageData } from "./utils/damageCalc";
+import { KickTable, legal } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 
 import chalk from "chalk";
 
 export interface GameOptions {
-  spinBonuses: "T-spins" | "all" | "all-mini" | "handheld" | "stupid" | "none";
+  spinBonuses: Game.SpinBonuses;
   comboTable: keyof (typeof garbageData)["comboTable"] | "multiplier";
   garbageTargetBonus: "none" | "normal" | string;
   garbageMultiplier: {
@@ -29,6 +29,8 @@ export interface GameOptions {
     increase: number;
     marginTime: number;
   };
+
+  clutch: boolean;
 
   garbageAttackCap?: number;
   garbageBlocking: "combo blocking" | "limited blocking" | "none";
@@ -82,6 +84,7 @@ export class Engine {
   garbageQueue!: GarbageQueue;
 
   frame!: number;
+  pieceCount!: number;
   checkpoints!: EngineCheckpoint[];
 
   initializer: EngineInitializeParams;
@@ -104,8 +107,14 @@ export class Engine {
   multiplayer?: {
     options: MultiplayerOptions;
     targets: number[];
+    passthrough: {
+      network: boolean;
+      replay: boolean;
+      travel: boolean;
+    };
   };
   igeHandler!: IGEHandler;
+  onGarbageSpawn?: (column: number, size: number) => void;
   constructor(options: EngineInitializeParams) {
     this.initializer = options;
     this.init();
@@ -122,11 +131,19 @@ export class Engine {
 
     this.garbageQueue = new GarbageQueue(options.garbage);
 
+    console.log(options.multiplayer?.opponents);
     this.igeHandler = new IGEHandler(options.multiplayer?.opponents || []);
     if (options.multiplayer)
       this.multiplayer = {
         options: options.multiplayer,
-        targets: []
+        targets: [],
+        passthrough: {
+          network: ["consistent", "zero"].includes(
+            options.multiplayer.passthrough
+          ),
+          replay: options.multiplayer.passthrough !== "full",
+          travel: ["zero", "limited"].includes(options.multiplayer.passthrough)
+        }
       };
 
     this.nextPiece();
@@ -215,9 +232,14 @@ export class Engine {
     this._kickTable = value;
   }
 
-  nextPiece() {
+  nextPiece(canClutch = false) {
     const newTetromino = this.queue.shift()!;
     this.initiatePiece(newTetromino);
+    if (canClutch && this.gameOptions.clutch) {
+      while (!legal(this.falling.absoluteBlocks, this.board.state)) {
+        this.falling.location[1]++;
+      }
+    }
   }
 
   initiatePiece(piece: Piece) {
@@ -325,31 +347,49 @@ export class Engine {
     return res;
   }
 
+  maxSpin(...spins: SpinType[]) {
+    return spins.reduce((a, b) => {
+      if (a === "none") return b;
+      if (b === "none") return a;
+      if (a === "normal" && b === "mini") return "normal";
+      if (a === "mini" && b === "normal") return "normal";
+      return "normal";
+    });
+  }
+
   detectSpin(finOrTst: boolean): SpinType {
     if (this.gameOptions.spinBonuses === "none") return "none";
-    if (
+    const tSpin =
       (
-        [
-          "all",
-          "all-mini",
-          "T-spins"
-        ] as (typeof this.gameOptions.spinBonuses)[]
-      ).includes(this.gameOptions.spinBonuses) &&
-      this.falling.symbol === "t"
-    ) {
-      return this.detectTSpin(finOrTst);
-    }
-    if (
-      this.gameOptions.spinBonuses === "all" ||
-      this.gameOptions.spinBonuses === "all-mini"
-    ) {
-      return this.falling.isAllSpinPosition(this.board.state)
-        ? this.gameOptions.spinBonuses === "all-mini"
+        ["all", "all-mini", "all-mini+", "all+", "T-spins"] as Game.SpinBonuses[]
+      ).includes(this.gameOptions.spinBonuses) && this.falling.symbol === "t"
+        ? this.detectTSpin(finOrTst)
+        : false;
+    const allSpin = this.falling.isAllSpinPosition(this.board.state);
+
+    switch (this.gameOptions.spinBonuses) {
+      case "stupid":
+        return this.falling.isStupidSpinPosition(this.board.state)
+          ? "normal"
+          : "none";
+      case "T-spins":
+        return tSpin || "none";
+      case "all":
+        return tSpin || (allSpin ? "normal" : "none");
+      case "all-mini":
+        return tSpin || (allSpin ? "mini" : "none");
+      case "all+":
+        return this.maxSpin(tSpin || "none", allSpin ? "normal" : "none");
+      case "all-mini+":
+        return this.maxSpin(tSpin || "none", allSpin ? "mini" : "none");
+      case "mini-only":
+        return tSpin === "normal"
           ? "mini"
-          : "normal"
-        : "none";
+          : this.maxSpin(tSpin || "none", allSpin ? "mini" : "none");
+      case "handheld":
+        // TODO: How does this work?
+        return "none";
     }
-    return "none";
   }
 
   detectTSpin(finOrTst: boolean): SpinType {
@@ -441,9 +481,10 @@ export class Engine {
       },
       { ...this.gameOptions, b2b: this.b2b.chaining }
     );
+    console.log(garbage);
     const pc = this.board.perfectClear;
     const gEvents =
-      garbage.garbage > 0 ? [this.garbageQueue.round(garbage.garbage)] : [];
+      garbage.garbage > 0 ? [this.garbageQueue.round(garbage.garbage)] : []; // TODO: do this after calculating increase instead, margin time issues
     const m = this.gameOptions.garbageMultiplier;
 
     const gMultiplier = calculateIncrease(
@@ -452,17 +493,21 @@ export class Engine {
       m.increase,
       m.marginTime
     );
-    if (brokeB2B !== false && this.b2b.charging) {
-      const value = Math.floor(
-        (this.stats.b2b - this.b2b.charging.at + this.b2b.charging.base + 1) *
-          gMultiplier
-      );
-      const garbages = [
-        Math.round(value / 3),
-        Math.round(value / 3),
-        value - 2 * Math.round(value / 3)
-      ].filter((g) => g !== 0);
-      gEvents.splice(0, 0, ...garbages);
+    if (brokeB2B !== false) {
+      let btb = brokeB2B;
+      if (this.b2b.charging !== false && btb > this.b2b.charging.at) {
+        const value = Math.floor(
+          (btb - this.b2b.charging.at + this.b2b.charging.base) * gMultiplier
+        );
+        const garbages = [
+          Math.round(value / 3),
+          Math.round(value / 3),
+          value - 2 * Math.round(value / 3)
+        ];
+        console.warn("sending surge:", garbages);
+        gEvents.push(...garbages);
+        brokeB2B = false;
+      }
     }
     if (pc && this.pc) {
       gEvents.push(this.garbageQueue.round(this.pc.garbage * gMultiplier));
@@ -480,7 +525,8 @@ export class Engine {
         spin: this.lastSpin ? this.lastSpin.type : "none",
         rawGarbage: [...gEvents]
       },
-      garbageAdded: false as false | OutgoingGarbage[]
+      garbageAdded: false as false | OutgoingGarbage[],
+      topout: false
     };
 
     if (lines > 0) {
@@ -488,7 +534,7 @@ export class Engine {
         if (res.garbage[0] === 0) {
           continue;
         }
-        const r = this.garbageQueue.cancel(res.garbage[0]);
+        const r = this.garbageQueue.cancel(res.garbage[0], this.pieceCount);
         if (r === 0) res.garbage.shift();
         else {
           res.garbage[0] = r;
@@ -498,13 +544,23 @@ export class Engine {
     } else {
       const garbages = this.garbageQueue.tank(this.frame);
       res.garbageAdded = garbages;
-      if (res.garbageAdded)
-        garbages.forEach((garbage) => this.board.insertGarbage(garbage));
+      if (res.garbageAdded) {
+        garbages.forEach((garbage) => {
+          this.board.insertGarbage(garbage);
+          if (this.onGarbageSpawn) {
+            this.onGarbageSpawn(garbage.column, garbage.size);
+          }
+        });
+      }
     }
 
-    this.nextPiece();
+    this.nextPiece(lines > 0);
 
     this.lastSpin = null;
+    this.pieceCount++;
+
+    if (!legal(this.falling.absoluteBlocks, this.board.state))
+      res.topout = true;
     return res;
   }
 
@@ -552,16 +608,20 @@ export class Engine {
     // array of arrays of frames, each arr has a subframe
     const f: Game.Replay.Frame[][] = Array.from({ length: 10 }, () => []);
     frames.forEach((frame) => {
-      if (frame.type === "keyup" || frame.type === "keydown")
-        f[Math.round(frame.data.subframe * 10)].push(frame);
-      else if (frame.type === "ige") {
+      if (frame.type === "keyup" || frame.type === "keydown") {
+        if (frame.data && typeof frame.data.subframe === "number") {
+          const i = Math.round(frame.data.subframe * 10);
+          const ci = Math.max(0, Math.min(9, i));
+          f[ci].push(frame);
+        }
+      } else if (frame.type === "ige") {
         if (
           frame.data.type === "interaction_confirm" &&
           frame.data.data.type === "garbage"
         ) {
           this.receiveGarbage({
             frame: frame.frame,
-            amount: this.multiplayer
+            amount: this.multiplayer?.passthrough?.network
               ? this.igeHandler.receive({
                   playerID: frame.data.data.gameid,
                   ackiid: frame.data.data.ackiid,
@@ -579,13 +639,13 @@ export class Engine {
       pieces: number;
       garbage: {
         sent: number[];
-        recieved: OutgoingGarbage[];
+        received: OutgoingGarbage[];
       };
     } = {
       pieces: 0,
       garbage: {
         sent: [],
-        recieved: []
+        received: []
       }
     };
 
@@ -640,7 +700,7 @@ export class Engine {
                   this.igeHandler.send({ amount: g, playerID: target })
                 )
               );
-            res.garbage.recieved.push(...(garbageAdded || []));
+            res.garbage.received.push(...(garbageAdded || []));
             res.pieces++;
             spin = s;
           } else if (key === "hold") {
@@ -731,6 +791,12 @@ export class Engine {
     listener: NonNullable<(typeof Queue)["prototype"]["repopulateListener"]>
   ) {
     this.queue.onRepopulate(listener);
+  }
+
+  spawnGarbage(column: number, size: number) {
+    if (this.onGarbageSpawn) {
+      this.onGarbageSpawn(column, size);
+    }
   }
 
   private static colorMap = {

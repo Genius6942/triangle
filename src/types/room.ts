@@ -104,6 +104,11 @@ export namespace Room {
       manual_allowed: boolean;
       b2bchaining: boolean;
       b2bcharging: boolean;
+      openerphase: boolean;
+      allclear_garbage: number | string;
+      allclear_b2b: number | string;
+      garbagespecialbonus: number | string;
+      roundmode: string;
       allclears: boolean;
       clutch: boolean;
       nolockout: boolean;

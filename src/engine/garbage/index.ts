@@ -22,6 +22,8 @@ export interface GarbageQueueInitializeParams {
   seed: number;
   boardWidth: number;
   rounding: "down" | "rng";
+  openerPhase: number;
+  specialBonus: boolean;
 }
 
 export interface Garbage {
@@ -82,12 +84,17 @@ export class GarbageQueue {
     }
   }
 
-  cancel(amount: number) {
-    while (amount > 0) {
-      if (this.queue.length <= 0) {
-        break;
+  cancel(amount: number, pieceCount: number) {    
+    if (this.options.openerPhase > 0) {
+      if (pieceCount < this.options.openerPhase) {
+        // compare current queue size against the attack being sent
+        if (this.size > amount) {
+          amount *= 2;
+        }
       }
-
+    }
+    while (amount > 0) {
+      if (this.queue.length <= 0) break;
       if (amount >= this.queue[0].amount) {
         amount -= this.queue[0].amount;
         this.queue.shift();
@@ -97,7 +104,6 @@ export class GarbageQueue {
         break;
       }
     }
-
     return amount;
   }
 
@@ -176,12 +182,16 @@ export class GarbageQueue {
   }
 
   round(amount: number): number {
-    if (this.options.rounding === "down") return Math.floor(amount);
-    else if (this.options.rounding === "rng") {
-      const floored = Math.floor(amount);
-      if (floored === amount) return floored;
-      const decimal = amount - floored;
-      return this.rngex() < decimal ? floored + 1 : floored;
-    } else throw new Error(`Invalid rounding mode ${this.options.rounding}`);
+    switch (this.options.rounding) {
+      case "down":
+        return Math.floor(amount);
+      case "rng":
+        const floored = Math.floor(amount);
+        if (floored === amount) return floored;
+        const decimal = amount - floored;
+        return floored + (this.rngex() < decimal ? 1 : 0);
+      default:
+        throw new Error(`Invalid rounding mode ${this.options.rounding}`); 
+    }
   }
 }

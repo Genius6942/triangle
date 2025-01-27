@@ -43,7 +43,7 @@ export class Client {
   /**
    * Raw ribbon handler.
    * @example
-   * client.on('social.dm', () => console.log('DM recieved!'));
+   * client.on('social.dm', () => console.log('DM received!'));
    */
   public on: typeof this.ribbon.emitter.on;
   /** Raw ribbon handler. */
@@ -93,12 +93,18 @@ export class Client {
     this.rooms = {
       list: () => this.api.rooms(),
       join: async (id: string) => {
-        await this.wrap("room.join", id.toUpperCase(), "room.update");
-        return await new Promise((r) => setTimeout(() => r(this.room!), 0));
+        return await this.wrap(
+          "room.join",
+          id.toUpperCase(),
+          "client.room.join"
+        );
       },
       create: async (type = "private") => {
-        await this.wrap("room.create", type === "public", "room.update");
-        return await new Promise((r) => setTimeout(() => r(this.room!), 0));
+        return await this.wrap(
+          "room.create",
+          type === "public",
+          "client.room.join"
+        );
       }
     };
 
@@ -226,12 +232,12 @@ export class Client {
   }
 
   /**
-   * Send a message and then wait for another message. Throws an error if a 'err' message is recieved before the response message
+   * Send a message and then wait for another message. Throws an error if a 'err' message is received before the response message
    * @param event - the `command` of the event to send
    * @param data - the data to send along with the command. For void (no) data, just pass in `undefined`
    * @param listen - the event to wait for before resolving.
    * @returns the data sent by the `listen` event
-   * @throws an error if the 'err' message is recieved from TETR.IO
+   * @throws an error if the 'err' message is received from TETR.IO
    * @example
    * // This is just for example, use `client.room!.chat` instead
    * await client.wrap('room.chat', { content: 'Hello', pinned: false }, 'room.chat');
@@ -269,6 +275,7 @@ export class Client {
     this.on("room.join", async () => {
       const data = await this.wait("room.update");
       this.room = new Room(this, data);
+      this.emit("client.room.join", this.room!);
     });
 
     this.on("notify", (notif) => {

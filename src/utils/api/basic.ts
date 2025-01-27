@@ -143,7 +143,7 @@ export const basic = (defaults: APIDefaults) => {
             );
           else
             throw new Error(
-              `An error occured. This was likely because it the request was blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. View the error at ${path.join(
+              `An error occured. This was likely because the request was blocked by Cloudflare Turnstile on GET to ${uri}. Try passing in a turnstile token. View the error at ${path.join(
                 os.homedir(),
                 ".trianglejs",
                 "errors",

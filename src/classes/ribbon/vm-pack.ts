@@ -8,7 +8,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
-let globalVM: Awaited<ReturnType<typeof vmPack>>;
+let globalVM: Awaited<ReturnType<typeof vmPack>> | null = null;
 
 export const vmPack = (
   userAgent: string,

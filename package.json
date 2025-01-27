@@ -1,6 +1,6 @@
 {
   "name": "@haelp/teto",
-  "version": "2.3.1",
+  "version": "2.5.0",
   "description": "A typescript-based controllable TETR.IO client.",
   "maintainers": [
     "haelp"
@@ -52,9 +52,7 @@
     "typedoc": "^0.26.6",
     "typescript": "^5.4.5",
     "websocket": "^1.0.35",
-    "ws": "^8.16.0"
-  },
-  "dependencies": {
-    "@types/websocket": "^1.0.10"
+    "ws": "^8.16.0",
+		"@types/websocket": "^1.0.10"
   }
 }

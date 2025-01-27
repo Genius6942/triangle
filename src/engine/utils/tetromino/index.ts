@@ -34,6 +34,13 @@ export class Tetromino {
     return this.states[Math.min(this.rotation, this.states.length)];
   }
 
+	get absoluteBlocks() {
+		return this.blocks.map((block): [number, number] => [
+			block[0] + this.location[0],
+			-block[1] + this.location[1]
+		]);
+	}
+
   get rotation(): Rotation {
     return (this._rotation % 4) as any;
   }
@@ -56,6 +63,16 @@ export class Tetromino {
 
   set y(value: number) {
     this.location[1] = value;
+  }
+
+  isStupidSpinPosition(board: BoardSquare[][]) {
+    return !legal(
+      this.blocks.map((block) => [
+        block[0] + this.location[0],
+        -block[1] + this.location[1] - 1
+      ]),
+      board
+    );
   }
 
   isAllSpinPosition(board: BoardSquare[][]) {

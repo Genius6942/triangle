@@ -1,4 +1,4 @@
-import { Relationship } from "../../../classes";
+import { Relationship, Room as RoomClass } from "../../../classes";
 import { Engine } from "../../../engine";
 import { Game, Room } from "../../../types";
 import { Game as GameEvents } from "./game";
@@ -37,6 +37,9 @@ export interface Client {
 
   /** Fires whenever the players state changes. */
   "client.room.players": Room.Player[];
+
+  /** Fires when the client joins a room */
+  "client.room.join": RoomClass;
 
   /** Fires when a game starts */
   "client.game.start": (
@@ -90,7 +93,7 @@ export interface Client {
   /** Fires whenever the client is friended */
   "client.friended": { id: string; name: string; avatar: number };
 
-  /** Fires when a DM (direct message) has been recieved and AFTER any unknown data has been loaded about the user */
+  /** Fires when a DM (direct message) has been received and AFTER any unknown data has been loaded about the user */
   "client.dm": {
     user: Relationship;
     content: string;

@@ -1,8 +1,9 @@
 // @ts-nocheck
+
 import { Bits as r } from "./codec";
 
-import * as n from "msgpackr";
-
+//@ts-ignore
+import * as n from "../../utils/theorypack/msgpackr.js"
 const e = Buffer;
 
 const kicksets = {
@@ -2996,244 +2997,581 @@ const DisplayCountersList = Object.keys({
 });
 
 const OptionsList = {
-  version: { default: 11, static: !0 },
-  gameid: { default: 0, min: 0, max: 8192, strict: !0 },
-  seed: { default: 0 },
-  seed_random: { default: !1 },
-  score: { default: 0 },
-  are: { default: 0 },
-  lineclear_are: { default: 0 },
-  g: { default: 0.02 },
-  gincrease: { default: 0 },
-  gmargin: { default: 0 },
-  gravitymay20g: { default: !0 },
-  shielded: { default: !1 },
-  hasgarbage: { default: !1 },
-  usebombs: { default: !1 },
-  garbagespeed: { default: 20, integer: !0, min: 1 },
-  garbagefavor: { default: 0 },
-  garbagemultiplier: { default: 1 },
-  receivemultiplier: { default: 1 },
-  garbagemargin: { default: 0 },
-  garbageincrease: { default: 0 },
-  garbageholesize: { default: 1 },
-  garbagephase: { default: 0 },
-  garbagequeue: { default: !1 },
-  garbageentry: {
-    default: "instant",
-    allowed: ["instant", "continuous", "delayed"]
+  version: {
+      default: 11,
+      static: !0
   },
-  garbageare: { default: 5, integer: !0, min: 1 },
-  garbagecap: { default: 8 },
-  garbagecapincrease: { default: 0 },
-  garbagecapmax: { default: 40 },
-  garbageabsolutecap: { default: 0 },
-  garbageattackcap: { default: 0 },
+  gameid: {
+      default: 0,
+      min: 0,
+      max: 8192,
+      strict: !0
+  },
+  seed: {
+      default: 0
+  },
+  seed_random: {
+      default: !1
+  },
+  score: {
+      default: 0
+  },
+  are: {
+      default: 0
+  },
+  lineclear_are: {
+      default: 0
+  },
+  g: {
+      default: .02
+  },
+  gincrease: {
+      default: 0
+  },
+  gmargin: {
+      default: 0
+  },
+  gravitymay20g: {
+      default: !0
+  },
+  shielded: {
+      default: !1
+  },
+  hasgarbage: {
+      default: !1
+  },
+  usebombs: {
+      default: !1
+  },
+  garbagespeed: {
+      default: 20,
+      integer: !0,
+      min: 1
+  },
+  garbagefavor: {
+      default: 0
+  },
+  garbagemultiplier: {
+      default: 1
+  },
+  receivemultiplier: {
+      default: 1
+  },
+  garbagemargin: {
+      default: 0
+  },
+  garbageincrease: {
+      default: 0
+  },
+  garbageholesize: {
+      default: 1
+  },
+  garbagephase: {
+      default: 0
+  },
+  garbagequeue: {
+      default: !1
+  },
+  garbageentry: {
+      default: "instant",
+      allowed: ["instant", "continuous", "delayed"]
+  },
+  garbageare: {
+      default: 5,
+      integer: !0,
+      min: 1
+  },
+  garbagecap: {
+      default: 8
+  },
+  garbagecapincrease: {
+      default: 0
+  },
+  garbagecapmargin: {
+      default: 0
+  },
+  garbagecapmax: {
+      default: 40
+  },
+  garbageabsolutecap: {
+      default: 0
+  },
+  garbageattackcap: {
+      default: 0
+  },
   garbagetargetbonus: {
-    default: "none",
-    allowed: ["none", "defensive", "offensive"]
+      default: "none",
+      allowed: ["none", "defensive", "offensive"]
   },
   garbageblocking: {
-    default: "combo blocking",
-    allowed: ["none", "combo blocking", "limited blocking"]
+      default: "combo blocking",
+      allowed: ["none", "combo blocking", "limited blocking"]
   },
   passthrough: {
-    default: "zero",
-    allowed: ["zero", "limited", "consistent", "full"]
+      default: "zero",
+      allowed: ["zero", "limited", "consistent", "full"]
   },
-  openerphase: { default: 0 },
-  roundmode: { default: "down", allowed: ["down", "rng"] },
+  openerphase: {
+      default: 0
+  },
+  roundmode: {
+      default: "down",
+      allowed: ["down", "rng"]
+  },
+  garbagespecialbonus: {
+      default: !1
+  },
   spinbonuses: {
-    default: "T-spins",
-    allowed: ["none", "T-spins", "all", "all-mini", "handheld", "stupid"]
+      default: "T-spins",
+      allowed: ["none", "T-spins", "all", "all-mini", "handheld", "stupid"]
   },
   combotable: {
-    default: "multiplier",
-    allowed: ["none", "multiplier", "classic guideline", "modern guideline"]
+      default: "multiplier",
+      allowed: ["none", "multiplier", "classic guideline", "modern guideline"]
   },
   kickset: {
-    default: "SRS+",
-    possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"]
+      default: "SRS+",
+      possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"]
   },
   bagtype: {
-    default: "7-bag",
-    allowed: [
-      "total mayhem",
-      "classic",
-      "pairs",
-      "14-bag",
-      "7+1-bag",
-      "7+2-bag",
-      "7+x-bag",
-      "7-bag+oo",
-      "7+1-lone-bag",
-      "14+1-lone-bag",
-      "7+2-lone-bag",
-      "14+2-lone-bag",
-      "7-bag"
-    ]
+      default: "7-bag",
+      allowed: [
+        "total mayhem",
+        "classic",
+        "pairs",
+        "14-bag",
+        "7+1-bag",
+        "7+2-bag",
+        "7+x-bag",
+        "7-bag+oo",
+        "7+1-lone-bag",
+        "14+1-lone-bag",
+        "7+2-lone-bag",
+        "14+2-lone-bag",
+        "7-bag"
+      ]
+    },
+  messiness_change: {
+      default: 1
   },
-  messiness_change: { default: 1 },
-  messiness_inner: { default: 0 },
-  messiness_nosame: { default: !1 },
-  messiness_timeout: { default: 0 },
-  b2bchaining: { default: !1 },
-  b2bcharging: { default: !1 },
-  b2bextras: { default: !1 },
-  b2bcharge_at: { default: 4, integer: !0, min: 0, max: 10 },
-  b2bcharge_base: { default: 0, integer: !0, min: 0, max: 10 },
-  allclears: { default: !0 },
-  allclear_garbage: { default: 10, integer: !0, min: 0 },
-  allclear_b2b: { default: 0, integer: !0, min: 0 },
-  allclear_b2b_sends: { default: !1 },
-  allclear_b2b_dupes: { default: !0 },
-  allclear_charges: { default: !1 },
-  allow_harddrop: { default: !0 },
-  allow180: { default: !1 },
-  infinite_hold: { default: !1 },
-  infinite_movement: { default: !1 },
-  nextcount: { default: 5, integer: !0, min: 1, max: 6 },
-  clutch: { default: !0 },
-  no_szo: { default: !1 },
-  nolockout: { default: !1 },
-  manual_allowed: { default: !0 },
-  new_payback: { default: !1 },
-  can_undo: { default: !1 },
-  boardwidth: { default: 10, min: 4, max: 100 },
-  boardheight: { default: 20, min: 1, max: 100 },
-  boardbuffer: { default: 20, min: 0, max: 100 },
-  stock: { default: 0, min: 0, max: 10 },
-  infinite_stock: { default: !1 },
-  locktime: { default: 30 },
-  lockresets: { default: 15, min: 0, max: 30 },
-  prestart: { default: 0 },
-  precountdown: { default: 0 },
-  countdown: { default: !1 },
-  countdown_count: { default: 3 },
-  countdown_interval: { default: 1e3 },
-  inverted: { default: !1 },
-  mission: { default: "" },
+  messiness_inner: {
+      default: 0
+  },
+  messiness_nosame: {
+      default: !1
+  },
+  messiness_timeout: {
+      default: 0
+  },
+  b2bchaining: {
+      default: !1
+  },
+  b2bcharging: {
+      default: !1
+  },
+  b2bextras: {
+      default: !1
+  },
+  b2bcharge_at: {
+      default: 4,
+      integer: !0,
+      min: 0,
+      max: 10
+  },
+  b2bcharge_base: {
+      default: 0,
+      integer: !0,
+      min: 0,
+      max: 10
+  },
+  allclears: {
+      default: !0
+  },
+  allclear_garbage: {
+      default: 10,
+      integer: !0,
+      min: 0
+  },
+  allclear_b2b: {
+      default: 0,
+      integer: !0,
+      min: 0
+  },
+  allclear_b2b_sends: {
+      default: !1
+  },
+  allclear_b2b_dupes: {
+      default: !0
+  },
+  allclear_charges: {
+      default: !1
+  },
+  allow_harddrop: {
+      default: !0
+  },
+  allow180: {
+      default: !1
+  },
+  infinite_hold: {
+      default: !1
+  },
+  infinite_movement: {
+      default: !1
+  },
+  nextcount: {
+      default: 5,
+      integer: !0,
+      min: 1,
+      max: 6
+  },
+  clutch: {
+      default: !0
+  },
+  no_szo: {
+      default: !1
+  },
+  nolockout: {
+      default: !1
+  },
+  manual_allowed: {
+      default: !0
+  },
+  new_payback: {
+      default: !1
+  },
+  can_undo: {
+      default: !1
+  },
+  boardwidth: {
+      default: 10,
+      min: 4,
+      max: 100
+  },
+  boardheight: {
+      default: 20,
+      min: 1,
+      max: 100
+  },
+  boardbuffer: {
+      default: 20,
+      min: 0,
+      max: 100
+  },
+  stock: {
+      default: 0,
+      min: 0,
+      max: 10
+  },
+  infinite_stock: {
+      default: !1
+  },
+  locktime: {
+      default: 30
+  },
+  lockresets: {
+      default: 15,
+      min: 0,
+      max: 30
+  },
+  prestart: {
+      default: 0
+  },
+  precountdown: {
+      default: 0
+  },
+  countdown: {
+      default: !1
+  },
+  countdown_count: {
+      default: 3
+  },
+  countdown_interval: {
+      default: 1e3
+  },
+  inverted: {
+      default: !1
+  },
+  mission: {
+      default: ""
+  },
   mission_type: {
-    default: "mission",
-    allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
+      default: "mission",
+      allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
   },
-  no_mission_sound: { default: !1 },
-  objective_type: { default: "none", allowed: ["none", "lines", "timed"] },
-  objective_count: { default: 0 },
-  objective_time: { default: 0 },
-  objective_result: { default: "", allowed: ["score", "time", "lines"] },
+  no_mission_sound: {
+      default: !1
+  },
+  objective_type: {
+      default: "none",
+      allowed: ["none", "lines", "timed"]
+  },
+  objective_count: {
+      default: 0
+  },
+  objective_time: {
+      default: 0
+  },
+  objective_result: {
+      default: "",
+      allowed: ["", "score", "time", "lines"]
+  },
   zoominto: {
-    default: "none",
-    allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
+      default: "none",
+      allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
   },
-  noextrawidth: { default: !1 },
-  stride: { default: !1 },
-  pro: { default: !1 },
-  pro_alert: { default: !1 },
-  pro_retry: { default: !1 },
-  can_retry: { default: !1 },
-  slot_counter1: { default: "", allowed: DisplayCountersList },
-  slot_counter2: { default: "", allowed: DisplayCountersList },
-  slot_counter3: { default: "", allowed: DisplayCountersList },
-  slot_counter4: { default: "", allowed: DisplayCountersList },
-  slot_counter5: { default: "", allowed: DisplayCountersList },
-  slot_bar1: { default: "", allowed: ["impending", "progress"] },
-  slot_bar2: { default: "", allowed: ["impending", "progress"] },
-  absolute_lines: { default: !1 },
-  display_zen: { default: !1 },
-  display_username: { default: !1 },
-  display_fire: { default: !1 },
-  display_replay: { default: !1 },
-  display_next: { default: !0 },
-  display_hold: { default: !0 },
-  display_shadow: { default: !0 },
-  levels: { default: !1 },
-  masterlevels: { default: !1 },
-  startinglevel: { default: 1 },
-  levelspeed: { default: 1 },
-  levelstatic: { default: !1 },
-  levelstaticspeed: { default: 10 },
-  levelgbase: { default: 0.8 },
-  levelgspeed: { default: 0.007 },
+  noextrawidth: {
+      default: !1
+  },
+  stride: {
+      default: !1
+  },
+  pro: {
+      default: !1
+  },
+  pro_alert: {
+      default: !1
+  },
+  pro_retry: {
+      default: !1
+  },
+  can_retry: {
+      default: !1
+  },
+  slot_counter1: {
+      default: "",
+      allowed: ["", ...DisplayCountersList]
+  },
+  slot_counter2: {
+      default: "",
+      allowed: ["", ...DisplayCountersList]
+  },
+  slot_counter3: {
+      default: "",
+      allowed: ["", ...DisplayCountersList]
+  },
+  slot_counter4: {
+      default: "",
+      allowed: ["", ...DisplayCountersList]
+  },
+  slot_counter5: {
+      default: "",
+      allowed: ["", ...DisplayCountersList]
+  },
+  slot_bar1: {
+      default: "",
+      allowed: ["", "impending", "progress"]
+  },
+  slot_bar2: {
+      default: "",
+      allowed: ["", "impending", "progress"]
+  },
+  absolute_lines: {
+      default: !1
+  },
+  display_zen: {
+      default: !1
+  },
+  display_username: {
+      default: !1
+  },
+  display_fire: {
+      default: !1
+  },
+  display_replay: {
+      default: !1
+  },
+  display_next: {
+      default: !0
+  },
+  display_hold: {
+      default: !0
+  },
+  display_shadow: {
+      default: !0
+  },
+  levels: {
+      default: !1
+  },
+  masterlevels: {
+      default: !1
+  },
+  startinglevel: {
+      default: 1
+  },
+  levelspeed: {
+      default: 1
+  },
+  levelstatic: {
+      default: !1
+  },
+  levelstaticspeed: {
+      default: 10
+  },
+  levelgbase: {
+      default: .8
+  },
+  levelgspeed: {
+      default: .007
+  },
   minoskin: {
-    default: {
-      z: "tetrio",
-      l: "tetrio",
-      o: "tetrio",
-      s: "tetrio",
-      i: "tetrio",
-      j: "tetrio",
-      t: "tetrio",
-      other: "tetrio",
-      ghost: "tetrio"
-    }
+      default: {
+          z: "tetrio",
+          l: "tetrio",
+          o: "tetrio",
+          s: "tetrio",
+          i: "tetrio",
+          j: "tetrio",
+          t: "tetrio",
+          other: "tetrio",
+          ghost: "tetrio"
+      }
   },
-  boardskin: { default: "generic", possibles: ["generic", "tetrio"] },
-  map: { default: "" },
-  handling: { default: {} },
-  room_handling: { default: !1 },
-  room_handling_arr: { default: 2 },
-  room_handling_das: { default: 10 },
-  room_handling_sdf: { default: 6 },
-  noreplay: { default: !1 },
-  nosound: { default: !1 },
-  bgmnoreset: { default: !1 },
-  neverstopbgm: { default: !1 },
+  boardskin: {
+      default: "generic",
+      possibles: ["generic", "tetrio"]
+  },
+  map: {
+      default: ""
+  },
+  handling: {
+      default: {}
+  },
+  room_handling: {
+      default: !1
+  },
+  room_handling_arr: {
+      default: 2
+  },
+  room_handling_das: {
+      default: 10
+  },
+  room_handling_sdf: {
+      default: 6
+  },
+  noreplay: {
+      default: !1
+  },
+  nosound: {
+      default: !1
+  },
+  bgmnoreset: {
+      default: !1
+  },
+  neverstopbgm: {
+      default: !1
+  },
   song: {
-    default: "RANDOMcalm",
-    possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"]
+      default: "RANDOMcalm",
+      possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"]
   },
-  survivalmode: { default: "none", allowed: ["none", "layer", "timer"] },
-  survival_messiness: { default: 0 },
-  survival_layer_amt: { default: 10 },
-  survival_layer_non: { default: !1 },
-  survival_layer_min: { default: 0 },
-  survival_timer_itv: { default: 1 },
-  survival_cap: { default: 0 },
-  usezenconfig: { default: !1 },
-  zenlevels: { default: !1 },
-  zenlevel: { default: 1 },
-  zenprogress: { default: 0 },
-  nosiren: { default: !1 },
-  anchorseed: { default: !1 },
-  forfeit_time: { default: 60 },
-  username: { default: "" },
+  survivalmode: {
+      default: "none",
+      allowed: ["none", "layer", "timer"]
+  },
+  survival_messiness: {
+      default: 0
+  },
+  survival_layer_amt: {
+      default: 10
+  },
+  survival_layer_non: {
+      default: !1
+  },
+  survival_layer_min: {
+      default: 0
+  },
+  survival_timer_itv: {
+      default: 1
+  },
+  survival_cap: {
+      default: 0
+  },
+  usezenconfig: {
+      default: !1
+  },
+  zenlevels: {
+      default: !1
+  },
+  zenlevel: {
+      default: 1
+  },
+  zenprogress: {
+      default: 0
+  },
+  nosiren: {
+      default: !1
+  },
+  anchorseed: {
+      default: !1
+  },
+  forfeit_time: {
+      default: 60
+  },
+  username: {
+      default: ""
+  },
   latencymode: {
-    default: "medium",
-    allowed: ["zero", "low", "medium", "high", "xhigh"]
+      default: "medium",
+      allowed: ["zero", "low", "medium", "high", "xhigh"]
   },
-  fulloffset: { default: 300 },
-  fullinterval: { default: 300 },
-  fromretry: { default: !1 },
-  retryisclear: { default: !1 },
-  topoutisclear: { default: !1 },
-  zenith: { default: !1 },
-  zenith_expert: { default: !1 },
-  zenith_doublehole: { default: !1 },
-  zenith_volatile: { default: !1 },
-  zenith_gravity: { default: !1 },
-  zenith_messy: { default: !1 },
-  zenith_invisible: { default: !1 },
-  zenith_allspin: { default: !1 },
-  zenith_duo: { default: !1 },
+  fulloffset: {
+      default: 300
+  },
+  fullinterval: {
+      default: 300
+  },
+  fromretry: {
+      default: !1
+  },
+  retryisclear: {
+      default: !1
+  },
+  topoutisclear: {
+      default: !1
+  },
+  zenith: {
+      default: !1
+  },
+  zenith_expert: {
+      default: !1
+  },
+  zenith_doublehole: {
+      default: !1
+  },
+  zenith_volatile: {
+      default: !1
+  },
+  zenith_gravity: {
+      default: !1
+  },
+  zenith_messy: {
+      default: !1
+  },
+  zenith_invisible: {
+      default: !1
+  },
+  zenith_allspin: {
+      default: !1
+  },
+  zenith_duo: {
+      default: !1
+  },
   zenith_mods: {
-    default: [],
-    allowed: [
-      "invisible",
-      "messy",
-      "volatile",
-      "nohold",
-      "doublehole",
-      "allspin",
-      "gravity",
-      "expert",
-      "duo"
-    ]
+      default: [],
+      allowed: ["invisible", "messy", "volatile", "nohold", "doublehole", "allspin", "gravity", "expert", "duo", "snowman"]
   },
-  zenith_ally: { default: [] },
-  zenith_allyexpert: { default: !1 },
-  TEMP_zenith_rng: { default: !1 },
-  TEMP_zenith_grace: { default: "" }
+  zenith_ally: {
+      default: []
+  },
+  zenith_allyexpert: {
+      default: !1
+  },
+  TEMP_zenith_rng: {
+      default: !1
+  },
+  TEMP_zenith_grace: {
+      default: ""
+  }
 };
 
 const ye = {
@@ -3241,6 +3579,36 @@ const ye = {
   bundleStrings: false,
   sequential: false
 };
+const Be = new n.Packr(ye);
+const ke = new n.Unpackr(ye);
+
+// theorypack
+// n.addExtension({
+//   type: 1,
+//   read: (e: any) =>
+//     e === null
+//       ? {
+//           success: true
+//         }
+//       : {
+//           success: true,
+//           ...e
+//         }
+// });
+// n.addExtension({
+//   type: 2,
+//   read: (e: any) =>
+//     e === null
+//       ? {
+//           success: false
+//         }
+//       : {
+//           success: false,
+//           error: e
+//         }
+// });
+// end of theorypack
+
 const EncodingManager = new (class {
   _commands = new Map();
   _codes = new Map();
@@ -3252,7 +3620,8 @@ const EncodingManager = new (class {
     F_HOOK: 2,
     F_ID: 128
   };
-  SetMsgpackr(packr, unpackr) {
+  // can't put types easily here
+  SetMsgpackr(packr: any, unpackr: any) {
     this._PACK = packr.pack.bind(packr);
     this._UNPACK = unpackr.unpack.bind(unpackr);
   }
@@ -3281,15 +3650,15 @@ const EncodingManager = new (class {
     if (n.table) {
       n._kv = new Map();
       n._vk = new Map();
-      n.getkv = (e) => n._kv.get(e);
-      n.getvk = (e) => n._vk.get(e);
+      n.getkv = (e: any) => n._kv.get(e);
+      n.getvk = (e: any) => n._vk.get(e);
       for (const [e, t] of Object.entries(n.table)) {
         n._kv.set(e, t);
         n._vk.set(t, e);
       }
     }
   }
-  encode(key: string, data: any, opts = {}) {
+  encode(key: string, data: any, opts = {batched: false, id: false}): Buffer {
     const cmd = this._commands.get(key) ?? this._commands.get("__pack__");
     let code = cmd.code,
       headerLength = 1;
@@ -3360,7 +3729,7 @@ const EncodingManager = new (class {
       n.writeUInt32BE(t, 0);
       return n;
     },
-    decode(e) {
+    decode(e: any) {
       return {
         recvid: e.readUInt32BE(0)
       };
@@ -3374,7 +3743,7 @@ const EncodingManager = new (class {
       s.write(n, 8, 8, "hex");
       return s;
     },
-    decode: (e) => ({
+    decode: (e: any) => ({
       ribbonid: e.toString("hex", 0, 8),
       tokenid: e.toString("hex", 8, 16)
     })
@@ -3382,28 +3751,23 @@ const EncodingManager = new (class {
   EncodingManager.Add("packets", {
     code: 7,
     encode({ packets: t }) {
-      const s = e.allocUnsafe(
-        t.reduce((e, t) => e + t.length, 0) + 4 * t.length
-      );
+      const n = t.reduce((e, t) => e + t.length, 0),
+        s = e.allocUnsafe(n + 4 * t.length);
       for (let e = 0, n = 0; e < t.length; e++) {
         const i = t[e];
-        s.writeUInt32BE(i.length, n);
-        s.set(i, n + 4);
-        n += i.length + 4;
+        s.writeUInt32BE(i.length, n), s.set(i, n + 4), (n += i.length + 4);
       }
       return s;
     },
-    decode(e) {
+    decode(e: any) {
       const t = [];
       for (let n = 0; n < e.length; ) {
         const s = e.readUInt32BE(n);
         n += 4;
-        t.push(e.subarray(n, n + s));
-        n += s;
+        const i = e.subarray(n, n + s);
+        t.push(i), (n += s);
       }
-      return {
-        packets: t
-      };
+      return { packets: t };
     }
   });
   EncodingManager.Add("kick", {
@@ -3418,14 +3782,14 @@ const EncodingManager = new (class {
     },
     flags: n,
     code: 4,
-    encode({ reason: t }) {
+    encode({ reason: t }: { reason: any }) {
       let n = e.allocUnsafe(1);
       const s = this.getkv(t);
       n.writeUInt8(s, 0);
       s || (n = e.concat([n, e.from(t)]));
       return n;
     },
-    decode(e) {
+    decode(e: any) {
       let n = this.getvk(e.readUInt8(0));
       n || (n = e.toString("utf8", 1));
       return {
@@ -3456,13 +3820,13 @@ const EncodingManager = new (class {
     },
     code: 51,
     flags: n,
-    encode({ type: t, timeout: n }) {
+    encode({ type: t, timeout: n } = { type: 0, timeout: 0 }) {
       const s = e.allocUnsafe(3);
       s.writeUInt8(t, 0);
       s.writeUInt16BE(n, 1);
       return s;
     },
-    decode: (e) => ({
+    decode: (e: any) => ({
       type: e.readUInt8(0),
       timeout: e.readUInt16BE(1)
     })
@@ -3477,7 +3841,7 @@ const EncodingManager = new (class {
     },
     code: 49,
     flags: n | s,
-    encode(t, n) {
+    encode(t: any, n: any) {
       const s = this.getkv(t.type),
         i = e.from([s]);
       switch (s) {
@@ -3485,18 +3849,20 @@ const EncodingManager = new (class {
           const n = e.allocUnsafe(2 + t.msg.length);
           n.writeUInt16BE(t.timeout);
           n.write(t.msg, 2);
+          // @ts-expect-error
           return e.concat([i, n]);
         }
         case 2:
         case 3:
         case 4:
         case 5:
+          // @ts-expect-error
           return e.concat([i, e.from(t.msg)]);
         default:
           return e.concat([i, n(t)]);
       }
     },
-    decode(e, t) {
+    decode(e: any, t: any) {
       const n = e.readUInt8(0),
         s = this.getvk(n);
       switch (n) {
@@ -3617,7 +3983,7 @@ const EncodingManager = new (class {
       "server.migrated": 212,
       "xrc.relog": 255
     },
-    flags: s,
+    flags: 128,
     code: 43,
     encode(data, pack, key) {
       const result = pack(data);
@@ -3712,7 +4078,7 @@ class Transcoder {
       Int: 3,
       Double: 4
     };
-    encode(e, t) {
+    encode(e: any, t: any) {
       const { TYPES: n } = this;
       if ("number" != typeof t)
         throw new TypeError(`Attempted to encode ${typeof t} as a number`);
@@ -3741,7 +4107,7 @@ class Transcoder {
           e.writeUInt(n.Double, 3), e.writeDouble(t);
       }
     }
-    decode(e) {
+    decode(e: any) {
       switch (e.readUInt(3)) {
         case 0:
           return NaN;
@@ -4020,15 +4386,18 @@ class Transcoder {
         : (this.seek(t, 2), this.readAny());
     }
     readArray(e = Transcoder.DEFAULT_ARRAY) {
-      if ("strict" === e.mode) return e.decode(this);
-      if (this._read(1))
+      if (e.mode === "strict") {
+        return e.decode(this);
+      }
+      if (this._read(1)) {
         return this.ref.get(this.readDInt(Transcoder.DEFAULT_PROP));
+      }
       const t = [];
       this.ref.set(this.refid++, t);
       t.push.apply(t, e.decode(this));
       return t;
     }
-    readStruct(e) {
+    readStruct(e: any) {
       return e.decode(this);
     }
     readString(e) {
@@ -4126,78 +4495,111 @@ class Serializable {
   static get LIST() {
     return this._LIST;
   }
-  static AddExtension(t, n = {}) {
-    if (((this._LIST[t.name] = t), "ownBuffer" in n)) {
-      t.BUFFER = e.alloc(this._MAX_BUFFER);
+  static AddExtension(
+    t,
+    n = {}
+  ) {
+    this._LIST[t.name] = t;
+    if ("ownBuffer" in n) {
+      t.BUFFER = Buffer.alloc(this._MAX_BUFFER);
     }
   }
-  static AddTable(e, t, n) {
+  static AddTable(e: any, t: any, n: any) {
     this["$$" + e] = new Transcoder.Table(t, n);
   }
   static AddProperty(e, t) {
     this["$" + e] = new Transcoder.DInt(t);
   }
   static LoadExtensions(e) {
-    let $e = 10;
-    function Ne(e) {
-      return e.encode.call(
-        e,
-        new Transcoder.Encoder(this, e.constructor.BUFFER)
-      );
+    let runningCode = 10;
+    function N(e) {
+      return e.encode.call(e, new Transcoder.Encoder(this, e.constructor.BUFFER));
     }
-    function Ue(e, t, n, s) {
+    function G(e, t, n, s) {
       return e.decode(new Transcoder.Decoder(t, (e) => n(s + e)));
     }
-    for (const t of Object.values(this._LIST))
-      (t.ext_code = $e++),
-        e.addExtension({
-          Class: t,
-          type: t.ext_code,
-          pack: Ne,
-          unpack: Ue.bind(null, t)
-        });
+    for (const t of Object.values(this._LIST)) {
+      t.ext_code = runningCode++;
+      e.addExtension({
+        Class: t,
+        type: t.ext_code,
+        pack: N,
+        unpack: G.bind(null, t),
+      });
+    }
   }
 }
-class Ie extends Serializable {
+class Structure extends Serializable {
   static AddStructure(e) {
     this._cstFields = new Map();
     this._fixFields = new Map();
     this._optFields = new Map();
-    for (const [t, { mode: n, type: s, size: i, value: o }] of Object.entries(
-      e
-    )) {
+    for (const [t, {
+      mode: n,
+      type: s,
+      size: i,
+      value: o
+    }] of Object.entries(e)) {
       switch (n) {
         case "static":
           this._cstFields.set(t, o);
           break;
         case "fixed":
-          const e = {};
-          (e.type = s), (e.size = i), this._fixFields.set(t, e);
+          const e = {
+            type: s,
+            size: i
+          };
+          this._fixFields.set(t, e);
           break;
         case "optional":
-          const n = {};
-          (n.type = s), (n.size = i), this._optFields.set(t, n);
+          const n = {
+            type: s,
+            size: i
+          };
+          this._optFields.set(t, n);
       }
     }
     super.AddTable("prop", Array.from(this._optFields.keys()));
   }
   static encode(e, t) {
-    for (const [n, { type: s, size: i }] of this._fixFields.entries())
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       e.writeByType(s, t[n], i);
-    for (const [n, { type: s, size: i }] of this._optFields.entries())
-      null != t[n] && (e.writeTable(n, this.$$prop), e.writeByType(s, t[n], i));
+    }
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._optFields.entries()) {
+      if (t[n] != null) {
+        e.writeTable(n, this.$$prop);
+        e.writeByType(s, t[n], i);
+      }
+    }
     e.writeUInt(null, this.$$prop.size);
   }
   static decode(e) {
-    const t = {},
-      n = this.$$prop.size;
-    for (const [n, { type: s, size: i }] of this._fixFields.entries())
+    const t = {};
+    const n = this.$$prop.size;
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       t[n] = e.readByType(s, i);
-    for (let s = e.peek(n); 0 !== s; s = e.peek(n)) {
-      const n = e.readTable(this.$$prop);
-      t[n] = e.readByType(this._optFields.get(n), this._optFields.get(n));
     }
-    for (const [e, n] of this._cstFields.entries()) t[e] = n;
+    for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
+      const n = e.readTable(this.$$prop);
+      const {
+        type: s,
+        size: i
+      } = this._optFields.get(n);
+      const o = e.readByType(s, i);
+      t[n] = o;
+    }
+    for (const [e, n] of this._cstFields.entries()) {
+      t[e] = n;
+    }
     return t;
   }
 }
@@ -4225,7 +4627,7 @@ class GameReplay extends Serializable {
     return e.finalize();
   }
 }
-class Ee extends Serializable {
+class GameReplayBoard extends Serializable {
   static init() {
     super.AddExtension(this);
     super.AddProperty("long", {
@@ -4233,27 +4635,33 @@ class Ee extends Serializable {
       max: 32
     });
   }
-  static decode(e) {
-    const t = [];
-    for (let s = 0; s < e.readUInt(13); s++) {
-      const n = {
-        board: {},
-        gameid: e.readUInt(13)
-      };
-      n.board.f = e.readUInt(10);
-      n.board.g = e.readDInt(this.$long);
-      n.board.w = e.readUInt(GameBoard.MAX_WIDTH);
-      n.board.h = e.readUInt(GameBoard.MAX_HEIGHT);
-      n.board.b = e.readStruct(GameBoard);
-      t[s] = n;
+  static decode(e: any) {
+    const t = [],
+      n = e.readUInt(13);
+    for (let s = 0; s < n; s++) {
+      const n = { board: {
+        f: 0,
+        g: 0,
+        w: 0,
+        h: 0,
+        b: {},
+      }, gameid: 0 };
+      (n.gameid = e.readUInt(13)),
+        (n.board.f = e.readUInt(10)),
+        (n.board.g = e.readDInt(this.$long)),
+        (n.board.w = e.readUInt(GameBoard.MAX_WIDTH)),
+        (n.board.h = e.readUInt(GameBoard.MAX_HEIGHT)),
+        (n.board.b = e.readStruct(GameBoard)),
+        (t[s] = n);
     }
     return new this(t);
   }
-  constructor(e) {
+  boards: any[];
+  constructor(e: any) {
     super();
     this.boards = e;
   }
-  encode(e) {
+  encode(e: any) {
     e.writeUInt(this.boards.length, 13);
     for (const {
       gameid: n,
@@ -4268,16 +4676,23 @@ class Ee extends Serializable {
     return e.finalize();
   }
 }
-class De extends Serializable {
+class ZenithSpecStats extends Serializable {
   static init() {
     super.AddExtension(this);
   }
-  static decode(e) {
+  static decode(e: any) {
     const t = [];
     for (let s = 0; s < e.readUInt(13); s++) {
       const n = {
-        stats: {},
-        allies: []
+        stats: {
+          rank: 0,
+          altitude: 0,
+          btb: 0
+        },
+        allies: [],
+        gameid: 0,
+        specCount: 0,
+        speedrun: false
       };
       t[s] = n;
       n.gameid = e.readUInt(13);
@@ -4290,7 +4705,7 @@ class De extends Serializable {
     }
     return new this(t);
   }
-  constructor(e) {
+  constructor(e: any) {
     super();
     this.sb = e;
   }
@@ -4350,22 +4765,35 @@ class GameReplayFrame extends Serializable {
     ]);
   }
   static decode(e) {
-    const t = {};
+    const t = {
+      type: "",
+      frame: 0,
+      data: {}
+    };
     switch (
+      // @ts-expect-error
       ((t.type = e.readTable(this.$$type)),
+      // @ts-expect-error
       (t.frame = e.readDInt(this.$frame)),
       t.type)
     ) {
       case "keydown":
-      case "keyup": {
-        const i = {
-          key: e.readTable(this.$$key),
-          subframe: e.readFloat(4, 10)
-        };
-        e.readBoolean() && (i.hoisted = true);
-        t.data = i;
-        break;
-      }
+        case "keyup":
+          {
+            // @ts-expect-error
+            const n = e.readTable(this.$$key);
+            const s = e.readBoolean();
+            const i = {
+              key: n,
+              subframe: e.readFloat(4, 10),
+              hoisted: false,
+            };
+            if (s) {
+              i.hoisted = true;
+            }
+            t.data = i;
+            break;
+          }
       case "start":
         t.data = {};
         break;
@@ -4389,7 +4817,7 @@ class GameReplayFrame extends Serializable {
     }
     return new this(t);
   }
-  constructor(e) {
+  constructor(e: any) {
     super();
     this.type = e.type;
     this.frame = e.frame;
@@ -4437,18 +4865,25 @@ class FullFrame extends Serializable {
     super.AddTable("piece", [null, ...Object.keys(tetrominoes)], "flexible");
   }
   static encode(e, t) {
-    const s = t.game.bag,
-      i = t.game.hold,
-      a = t.game.controlling,
-      l = t.game.handling;
+    const n = t.game.board;
+    const s = t.game.bag;
+    const i = t.game.hold;
+    const o = t.game.g;
+    const a = t.game.controlling;
+    const r = t.game.falling;
+    const l = t.game.handling;
     e.writeUInt(s.length, 12);
-    for (const t of s) e.writeTable(t, this.$$piece);
-    e.writeStruct(t.game.board, GameBoard);
+    for (const t of s) {
+      // @ts-expect-error
+      e.writeTable(t, this.$$piece);
+    }
+    e.writeStruct(n, GameBoard);
     e.writeBoolean(i.locked);
+    // @ts-expect-error
     e.writeTable(i.piece, this.$$piece);
-    e.writeDouble(t.game.g);
+    e.writeDouble(o);
     e.writeBoolean(a.inputSoftdrop);
-    e.writeBoolean(-1 === a.lastshift);
+    e.writeBoolean(a.lastshift === -1);
     e.writeBoolean(a.lShift.held);
     e.writeBoolean(a.rShift.held);
     e.writeUInt(t.diyusi, 4);
@@ -4456,7 +4891,7 @@ class FullFrame extends Serializable {
     e.writeDouble(a.rShift.arr);
     e.writeDouble(a.lShift.das);
     e.writeDouble(a.rShift.das);
-    e.writeStruct(t.game.falling, FallingPiece);
+    e.writeStruct(r, FallingPiece);
     e.writeFloat(l.arr, 6, 10);
     e.writeUInt(l.sdf, 6);
     e.writeBoolean(l.safelock);
@@ -4467,27 +4902,60 @@ class FullFrame extends Serializable {
     e.writeFloat(l.dcd, 8, 10);
     e.writeStruct(t.stats, GameStats);
   }
-  static decode(e) {
-    const t = {},
-      n = {
-        bag: [],
-        controlling: {
-          lShift: {
-            dir: -1
-          },
-          rShift: {
-            dir: 1
-          }
+  static decode(e: any) {
+    const t = {
+      diyusi: 0,
+      stats: {},
+      game: {}
+    };
+    const n = {
+      bag: [],
+      falling: {},
+      playing: false,
+      controlling: {
+        lShift: {
+          dir: -1,
+          held: false,
+          arr: 0,
+          das: 0,
         },
-        handling: {}
+        rShift: {
+          dir: 1,
+          held: false,
+          arr: 0,
+          das: 0,
+        },
+        inputSoftdrop: false,
+        lastshift: 1,
+        falling: {},
       },
-      s = n.controlling,
-      i = n.handling;
-    for (let t = 0; t < e.readUInt(12); t++)
+      board: {},
+      handling: {
+        arr: 0,
+        sdf: 0,
+        safelock: false,
+        cancel: false,
+        may20g: false,
+        das: 0,
+        dcd: 0,
+      },
+      g: 0,
+      hold: {
+        locked: false,
+        piece: null
+      },
+    };
+    const s = n.controlling;
+    const i = n.handling;
+    const o = e.readUInt(12);
+    for (let t = 0; t < o; t++) {
+      // @ts-expect-error
       n.bag.push(e.readTable(this.$$piece));
+    }
     n.board = e.readStruct(GameBoard);
     n.hold = {
       locked: e.readBoolean(),
+      // @ts-expect-error
       piece: e.readTable(this.$$piece)
     };
     n.g = e.readDouble();
@@ -4520,25 +4988,44 @@ class GameBoard extends Serializable {
   static init() {
     super.AddTable("blk", [false, null, ...minocolors]);
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
     const n = t[0]?.length ?? 0;
-    if (!n) return e.writeUInt(0, this.MAX_WIDTH);
+    const s = t.length;
+    if (!n) {
+      return e.writeUInt(0, this.MAX_WIDTH);
+    }
     e.writeUInt(n, this.MAX_WIDTH);
-    e.writeUInt(t.length, this.MAX_HEIGHT);
-    for (const n of t)
-      if (n.some((e) => null !== e))
-        for (const t of n) e.writeTable(t, this.$$blk);
-      else e.writeTable(false, this.$$blk);
+    e.writeUInt(s, this.MAX_HEIGHT);
+    for (const n of t) {
+      if (n.some((e: any) => e !== null)) {
+        for (const t of n) {
+          // @ts-expect-error
+          e.writeTable(t, this.$$blk);
+        }
+      } else {
+        // @ts-expect-error
+        e.writeTable(false, this.$$blk);
+      }
+    }
   }
-  static decode(e) {
-    const t = [],
-      n = e.readUInt(this.MAX_WIDTH);
-    if (!n) return t;
-    for (let i = 0; i < e.readUInt(this.MAX_HEIGHT); i++)
-      if (false !== e.peekTable(this.$$blk)) {
+  static decode(e: any) {
+    const t = [];
+    const n = e.readUInt(this.MAX_WIDTH);
+    if (!n) {
+      return t;
+    }
+    const s = e.readUInt(this.MAX_HEIGHT);
+    for (let i = 0; i < s; i++) {
+      if (e.peekTable(this.$$blk) !== false) {
         t[i] = [];
-        for (let s = 0; s < n; s++) t[i][s] = e.readTable(this.$$blk);
-      } else e.seek(4, 2), (t[i] = new Array(n).fill(null));
+        for (let s = 0; s < n; s++) {
+          t[i][s] = e.readTable(this.$$blk);
+        }
+      } else {
+        e.seek(4, 2);
+        t[i] = new Array(n).fill(null);
+      }
+    }
     return t;
   }
 }
@@ -4546,7 +5033,8 @@ class FallingPiece extends Serializable {
   static init() {
     super.AddTable("piece", [null, ...Object.keys(tetrominoes)], "flexible");
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
+    // @ts-expect-error
     e.writeTable(t.type, this.$$piece);
     e.writeInt(t.x, GameBoard.MAX_WIDTH);
     e.writeUInt(t.r, 2);
@@ -4554,29 +5042,46 @@ class FallingPiece extends Serializable {
     e.writeUInt(t.irs, 2);
     e.writeUInt(t.kick, 5);
     e.writeUInt(t.keys, 16);
-    e.writeUInt(t.flags, R.FLAGS_COUNT);
+    e.writeUInt(t.flags, 13);
     e.writeUInt(t.safelock, 3);
     e.writeUInt(t.lockresets, 5);
     e.writeUInt(t.rotresets, 6);
     e.writeDouble(t.y);
     e.writeDouble(t.locking);
   }
-  static decode(e) {
-    return {
-      type: e.readTable(this.$$piece),
-      x: e.readInt(GameBoard.MAX_WIDTH),
-      r: e.readUInt(2),
-      hy: e.readUInt(GameBoard.MAX_HEIGHT),
-      irs: e.readUInt(2),
-      kick: e.readUInt(5),
-      keys: e.readUInt(16),
-      flags: e.readUInt(R.FLAGS_COUNT),
-      safelock: e.readUInt(3),
-      lockresets: e.readUInt(5),
-      rotresets: e.readUInt(6),
-      y: e.readDouble(),
-      locking: e.readDouble()
+  static decode(e: any) {
+    const t = {
+      type: "",
+      x: 0,
+      r: 0,
+      hy: 0,
+      irs: 0,
+      kick: 0,
+      keys: 0,
+      flags: 0,
+      safelock: 0,
+      lockresets: 0,
+      rotresets: 0,
+      y: 0,
+      locking: 0
     };
+    return (
+      // @ts-expect-error
+      (t.type = e.readTable(this.$$piece)),
+      (t.x = e.readInt(GameBoard.MAX_WIDTH)),
+      (t.r = e.readUInt(2)),
+      (t.hy = e.readUInt(GameBoard.MAX_HEIGHT)),
+      (t.irs = e.readUInt(2)),
+      (t.kick = e.readUInt(5)),
+      (t.keys = e.readUInt(16)),
+      (t.flags = e.readUInt(13)),
+      (t.safelock = e.readUInt(3)),
+      (t.lockresets = e.readUInt(5)),
+      (t.rotresets = e.readUInt(6)),
+      (t.y = e.readDouble()),
+      (t.locking = e.readDouble()),
+      t
+    );
   }
 }
 class GameStats extends Serializable {
@@ -4610,7 +5115,7 @@ class GameStats extends Serializable {
       "allclear"
     ];
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
     const n = t.garbage,
       i = t.finesse;
     e.writeDInt(t.lines, this.$short);
@@ -4649,36 +5154,38 @@ class GameStats extends Serializable {
       clears: {},
       garbage: {},
       finesse: {},
-      lines: e.readDInt(this.$short),
-      level_lines: e.readDInt(this.$short),
-      level_lines_needed: e.readDInt(this.$short),
-      inputs: e.readDInt(this.$long),
-      holds: e.readDInt(this.$long),
-      score: e.readDInt(this.$long),
-      level: e.readUInt(8),
-      combo: e.readDInt(this.$long),
-      topcombo: e.readDInt(this.$long),
-      combopower: e.readUInt(3),
-      btb: e.readDInt(this.$short),
-      topbtb: e.readDInt(this.$short),
-      btbpower: e.readUInt(8),
-      tspins: e.readDInt(this.$long),
-      piecesplaced: e.readDInt(this.$long)
     };
+    (t.lines = e.readDInt(this.$short)),
+      (t.level_lines = e.readDInt(this.$short)),
+      (t.level_lines_needed = e.readDInt(this.$short)),
+      (t.inputs = e.readDInt(this.$long)),
+      (t.holds = e.readDInt(this.$long)),
+      (t.score = e.readDInt(this.$long)),
+      (t.level = e.readUInt(8)),
+      (t.combo = e.readDInt(this.$long)),
+      (t.topcombo = e.readDInt(this.$long)),
+      (t.combopower = e.readUInt(3)),
+      (t.btb = e.readDInt(this.$short)),
+      (t.topbtb = e.readDInt(this.$short)),
+      (t.btbpower = e.readUInt(8)),
+      (t.tspins = e.readDInt(this.$long)),
+      (t.piecesplaced = e.readDInt(this.$long));
     for (const n of this._clears) t.clears[n] = e.readDInt(this.$short);
-    t.garbage.sent = e.readDInt(this.$long);
-    t.garbage.sent_nomult = e.readDInt(this.$long);
-    t.garbage.maxspike = e.readDInt(this.$long);
-    t.garbage.maxspike_nomult = e.readDInt(this.$long);
-    t.garbage.received = e.readDInt(this.$long);
-    t.garbage.attack = e.readDInt(this.$long);
-    t.garbage.cleared = e.readDInt(this.$long);
-    t.kills = e.readDInt(this.$short);
-    t.finesse.combo = e.readDInt(this.$long);
-    t.finesse.faults = e.readDInt(this.$long);
-    t.finesse.perfectpieces = e.readDInt(this.$long);
-    t.zenith = e.readStruct(Zenith);
-    return t;
+    return (
+      (t.garbage.sent = e.readDInt(this.$long)),
+      (t.garbage.sent_nomult = e.readDInt(this.$long)),
+      (t.garbage.maxspike = e.readDInt(this.$long)),
+      (t.garbage.maxspike_nomult = e.readDInt(this.$long)),
+      (t.garbage.received = e.readDInt(this.$long)),
+      (t.garbage.attack = e.readDInt(this.$long)),
+      (t.garbage.cleared = e.readDInt(this.$long)),
+      (t.kills = e.readDInt(this.$short)),
+      (t.finesse.combo = e.readDInt(this.$long)),
+      (t.finesse.faults = e.readDInt(this.$long)),
+      (t.finesse.perfectpieces = e.readDInt(this.$long)),
+      (t.zenith = e.readStruct(Zenith)),
+      t
+    );
   }
 }
 class Zenith extends Serializable {
@@ -4688,7 +5195,7 @@ class Zenith extends Serializable {
       max: 32
     });
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
     e.writeDouble(t.altitude);
     e.writeDouble(t.rank);
     e.writeDouble(t.peakrank);
@@ -4703,24 +5210,24 @@ class Zenith extends Serializable {
     e.writeBoolean(t.speedrun_seen);
     for (let n = 0; n < 9; n++) e.writeDInt(t.splits[n], this.$long);
   }
-  static decode(e) {
-    const t = {
-      altitude: e.readDouble(),
-      rank: e.readDouble(),
-      peakrank: e.readDouble(),
-      avgrankpts: e.readDouble(),
-      totalbonus: e.readDouble(),
-      targetingfactor: e.readFloat(16, 100),
-      targetinggrace: e.readFloat(16, 100),
-      floor: e.readUInt(4),
-      revives: e.readUInt(8),
-      revivesTotal: e.readUInt(8),
-      speedrun: e.readBoolean(),
-      speedrun_seen: e.readBoolean(),
-      splits: []
-    };
-    for (let n = 0; n < 9; n++) t.splits[n] = e.readDInt(this.$long);
-    return t;
+  static decode(e: any) {
+    const t = {};
+      (t.altitude = e.readDouble()),
+        (t.rank = e.readDouble()),
+        (t.peakrank = e.readDouble()),
+        (t.avgrankpts = e.readDouble()),
+        (t.totalbonus = e.readDouble()),
+        (t.targetingfactor = e.readFloat(16, 100)),
+        (t.targetinggrace = e.readFloat(16, 100)),
+        (t.floor = e.readUInt(4)),
+        (t.revives = e.readUInt(8)),
+        (t.revivesTotal = e.readUInt(8)),
+        (t.revivesMaxOfBoth = Math.max(t.revives, t.revivesTotal - t.revives)),
+        (t.speedrun = e.readBoolean()),
+        (t.speedrun_seen = e.readBoolean()),
+        (t.splits = []);
+      for (let n = 0; n < 9; n++) t.splits[n] = e.readDInt(this.$long);
+      return t;
   }
 }
 class IgeFrame extends Serializable {
@@ -4738,6 +5245,7 @@ class IgeFrame extends Serializable {
       "kev",
       "custom"
     ]);
+    // @ts-expect-error
     super.AddTable("int_type", [
       "garbage",
       "zenith.climb_pts",
@@ -4746,7 +5254,7 @@ class IgeFrame extends Serializable {
       "zenith.revive"
     ]);
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
     const s = t.type,
       i = t.data;
     switch (
@@ -4797,12 +5305,11 @@ class IgeFrame extends Serializable {
     }
   }
   static decode(e) {
-    const t = {
-      id: e.readDInt(this.$byte),
-      frame: e.readDInt(this.$byte),
-      type: e.readTable(this.$$type)
-    };
-    e: switch (t.type) {
+    const t = {};
+      t.id = e.readDInt(this.$byte);
+      t.frame = e.readDInt(this.$byte);
+      t.type = e.readTable(this.$$type);
+      e: switch (t.type) {
       case "interaction":
         t.data = e.readStruct(IgeInteractionData);
         break;
@@ -4832,13 +5339,17 @@ class IgeFrame extends Serializable {
         }
         break;
       }
-      case "target": {
-        const n = [];
-        for (let t = 0; t < e.readUInt(13); t++) n.push(e.readUInt(13));
-        t.data = {
-          targets: n
-        };
-        break;
+      case "target":
+          {
+            const n = [];
+            const s = e.readUInt(13);
+            for (let t = 0; t < s; t++) {
+              n.push(e.readUInt(13));
+            }
+            t.data = {
+              targets: n
+            };
+            break;
       }
       case "targeted":
         t.data = {
@@ -4870,89 +5381,104 @@ class IgeFrame extends Serializable {
     return t;
   }
 }
-class IgeInteractionData extends Ie {
+class IgeInteractionData extends Structure {
   static init() {
     super.AddProperty("byte", {
       min: 8,
       max: 24
     });
-    super.AddStructure({
+    const zi = {
+      mode: "fixed",
+      type: Transcoder.TYPES.DInt,
+      size: this.$byte
+    };
+    const Ii = {
+      mode: "optional",
+      type: Transcoder.TYPES.UInt,
+      size: 13
+    };
+    const Mi = {
+      mode: "optional",
+      type: Transcoder.TYPES.DInt,
+      size: this.$byte
+    };
+    const Di = {
+      mode: "optional",
+      type: Transcoder.TYPES.DInt,
+      size: this.$byte
+    };
+    const Ei = {
+      mode: "optional",
+      type: Transcoder.TYPES.DInt,
+      size: this.$byte
+    };
+    const Oi = {
+      mode: "optional",
+      type: Transcoder.TYPES.DInt,
+      size: this.$byte
+    };
+    const Pi = {
+      mode: "optional",
+      type: Transcoder.TYPES.Int,
+      size: GameBoard.MAX_WIDTH
+    };
+    const Wi = {
+      mode: "optional",
+      type: Transcoder.TYPES.UInt,
+      size: GameBoard.MAX_HEIGHT
+    };
+    const Ri = {
+      mode: "optional",
+      type: Transcoder.TYPES.UInt,
+      size: GameBoard.MAX_WIDTH
+    };
+    const $i = {
+      mode: "optional",
+      type: Transcoder.TYPES.String,
+      size: true
+    };
+    const Ni = {
+      mode: "optional",
+      type: Transcoder.TYPES.UInt,
+      size: 16
+    };
+    const Ui = {
+      mode: "optional",
+      type: Transcoder.TYPES.Boolean
+    };
+    const Xi = {
+      mode: "optional",
+      type: Transcoder.TYPES.UInt,
+      size: GameBoard.MAX_WIDTH
+    };
+    const ji = {
+      mode: "optional",
+      type: Transcoder.TYPES.Double
+    };
+    const qi = {
       type: {
         mode: "static",
         value: "garbage"
       },
-      amt: {
-        mode: "fixed",
-        type: Transcoder.TYPES.DInt,
-        size: this.$byte
-      },
-      gameid: {
-        mode: "optional",
-        type: Transcoder.TYPES.UInt,
-        size: 13
-      },
-      frame: {
-        mode: "optional",
-        type: Transcoder.TYPES.DInt,
-        size: this.$byte
-      },
-      cid: {
-        mode: "optional",
-        type: Transcoder.TYPES.DInt,
-        size: this.$byte
-      },
-      iid: {
-        mode: "optional",
-        type: Transcoder.TYPES.DInt,
-        size: this.$byte
-      },
-      ackiid: {
-        mode: "optional",
-        type: Transcoder.TYPES.DInt,
-        size: this.$byte
-      },
-      x: {
-        mode: "optional",
-        type: Transcoder.TYPES.Int,
-        size: GameBoard.MAX_WIDTH
-      },
-      y: {
-        mode: "optional",
-        type: Transcoder.TYPES.UInt,
-        size: GameBoard.MAX_HEIGHT
-      },
-      column: {
-        mode: "optional",
-        type: Transcoder.TYPES.UInt,
-        size: GameBoard.MAX_WIDTH
-      },
-      username: {
-        mode: "optional",
-        type: Transcoder.TYPES.String,
-        size: true
-      },
-      delay: {
-        mode: "optional",
-        type: Transcoder.TYPES.UInt,
-        size: 16
-      },
-      queued: {
-        mode: "optional",
-        type: Transcoder.TYPES.Boolean
-      },
-      size: {
-        mode: "optional",
-        type: Transcoder.TYPES.UInt,
-        size: GameBoard.MAX_WIDTH
-      },
-      zthalt: {
-        mode: "optional",
-        type: Transcoder.TYPES.Double
-      }
-    });
+      amt: zi,
+      gameid: Ii,
+      frame: Mi,
+      cid: Di,
+      iid: Ei,
+      ackiid: Oi,
+      x: Pi,
+      y: Wi,
+      column: Ri,
+      username: $i,
+      delay: Ni,
+      queued: Ui,
+      size: Xi,
+      zthalt: ji
+    };
+    super.AddStructure(qi);
   }
 }
-class IgeLines extends Ie {
+class IgeLines extends Structure {
   static init() {
     super.AddTable("action", ["add", "remove"]);
     super.AddProperty("byte", {
@@ -5041,7 +5567,7 @@ class IgeCustomData extends Serializable {
         return e.writeStruct(n, Tetrominoes);
     }
   }
-  static decode(e) {
+  static decode(e: any) {
     const t = {};
     switch (((t.type = e.readTable(this.$$type)), (t.data = {}), t.type)) {
       case "garbage":
@@ -5240,52 +5766,51 @@ class Tetrominoes extends Serializable {
   }
 }
 class IgeOptions extends Serializable {
-  static TypeOrders = [
-    "boolean",
-    "number",
-    "table",
-    "object",
-    "array",
-    "string"
-  ];
+  static TypeOrders = ["boolean", "number", "table", "object", "array", "string"];
   static OptsBook = OptionsList;
   static init() {
     super.AddTable("options", Object.keys(this.OptsBook));
-    super.AddTable(
-      "minoskin",
-      ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"],
-      "flexible"
-    );
+    super.AddTable("minoskin", ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"], "flexible");
     super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
     for (const [e, t] of Object.entries(this.OptsBook)) {
       if (t.allowed) {
         super.AddTable("_" + e, t.allowed);
-      } else t.possibles && super.AddTable("_" + e, t.possibles, "flexible");
+      } else if (t.possibles) {
+        super.AddTable("_" + e, t.possibles, "flexible");
+      }
     }
   }
   static *ParseOptions(e) {
-    for (const t of Object.keys(e).sort(
-      (e, s) => t.indexOf(n[e].type) - t.indexOf(n[s].type)
-    )) {
-      yield [t, e[t], n[t]];
+    const {
+      TypeOrders: t,
+      OptsBook: n
+    } = this;
+    const s = Object.keys(e).sort((e, s) => t.indexOf(n[e].type) - t.indexOf(n[s].type));
+    for (const t of s) {
+      const s = e[t];
+      const i = n[t];
+      yield [t, s, i];
     }
   }
   static encode(e, t) {
-    for (const [n, s, i] of this.ParseOptions(t))
-      switch ((e.writeTable(n, this.$$options), i.type)) {
+    for (const [n, s, i] of this.ParseOptions(t)) {
+      e.writeTable(n, this.$$options);
+      switch (i.type) {
         case "object":
-          if ("handling" === n)
-            e.writeFloat(s.arr, 6, 10),
-              e.writeUInt(s.sdf, 6),
-              e.writeBoolean(s.safelock),
-              e.writeBoolean(s.cancel),
-              e.writeBoolean(s.may20g),
-              e.writeFloat(s.das, 8, 10),
-              e.writeFloat(s.dcd, 8, 10);
-          else if ("minoskin" === n) {
+          if (n === "handling") {
+            e.writeFloat(s.arr, 6, 10);
+            e.writeUInt(s.sdf, 6);
+            e.writeBoolean(s.safelock);
+            e.writeBoolean(s.cancel);
+            e.writeBoolean(s.may20g);
+            e.writeFloat(s.das, 8, 10);
+            e.writeFloat(s.dcd, 8, 10);
+          } else if (n === "minoskin") {
             e.writeUInt(Object.keys(s).length, 8);
-            for (const [t, n] of Object.entries(s))
-              e.writeTable(t, this.$$minoskin), e.writeTable(n, this.$$skins);
+            for (const [t, n] of Object.entries(s)) {
+              e.writeTable(t, this.$$minoskin);
+              e.writeTable(n, this.$$skins);
+            }
           }
           break;
         case "array":
@@ -5304,35 +5829,38 @@ class IgeOptions extends Serializable {
           e.writeString(s);
           break;
         default:
-          throw new TypeError(
-            `Unknown type for key: ${n} value: ${s} | got -> ${i.type}`
-          );
+          throw new TypeError(`Unknown type for key: ${n} value: ${s} | got -> ${i.type}`);
       }
+    }
     e.writeTable(null, this.$$options);
   }
   static decode(e) {
-    const t = this.$$options.size,
-      s = {};
-    for (let i = e.peek(t); 0 !== i; i = e.peek(t)) {
-      const t = e.readTable(this.$$options),
-        i = this.OptsBook[t]?.type;
+    const t = this.$$options.size;
+    const n = this.OptsBook;
+    const s = {};
+    for (let i = e.peek(t); i !== 0; i = e.peek(t)) {
+      const t = e.readTable(this.$$options);
+      const i = n[t]?.type;
       switch (i) {
         case "object":
-          if ("handling" === t) {
-            s[t] = {
-              arr: e.readFloat(6, 10),
-              sdf: e.readUInt(6),
-              safelock: e.readBoolean(),
-              cancel: e.readBoolean(),
-              may20g: e.readBoolean(),
-              das: e.readFloat(8, 10),
-              dcd: e.readFloat(8, 10)
-            };
-          } else if ("minoskin" === t) {
+          if (t === "handling") {
             const n = {};
+            n.arr = e.readFloat(6, 10);
+            n.sdf = e.readUInt(6);
+            n.safelock = e.readBoolean();
+            n.cancel = e.readBoolean();
+            n.may20g = e.readBoolean();
+            n.das = e.readFloat(8, 10);
+            n.dcd = e.readFloat(8, 10);
             s[t] = n;
-            for (let t = 0; t < e.readUInt(8); t++) {
-              n[e.readTable(this.$$minoskin)] = e.readTable(this.$$skins);
+          } else if (t === "minoskin") {
+            const n = {};
+            const i = e.readUInt(8);
+            s[t] = n;
+            for (let t = 0; t < i; t++) {
+              const t = e.readTable(this.$$minoskin);
+              const s = e.readTable(this.$$skins);
+              n[t] = s;
             }
           }
           break;
@@ -5352,18 +5880,22 @@ class IgeOptions extends Serializable {
           s[t] = e.readString();
           break;
         default:
-          throw new TypeError(`Unknown type for key: ${t} | got -> ${i}`);
+          s[t] = e.readString(); // wtf ok default should just be string i guess (it breaks some things but better than nothing i suppose)
       }
     }
     e.seek(t, 2);
     return s;
   }
 }
+// i think this is correct? i hope so at least (doesn't seem to help though)
+function strictShallowEqual(t: any , e: any) {
+  return t || e ? t === e : t === e || (t != t && e != e);
+}
 class EndFrameOptions extends IgeOptions {
-  static *ParseOptions(e) {
+  static *ParseOptions(e: any) {
     for (const [n, s, i] of super.ParseOptions(e))
       i.default !== s &&
-        (("object" === i.type && t.strictShallowEqual(i.default, s)) ||
+        (("object" === i.type && strictShallowEqual(i.default, s)) ||
           (yield [n, s, i]));
   }
 }
@@ -5387,8 +5919,9 @@ class EndFrame extends Serializable {
       "disconnect"
     ]);
   }
-  static encode(e, t) {
+  static encode(e: any, t: any) {
     e.writeBoolean(t.successful);
+    // @ts-expect-error
     e.writeTable(t.gameoverreason, this.$$gor);
     e.writeUInt(t.killer.gameid, 13);
     e.writeBoolean("spark" === t.killer.type, 1);
@@ -5406,13 +5939,25 @@ class EndFrame extends Serializable {
       FullFrame
     );
   }
-  static decode(e) {
+  static decode(e: any) {
     const t = {
-      killer: {},
-      aggregatestats: {},
-      successful: e.readBoolean(),
-      gameoverreason: e.readTable(this.$$gor)
+      killer: {
+        gameid: 0,
+        type: "",
+        username: ""
+      },
+      options: {},
+      gameoverreason: null,
+      successful: false,
+      aggregatestats: {
+        apm: 0,
+        pps: 0,
+        vsscore: 0
+      }
     };
+    t.successful = e.readBoolean();
+    // @ts-expect-error
+    t.gameoverreason = e.readTable(this.$$gor);
     t.killer.gameid = e.readUInt(13);
     t.killer.type = e.readBoolean() ? "spark" : "sizzle";
     t.killer.username = e.readString();
@@ -5426,12 +5971,13 @@ class EndFrame extends Serializable {
 }
 Transcoder.init();
 GameReplay.init();
-Ee.init(); // unused i think
-De.init(); // unused i think
+GameReplayBoard.init();
+ZenithSpecStats.init();
 GameReplayFrame.init();
 FullFrame.init();
 GameBoard.init();
 FallingPiece.init();
+EndFrameOptions.init();
 GameStats.init();
 Zenith.init();
 IgeFrame.init();
@@ -5443,6 +5989,6 @@ GameMap.init();
 IgeOptions.init();
 EndFrame.init();
 Serializable.LoadExtensions(n);
-EncodingManager.SetMsgpackr(new n.Packr(ye), new n.Unpackr(ye));
+EncodingManager.SetMsgpackr(Be, ke);
 
 export { EncodingManager as FullCodec };

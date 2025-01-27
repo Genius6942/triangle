@@ -68,6 +68,7 @@ export const garbageCalcV2 = (
     rawSpin === "none" ? null : rawSpin === "full" ? "normal" : rawSpin;
 
   switch (lines) {
+    // might be the issue here for z spin mini single being counted as 1 line?
     case 0:
       garbage =
         spin === "mini"
@@ -192,7 +193,6 @@ export const garbageCalcV2 = (
   }
 
   // TODO: what is e.atm.fightlines, what is garbagebonus
-
   return {
     garbage: l,
     bonus: garbageBonus

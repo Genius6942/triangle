@@ -14,7 +14,7 @@ export class Relationship {
   username: string;
   /** Avatar ID of the account on the other side of the relationship */
   avatar: number;
-  /** The DMs that have been sent and recieved. You may need to call `loadDms` to populate this information */
+  /** The DMs that have been sent and received. You may need to call `loadDms` to populate this information */
   dms: SocialTypes.DM[];
 
   /** Promise that resolves when the dms have been loaded. This will not resovle if `Relationship.lazyLoadDms` is set to true. */

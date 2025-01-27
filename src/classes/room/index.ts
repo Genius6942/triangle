@@ -86,6 +86,7 @@ export class Room {
   private init() {
     const emitPlayers = () =>
       this.client.emit("client.room.players", this.players);
+    let abortTimeout: NodeJS.Timeout | null = null;
     this.listen("room.update.host", (data) => {
       this.owner = data;
     });
@@ -158,8 +159,14 @@ export class Room {
     });
 
     this.listen("game.abort", () => {
+      if (abortTimeout) return; 
+    
+      abortTimeout = setTimeout(() => {
+        abortTimeout = null;
+      }, 50);
+    
       this.client.emit("client.game.abort");
-
+    
       if (!this.client.game) return;
       this.client.game = this.client.game.destroy();
       this.client.emit("client.game.over", { reason: "abort" });

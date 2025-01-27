@@ -1,4 +1,4 @@
-export * from "./garbage";
+export * from "./damageCalc";
 export * from "./kicks";
 export * from "./tetromino";
 export * from "./seed";

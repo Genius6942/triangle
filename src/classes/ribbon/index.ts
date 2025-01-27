@@ -8,12 +8,7 @@ import { vmPack } from "./vm-pack";
 import { EventEmitter } from "node:events";
 
 import chalk from "chalk";
-import {
-  client as WebSocket,
-  connection as WebSocketConnection
-} from "websocket";
-import { WebSocket as WS } from "ws";
-import { findLastIndex } from "lodash";
+import { client as WebSocket, connection as Connection } from "websocket";
 
 const RIBBON_CLOSE_CODES = {
   1000: "Ribbon closed normally",
@@ -34,8 +29,7 @@ const RIBBON_CLOSE_CODES = {
 } as const;
 
 export class Ribbon {
-  private ws: WS | null = null;
-  private websocket: WebSocketConnection | null = null;
+  private ws: Connection | null = null;
   private token: string;
   private userAgent: string;
   private api: API;
@@ -51,11 +45,8 @@ export class Ribbon {
     token?: string;
     tokenid?: string;
     signature?: Promise<APITypes.Server.Signature>;
-    authed: boolean;
     migrated?: boolean;
-  } = {
-    authed: false
-  };
+  } = {};
 
   private session: {
     ready?: boolean;
@@ -125,28 +116,30 @@ export class Ribbon {
     {
       force = false,
       level = "info"
-    }: { force?: boolean; level?: "info" | "warning" | "error" } = {
+    }: { force: boolean; level: "info" | "warning" | "error" } = {
       force: false,
       level: "info"
     }
   ) {
     if (!this.verbose && !force) return;
     const func =
-      level === "error"
-        ? chalk.red
+      level === "info"
+        ? chalk.blue
         : level === "warning"
           ? chalk.yellow
-          : chalk.blue;
+          : chalk.red;
     console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
   async connect() {
     const envPromise = this.api.server.environment();
+    // this is for vm checking against codec-2
+    // const vmPromise = vmPack(this.userAgent, { globalVM: this.globalVM });
     const vmPromise =
       this.codecMethod === "vm"
         ? vmPack(this.userAgent, { globalVM: this.globalVM })
         : Promise.resolve(undefined);
-    const spool = this.spool.endpoint
+       const spool = this.spool.endpoint
       ? Promise.resolve({
           endpoint: this.spool.endpoint,
           token: this.spool.token
@@ -161,68 +154,52 @@ export class Ribbon {
     this.codecVM = await vmPromise;
     this.spool = { ...this.spool, ...(await spool) };
 
-    this.log(
-      `Connecting to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
-    );
+    if (this.verbose) {
+      this.log(
+        `Connecting to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+      );
+    }
 
-    if (this.codecMethod === "json") {
-      const wsClient = new WebSocket();
+    const wsClient = new WebSocket();
 
-      wsClient.on("connectFailed", (error: { toString: () => string }) => {
-        this.log("Connect error: " + error.toString(), {
+    wsClient.on("connectFailed", (error: { toString: () => string }) => {
+      this.log("Connect error: " + error.toString(), {
+        force: true,
+        level: "error"
+      });
+      setTimeout(() => this.connect(), 1000);
+    });
+
+    wsClient.on("connect", (connection) => {
+      this.ws = connection;
+      this.onWSOpen();
+
+      connection.on("error", (error) => {
+        this.log("Connection error: " + error.toString(), {
           force: true,
           level: "error"
         });
-        setTimeout(() => this.connect(), 1000);
+        this.die();
       });
 
-      wsClient.on("connect", (connection) => {
-        this.websocket = connection;
-        this.onWSOpen();
-
-        connection.on("error", (error) => {
-          this.log("connection error: " + error.toString(), {
-            force: true,
-            level: "error"
-          });
-          this.die();
-        });
-
-        connection.on("close", (code) => {
-          this.onWSClose(code);
-        });
-
-        connection.on("message", (message) => {
-          if (message.type === "utf8" && message.utf8Data) {
-            this.onWSMessage(Buffer.from(message.utf8Data));
-          } else if (message.type === "binary" && message.binaryData) {
-            // amadeus
-            this.onWSMessage(Buffer.from(message.binaryData));
-          } else {
-            this.log(`unkown message type: ${message.type}`, {
-              force: true,
-              level: "error"
-            });
-          }
-        });
+      connection.on("close", (code) => {
+        this.onWSClose(code);
       });
 
-      wsClient.connect(`wss://${this.spool.endpoint}`, undefined, undefined, {
-        // why does this work
-        "user-agent": this.userAgent,
-        authorization: `Bearer ${this.spool.token}`
-      });
-    } else {
-      this.ws = new WS(`wss:${this.spool.endpoint}`, this.spool.token, {
-        headers: {
-          "user-agent": this.userAgent
+      connection.on("message", (message) => {
+        if (message.type === "utf8" && message.utf8Data) {
+          this.onWSMessage(Buffer.from(message.utf8Data));
+        } else if (message.type === "binary" && message.binaryData) {
+          // @ts-ignore
+          this.onWSMessage(Buffer.from(message.binaryData));
         }
       });
+    });
 
-      this.ws!.on("open", this.onWSOpen.bind(this));
-      this.ws!.on("message", this.onWSMessage.bind(this));
-      this.ws!.on("close", this.onWSClose.bind(this));
-    }
+    wsClient.connect(`wss://${this.spool.endpoint}`, undefined, undefined, {
+      "user-agent": this.userAgent,
+      authorization: `Bearer ${this.spool.token}`
+    });
   }
 
   static SLOW_CODEC_THRESHOLD = 100;
@@ -242,7 +219,7 @@ export class Ribbon {
         break;
       default:
         res = this.codec.encode(msg, data);
-    } // this looks nicer
+    }
     const end = performance.now();
     if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
       this.log(`Slow encode: ${msg} (${end - start}ms)`, {
@@ -253,28 +230,64 @@ export class Ribbon {
     return res;
   }
   decode(data: Buffer) {
-    const start = performance.now();
-    const res =
-      this.codecMethod === "vm"
-        ? this.codecVM!.decode(data)
-        : this.codecMethod === "codec-2"
-          ? this.codec2.decode(data)
-          : this.codecMethod === "json"
-            ? JSON.parse(data.toString())
-            : this.codec.decode(data);
-    const end = performance.now();
-    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
-      this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
+    try {
+      const start = performance.now();
+      let res;
+      
+      if (this.codecMethod === 'codec-2') {
+        try {
+          res = this.codec2.decode(data);
+          if (res.command === "packets") {
+            res.data.packets = res.data.packets.map((packet: any) =>
+              Buffer.from([...packet])
+            );
+          }
+        } catch (e) {
+          if (this.codecVM) {
+            res = this.codecVM.decode(data);
+            console.log("Decoded with VM", res);
+          } else {
+            throw e;
+          }
+        }
+      } else {
+        res = (() => {
+          switch (this.codecMethod) {
+            case "vm":
+              return this.codecVM!.decode(data);
+            case "json":
+              return JSON.parse(data.toString());
+            default:
+              return this.codec.decode(data);
+          }
+        })();
+      }
+
+      const end = performance.now();
+      if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
+        this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
+          force: true,
+          level: "warning"
+        });
+      }
+      return res;
+    } catch (e: any) {
+      this.log(`Error decoding message: ${e.stack || e.message || e}`, {
         force: true,
-        level: "warning"
+        level: "error"
       });
+      this.log(
+        `Data (${typeof data} | ${data instanceof Buffer}): ${JSON.stringify(data)}`,
+        {
+          force: true,
+          level: "error"
+        }
+      );
     }
-    return res;
   }
 
   private pipe(msg: string, data?: Record<string, any>) {
-    if (!this.ws && !this.websocket)
-      return this.session.messageQueue.push({ command: msg, data });
+    if (!this.ws) return this.session.messageQueue.push({ command: msg, data });
 
     const encoded = this.encode(msg, data);
     if (Buffer.isBuffer(encoded) && encoded[0] & Codec.FLAGS.F_ID) {
@@ -282,9 +295,11 @@ export class Ribbon {
       new Bits(encoded).seek(8).write(id, 24);
     }
     if (this.codecMethod === "json") {
-      this.websocket!.sendUTF(encoded.toString());
+      this.ws.sendUTF(encoded.toString());
     } else {
-      this.ws!.send(encoded);
+      this.ws.sendBytes(
+        Buffer.isBuffer(encoded) ? encoded : Buffer.from(encoded)
+      );
     }
     if (msg !== "ping")
       this.listeners
@@ -299,14 +314,15 @@ export class Ribbon {
   }
 
   private async onWSOpen() {
-    this.log(
-      `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
-    );
+    if (this.verbose)
+      this.log(
+        `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+      );
     this.session.open = true;
     this.session.flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
     this.session.flags &= ~Ribbon.FLAGS.TIMING_OUT;
 
-    if (!this.spool.authed) {
+    if (!this.spool.tokenid) {
       this.pipe("new");
       this.pipe("server.authorize", {
         token: this.token,
@@ -314,7 +330,6 @@ export class Ribbon {
         signature: await this.spool.signature,
         i: undefined
       });
-      this.spool.authed = true;
     } else {
       this.pipe("session", {
         ribbonid: this.session.id,
@@ -324,22 +339,25 @@ export class Ribbon {
     this.session.lastPong = performance.now();
 
     this.heartbeat = setInterval(() => {
-      if (!this.websocket?.connected && this.ws?.readyState === WS.OPEN) return;
-      if (performance.now() - this.session.lastPong! > 30000) {
-        (this.ws || this.websocket)!.close(3001, "pong timeout");
-      } else {
-        this.ping();
+      if (this.ws!.connected) {
+        if (performance.now() - this.session.lastPong! > 30000) {
+          this.ws!.close(3001, "pong timeout");
+        } else {
+          this.ping();
+        }
       }
     }, 2500);
   }
 
   private handleMigrate = async (newEndpoint: string) => {
     if (this.spool.migrated) {
-      this.log(
-        `Already migrated to <${
-          this.spool.endpoint?.split(".")[0]
-        }/${this.spool.endpoint?.split("/").at(-1)}>`
-      );
+      if (this.verbose) {
+        this.log(
+          `Already migrated to <${
+            this.spool.endpoint?.split(".")[0]
+          }/${this.spool.endpoint?.split("/").at(-1)}>`
+        );
+      }
       return;
     }
     this.spool.endpoint = `${this.spool.endpoint!.split("/ribbon/")[0]}${newEndpoint}`;
@@ -350,43 +368,73 @@ export class Ribbon {
   };
 
   private onWSMessage(data: any) {
-    this.log(
-      "Received message: " +
-        (data.toString() === "[object Object]"
-          ? JSON.stringify(data, null, 2)
-          : data.toString())
-    );
-    const item =
-      this.codecMethod === "json" && !(data instanceof Buffer)
-        ? data
-        : this.decode(data);
-    if (item.command === "packets") {
-      for (const packet of item.data.packets) {
-        this.onWSMessage(packet);
-      }
-    } else {
-      this.handleMessage(item);
+    try {
+      const reProcessPacket = (packetData: any) => {
+        const item = this.codecMethod === "json"
+          ? (packetData instanceof Buffer ? JSON.parse(packetData.toString()) : packetData)
+          : this.decode(packetData);
+
+        if (!item) return;
+
+        if (item.command === "packets") {
+          const packets = item.data.packets;
+          packets.forEach((packet: any) => {
+            let command = "ribbon:unparsed";
+            try {
+              const decoded = this.codecMethod === "json"
+                ? packet
+                : this.decode(packet);
+              
+              command = decoded.command;
+
+              if (decoded.command === "packets") {
+                reProcessPacket(packet);
+              } else {
+                this.handleMessage(decoded);
+              }
+            } catch (e) {
+              console.error(
+                `failed to unpack packet with command ${command}`,
+                packet,
+                e
+              );
+            }
+          });
+        } else {
+          this.handleMessage(item);
+        }
+      };
+
+      reProcessPacket(data);
+    } catch (e: any) {
+      this.log(`error handling message: ${e.stack || e.message || e}`, {
+        force: true,
+        level: "error"
+      });
+      this.log(
+        `data (${typeof data} | ${data instanceof Buffer}): ${JSON.stringify(data)}`,
+        {
+          force: true,
+          level: "error"
+        }
+      );
     }
   }
 
   private onWSClose(code: number) {
-    if (!this.spool.authed) {
+    if (!this.spool.tokenid) {
       return this.connect();
     }
 
-    (this.ws || this.websocket)!.removeAllListeners();
+    this.ws!.removeAllListeners();
     this.session.open = false;
     clearInterval(this.heartbeat);
 
-    const strCode = code.toString() as any;
     const closeReason =
-      strCode in RIBBON_CLOSE_CODES
-        ? RIBBON_CLOSE_CODES[
-            strCode as unknown as keyof typeof RIBBON_CLOSE_CODES
-          ]
-        : "Unknown reason: " + strCode;
+      code in RIBBON_CLOSE_CODES
+        ? RIBBON_CLOSE_CODES[code as unknown as keyof typeof RIBBON_CLOSE_CODES]
+        : "Unknown reason: " + code;
 
-    this.log("Closed: " + closeReason, { level: "warning" });
     this.emitter.emit("client.close", closeReason);
   }
 
@@ -407,9 +455,7 @@ export class Ribbon {
         this.session.lastPong = performance.now();
         return;
       case "session":
-        this.session.id = m.data.ribbonid;
-        this.spool.tokenid = m.data.tokenid;
-        if (!this.spool.authed) {
+        if (!this.spool.tokenid) {
           this.pipe("server.authorize", {
             token: this.token,
             handling: this.handling,
@@ -417,11 +463,12 @@ export class Ribbon {
             i: undefined
           });
         }
+        this.session.id = m.data.ribbonid;
+        this.spool.tokenid = m.data.tokenid;
         return;
       case "server.authorize":
         if (m.data.success) {
           this.log("Authorized");
-          this.spool.authed = true;
           this.emit("social.presence", {
             status: "online",
             detail: "menus"
@@ -489,7 +536,6 @@ export class Ribbon {
 
     for (let i = 0; i < this.session.messageQueue!.length; i++) {
       const message = this.session.messageQueue!.shift();
-      // log('sendMessage', message)
       this.pipe(message.command, message.data);
     }
   }
@@ -527,8 +573,11 @@ export class Ribbon {
 
   destroy() {
     (this.emitter as unknown as EventEmitter).removeAllListeners();
-    this.spool.authed = false;
     this.ws?.removeAllListeners();
     this.die(true);
+  }
+
+  get endpoint() {
+    return this.spool.endpoint;
   }
 }

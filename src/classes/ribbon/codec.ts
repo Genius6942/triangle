@@ -1,4 +1,5 @@
 // amadeus-codec
+// @ts-nocheck
 import { pack } from "../../utils";
 
 export type CodecType = "vm" | "custom" | "codec-2" | "json";
@@ -123,28 +124,34 @@ export class Bits {
   }
 
   peek(t: number = 1, e?: number): number {
-    if ((e = typeof e === "number" ? 0 | e : this._offset) + t > this._length)
+    if ((e = typeof e == "number" ? e | 0 : this._offset) + t > this._length) {
       throw new RangeError(
         `Cannot read ${t} bits, only ${this.remaining} bit(s) left`
       );
-    if (t > Bits.u)
+    }
+    if (t > Bits.u) {
       throw new RangeError(
-        `Reading ${t} bits would overflow result, max is ` + Bits.u
+        `Reading ${t} bits would overflow result, max is ${Bits.u}`
       );
-    const r = 7 & e,
-      n = Math.min(8 - r, t);
-    let i = (this.buffer[e >> 3] >> (8 - n - r)) & ((1 << n) - 1),
-      o = ((e += n), t - n);
-    while (o >= 8) {
-      i = (i << 8) | this.buffer[e >> 3];
+    }
+    const n = e & 7;
+    const i = Math.min(8 - n, t);
+    const a = (1 << i) - 1;
+    let o = (this.buffer[e >> 3] >> (8 - i - n)) & a;
+    e += i;
+    let s = t - i;
+    while (s >= 8) {
+      o <<= 8;
+      o |= this.buffer[e >> 3];
       e += 8;
-      o -= 8;
+      s -= 8;
     }
-    if (o > 0) {
-      const r2 = 8 - o;
-      i = (i << o) | ((this.buffer[e >> 3] >> r2) & (255 >> r2));
+    if (s > 0) {
+      const t = 8 - s;
+      o <<= s;
+      o |= (this.buffer[e >> 3] >> t) & (255 >> t);
     }
-    return i;
+    return o;
   }
 
   read(t: number = 1): number {

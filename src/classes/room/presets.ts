@@ -48,7 +48,7 @@ export const roomConfigPresets: {
     { index: "options.allclears", value: 1 },
     { index: "options.usebombs", value: 0 }
   ],
-  "tetra league": [
+  "tetra league (season 1)": [
     { index: "options.presets", value: "tetra league (season 1)" },
     { index: "match.modename", value: "TETRA LEAGUE" },
     { index: "gamebgm", value: "RANDOMbattle" },
@@ -94,7 +94,12 @@ export const roomConfigPresets: {
     { index: "options.boardwidth", value: "10" },
     { index: "options.boardheight", value: "20" },
     { index: "options.allclears", value: true },
-    { index: "options.usebombs", value: false }
+    { index: "options.allclear_garbage", value: "10" },
+    { index: "options.allclear_b2b", value: "0" },
+    { index: "options.openerphase", value: false },
+    { index: "options.usebombs", value: false },
+    { index: "options.roundmode", value: "down" },
+    { index: "options.garbagespecialbonus", value: false },
   ],
   classic: [
     { index: "options.presets", value: "classic" },

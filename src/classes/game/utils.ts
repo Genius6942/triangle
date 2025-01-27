@@ -9,7 +9,7 @@ export const getFullFrame = (
   data: {
     game: {
       board: Array.from(
-        { length: options.boardheight + options.boardbuffer },
+        { length: options.boardheight + 20 },
         () => Array.from({ length: options.boardwidth }, () => null)
       ),
       bag: new Queue({

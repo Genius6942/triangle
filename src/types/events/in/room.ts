@@ -73,11 +73,11 @@ export interface Room {
   "room.chat.gift": {
     /** UID of who gave supporter */
     sender: number;
-    /** UID of who recieved supporter */
+    /** UID of who received supporter */
     target: number;
     months: number;
   };
 
-	// TODO: find out what is this?
-	"party.members": any[];
+  // TODO: find out what is this?
+  "party.members": any[];
 }

@@ -1,6 +1,5 @@
 import { Engine } from "../../engine";
 import { Events, Game as GameTypes } from "../../types";
-import { IGEHandler } from "../../utils";
 import { Client } from "../client";
 import { getFullFrame } from "./utils";
 
@@ -13,8 +12,9 @@ const moveElementToFirst = <T>(arr: T[], n: number) => [
 export class Game {
   private client: Client;
   private listeners: Parameters<typeof this.client.on>[] = [];
-  private igeHandler: IGEHandler;
   private frameQueue: GameTypes.Replay.Frame[] = [];
+  private incomingGarbage: (GameTypes.Replay.Frames.IGE & { frame: number })[] =
+    [];
   private timeout: NodeJS.Timeout | null = null;
   private messageQueue: GameTypes.Client.Events[] = [];
   // private igeBuffer: Events.in.Game["game.replay.ige"][] = [];
@@ -68,12 +68,6 @@ export class Game {
     this.gameid = self.gameid;
     this.options = self.options;
     this.readyData = ready;
-
-    this.igeHandler = new IGEHandler(
-      ready.players
-        .filter((player) => player.gameid !== this.gameid)
-        .map((player) => player.gameid)
-    );
 
     this.engine = this.createEngine(this.options);
 
@@ -186,10 +180,14 @@ export class Game {
 
   createEngine(options: GameTypes.ReadyOptions) {
     return new Engine({
+      multiplayer: {
+        opponents: this.readyData.players.map((o) => o.gameid),
+				passthrough: options.passthrough
+      },
       board: {
         width: options.boardwidth,
         height: options.boardheight,
-        buffer: options.boardbuffer
+        buffer: 20 // there is always a buffer of 20 over the visible board
       },
       kickTable: options.kickset as any,
       options: {
@@ -200,6 +198,7 @@ export class Game {
           increase: options.garbageincrease,
           marginTime: options.garbagemargin
         },
+				clutch: options.clutch,
         garbageTargetBonus: options.garbagetargetbonus,
         spinBonuses: options.spinbonuses,
         garbageAttackCap: Infinity // TODO idk what but this is wrong
@@ -229,7 +228,9 @@ export class Game {
           within: options.messiness_inner
         },
         seed: options.seed,
-        rounding: options.roundmode
+        rounding: options.roundmode,
+        openerPhase: options.openerphase,
+        specialBonus: options.garbagespecialbonus
       },
       pc: options.allclears
         ? {
@@ -308,18 +309,16 @@ export class Game {
 
     keys.splice(0, keys.length, ...keys.reverse());
 
-    const { garbage, pieces } = this.engine.tick([...keys]);
+    const { garbage, pieces } = this.engine.tick([
+      ...this.incomingGarbage.splice(0, this.incomingGarbage.length),
+      ...keys
+    ]);
 
     this.stats.piecesPlaced += pieces;
 
-    garbage.sent.forEach((g) => {
-      this.serverTargets.forEach((target) => {
-        this.igeHandler.send({ playerID: target, amount: g });
-      });
-    });
 
     this.messageQueue.push(
-      ...garbage.recieved.map((g) => ({
+      ...garbage.received.map((g) => ({
         type: "garbage" as const,
         ...g
       }))
@@ -365,12 +364,6 @@ export class Game {
   }
 
   private handleIGE(data: Events.in.Game["game.replay.ige"]) {
-    const passthrough = {
-      network: ["consistent", "zero"].includes(this.options.passthrough),
-      replay: this.options.passthrough !== "full",
-      travel: ["zero", "limited"].includes(this.options.passthrough)
-    };
-
     data.iges.forEach((ige) => {
       const frame: GameTypes.Replay.Frame = {
         frame: this.frame,
@@ -379,27 +372,11 @@ export class Game {
       };
 
       this.pipe(frame);
+			this.incomingGarbage.push({ ...frame,});
 
       if (ige.type === "interaction_confirm") {
-        if (ige.data.type === "garbage") {
-          const amount = passthrough.network
-            ? this.igeHandler.receive({
-                playerID: ige.data.gameid,
-                ackiid: ige.data.ackiid,
-                iid: ige.data.iid,
-                amount: ige.data.amt
-              })
-            : ige.data.amt;
-
-          if (amount === 0) return;
-
-          this.engine.receiveGarbage({
-            amount,
-            frame: this.frame,
-            size: ige.data.size
-          });
-        } else if (ige.data.type === "targeted") {
-          // idk something with enemies?
+       if (ige.data.type === "targeted") {
+          // TODO: implement
         }
       } else if (ige.type === "target") {
         this.serverTargets = ige.data.targets;

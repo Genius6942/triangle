@@ -15,7 +15,7 @@ export namespace Game {
   /** Game config preset */
   export type Preset =
     | "default"
-    | "tetra league"
+    | "tetra league (season 1)"
     | "enforced delays"
     | "4wide"
     | "100 battle royale"
@@ -36,7 +36,10 @@ export namespace Game {
   export type SpinBonuses =
     | "T-spins"
     | "all"
+    | "all+"
     | "all-mini"
+    | "all-mini+"
+    | "mini-only"
     | "handheld"
     | "stupid"
     | "none";
@@ -51,7 +54,7 @@ export namespace Game {
   /** Only `versus` supported. Client will run in `practice` but undoing is not yet implemented. */
   export type GameMode = "versus" | "royale" | "practice";
 
-  /** Topout: Player tops themself out. Garbage smash: Player recieves garbage that causes them to top out. Winner: Player wins (does not die) */
+  /** Topout: Player tops themself out. Garbage smash: Player received garbage that causes them to top out. Winner: Player wins (does not die) */
   export type GameOverReason = "topout" | "garbagesmash" | "winner";
 
   export interface Options {
@@ -97,7 +100,7 @@ export namespace Game {
     garbageentry: GarbageEntry;
     garbageblocking: GarbageBlocking;
     garbagetargetbonus: GarbageTargetBonus;
-		garbagespecialbonus: boolean
+    garbagespecialbonus: boolean;
     presets: Preset;
     bagtype: BagType;
     spinbonuses: SpinBonuses;
@@ -143,10 +146,8 @@ export namespace Game {
 
   export interface ReadyOptions {
     version: number;
-    gameid: number;
     seed: number;
     seed_random: boolean;
-    score: number;
     are: number;
     lineclear_are: number;
     g: number;
@@ -174,7 +175,7 @@ export namespace Game {
     garbageattackcap: number;
     garbagetargetbonus: GarbageTargetBonus;
     garbageblocking: GarbageBlocking;
-		garbagespecialbonus: boolean;
+    garbagespecialbonus: boolean;
     passthrough: Passthrough;
     openerphase: number;
     roundmode: RoundingMode;
@@ -332,6 +333,7 @@ export namespace Game {
       userid: string;
       options: ReadyOptions;
       alive: boolean;
+      naturalorder: number;
     }[];
     isNew: boolean;
   }
