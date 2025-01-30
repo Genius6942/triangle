@@ -491,7 +491,10 @@ export class Engine {
         spin: this.lastSpin ? this.lastSpin.type : "none",
         frame: this.frame
       },
-      { ...this.gameOptions, b2b: this.b2b.chaining }
+      {
+        ...this.gameOptions,
+        b2b: { chaining: this.b2b.chaining, charging: !!this.b2b.charging }
+      }
     );
     const pc = this.board.perfectClear;
     const gEvents =
@@ -517,7 +520,7 @@ export class Engine {
           Math.round(value / 3),
           value - 2 * Math.round(value / 3)
         ];
-        gEvents.push(...garbages);
+        gEvents.splice(0, 0, ...garbages);
         brokeB2B = false;
       }
     }

@@ -26,7 +26,7 @@ export const garbageData = {
     "classic guideline": [0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5],
     "modern guideline": [0, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4]
   }
-};
+} as const;
 
 export const garbageCalcV2 = (
   data: {
@@ -49,7 +49,10 @@ export const garbageCalcV2 = (
     };
     garbageAttackCap?: number;
     garbageBlocking: "combo blocking" | "limited blocking" | "none";
-    b2b: boolean;
+    b2b: {
+      chaining: boolean;
+      charging: boolean;
+    };
   }
 ) => {
   let garbage = 0;
@@ -114,7 +117,7 @@ export const garbageCalcV2 = (
   }
 
   if (lines > 0 && b2b > 0) {
-    if (b2bOptions) {
+    if (b2bOptions.chaining) {
       const b2bGains =
         garbageData.backtobackBonus *
         (Math.floor(1 + Math.log1p(b2b * garbageData.backtobackBonusLog)) +
@@ -146,6 +149,10 @@ export const garbageCalcV2 = (
           Math.max(0, Math.min(combo - 1, comboTableData.length - 1))
         ];
     }
+  }
+
+  if (b2bOptions.charging && b2b > 0 && spin === "mini" && garbage === 0) {
+    garbage++;
   }
 
   const garbageMultiplierValue = calculateIncrease(

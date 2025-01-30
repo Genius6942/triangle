@@ -57,6 +57,15 @@ export const basic = (defaults: APIDefaults) => {
           );
           if (copy.status === 404) throw new Error(`404 on GET to ${uri}`);
 
+          if (text.includes("<title>Server error</title>"))
+            throw new Error(
+              `The TETR.IO Servers are currently unavailable. Check https://status.osk.sh for updates. You can view more information at ${path.join(
+                os.homedir(),
+                ".trianglejs",
+                "errors",
+                `${now}.html`
+              )}`
+            );
           if (text.includes("<title>Maintenance</title>"))
             throw new Error(
               `The TETR.IO Servers are under maintanence. Check https://status.osk.sh for updates. You can view more information at ${path.join(
@@ -94,6 +103,7 @@ export const basic = (defaults: APIDefaults) => {
     }): Promise<Res<T>> => {
       const res = await fetch(`https://tetr.io/api/${uri}`, {
         method: "POST",
+        //@ts-ignore
         body: json ? JSON.stringify(body) : pack.pack(body),
         headers: {
           Accept: json ? "application/json" : "application/vnd.osk.theorypack",
