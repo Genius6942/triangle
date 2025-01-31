@@ -132,6 +132,7 @@ export class Engine {
     this.garbageQueue = new GarbageQueue(options.garbage);
 
     this.igeHandler = new IGEHandler(options.multiplayer?.opponents || []);
+
     if (options.multiplayer)
       this.multiplayer = {
         options: options.multiplayer,
@@ -235,8 +236,12 @@ export class Engine {
     const newTetromino = this.queue.shift()!;
     this.initiatePiece(newTetromino);
     if (canClutch && this.gameOptions.clutch) {
-      while (!legal(this.falling.absoluteBlocks, this.board.state)) {
-        this.falling.location[1]++;
+      try {
+        while (!legal(this.falling.absoluteBlocks, this.board.state)) {
+          this.falling.location[1]++;
+        }
+      } catch {
+        this.falling.location[1]--;
       }
     }
   }
@@ -498,7 +503,7 @@ export class Engine {
     );
     const pc = this.board.perfectClear;
     const gEvents =
-      garbage.garbage > 0
+      garbage.garbage > 0 || gSpecialBonus > 0
         ? [this.garbageQueue.round(garbage.garbage + gSpecialBonus)]
         : []; // TODO: do this after calculating increase instead, margin time issues
     const m = this.gameOptions.garbageMultiplier;
@@ -574,8 +579,12 @@ export class Engine {
     this.lastSpin = null;
     this.pieceCount++;
 
-    if (!legal(this.falling.absoluteBlocks, this.board.state))
+    try {
+      if (!legal(this.falling.absoluteBlocks, this.board.state))
+        res.topout = true;
+    } catch {
       res.topout = true;
+    }
     return res;
   }
 

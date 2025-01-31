@@ -333,7 +333,7 @@ export class Client {
     return this._handling;
   }
 
-  /** Change the bot's current room (do not use in room) */
+  /** Change the bot's current handling (do not use while in a room) */
   set handling(handling: GameTypes.Handling) {
     if (this.room)
       throw new Error(
