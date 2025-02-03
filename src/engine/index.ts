@@ -237,12 +237,12 @@ export class Engine {
     const newTetromino = this.queue.shift()!;
     this.initiatePiece(newTetromino);
     if (canClutch && this.gameOptions.clutch) {
-      try {
-        while (!legal(this.falling.absoluteBlocks, this.board.state)) {
-          this.falling.location[1]++;
-        }
-      } catch {
-        this.falling.location[1]--;
+      while (
+        Math.max(...this.falling.absoluteBlocks.map((block) => block[1])) <
+          this.board.fullHeight &&
+        !legal(this.falling.absoluteBlocks, this.board.state)
+      ) {
+        this.falling.location[1]++;
       }
     }
   }
@@ -550,6 +550,7 @@ export class Engine {
     if (lines > 0) {
       while (res.garbage.length > 0) {
         if (res.garbage[0] === 0) {
+          res.garbage.shift();
           continue;
         }
         const r = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
