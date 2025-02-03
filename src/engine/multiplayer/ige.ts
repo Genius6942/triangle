@@ -1,6 +1,13 @@
+import { polyfills } from "../utils";
+
 interface GarbageRecord {
   amount: number;
   iid: number;
+}
+
+interface PlayerData {
+  incoming: number;
+  outgoing: GarbageRecord[];
 }
 
 /**
@@ -8,18 +15,33 @@ interface GarbageRecord {
  */
 export class IGEHandler {
   /** @hidden */
-  private players: Map<number, { incoming: number; outgoing: GarbageRecord[] }>;
+  private players: polyfills.Map<
+    number,
+    // { incoming: number; outgoing: GarbageRecord[] }
+		//! there was an issue where as an object some garbage numbers would magically turn into other numbers, wtf js
+    string
+  >;
   /** @hidden */
   private iid = 0;
+
+  /** @hidden */
+  private extract(data: string): PlayerData {
+    return JSON.parse(data);
+  }
+
+  /** @hidden */
+  private stringify(data: PlayerData): string {
+    return JSON.stringify(data);
+  }
 
   /**
    * Manages network IGE cancelling
    * @param players - list of player ids
    */
   constructor(players: number[]) {
-    this.players = new Map();
+    this.players = new polyfills.Map();
     players.forEach((player) => {
-      this.players.set(player, { incoming: 0, outgoing: [] });
+      this.players.set(player, this.stringify({ incoming: 0, outgoing: [] }));
     });
   }
 
@@ -31,6 +53,7 @@ export class IGEHandler {
    * @throws {Error} If the player is not found.
    */
   send({ playerID, amount }: { playerID: number; amount: number }) {
+    if (amount === 0) return;
     const player = this.players.get(playerID);
     const iid = ++this.iid;
 
@@ -40,11 +63,14 @@ export class IGEHandler {
           ...(this.players.keys() as any)
         ].join(", ")}`
       );
-    this.players.set(playerID, {
-      incoming: player.incoming,
-      outgoing: [...player.outgoing, { iid, amount }]
-    });
-    // console.log('sent: ', { iid: this.iid, players: Object.fromEntries(this.players) });
+
+    this.players.set(
+      playerID,
+      JSON.stringify({
+        incoming: JSON.parse(player).incoming,
+        outgoing: [...this.extract(player).outgoing, { iid, amount }]
+      })
+    );
   }
 
   /**
@@ -76,12 +102,14 @@ export class IGEHandler {
         ].join(", ")}`
       );
 
-    const incomingIID = Math.max(iid, player.incoming ?? 0);
+    const p = this.extract(player);
+
+    const incomingIID = Math.max(iid, p.incoming ?? 0);
 
     const newIGEs: GarbageRecord[] = [];
 
     let runningAmount = amount;
-    player.outgoing.forEach((item) => {
+    p.outgoing.forEach((item) => {
       if (item.iid <= ackiid) return;
       const amt = Math.min(item.amount, runningAmount);
       item.amount -= amt;
@@ -89,8 +117,10 @@ export class IGEHandler {
       if (item.amount > 0) newIGEs.push(item);
     });
 
-    this.players.set(playerID, { incoming: incomingIID, outgoing: newIGEs });
-    // console.log('recieved:', { iid: this.iid, players: Object.fromEntries(this.players) });
+    this.players.set(
+      playerID,
+      this.stringify({ incoming: incomingIID, outgoing: newIGEs })
+    );
 
     return runningAmount;
   }

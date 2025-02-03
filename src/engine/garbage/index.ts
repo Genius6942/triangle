@@ -85,8 +85,11 @@ export class GarbageQueue {
   }
 
   cancel(amount: number, pieceCount: number) {
-    if (pieceCount < this.options.openerPhase && this.size > amount)
+    let openerPhased = false;
+    if (pieceCount < this.options.openerPhase - 1 && this.size > amount) {
       amount *= 2;
+      openerPhased = true;
+    }
     while (amount > 0) {
       if (this.queue.length <= 0) break;
       if (amount >= this.queue[0].amount) {
@@ -98,7 +101,7 @@ export class GarbageQueue {
         break;
       }
     }
-    return amount;
+    return openerPhased ? 0 : amount;
   }
 
   private reroll_column() {

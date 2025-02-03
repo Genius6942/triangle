@@ -79,12 +79,12 @@ export class Engine {
   stats!: {
     combo: number;
     b2b: number;
+    pieces: number;
   };
   gameOptions!: GameOptions;
   garbageQueue!: GarbageQueue;
 
   frame!: number;
-  pieceCount!: number;
   checkpoints!: EngineCheckpoint[];
 
   initializer: EngineInitializeParams;
@@ -152,7 +152,8 @@ export class Engine {
 
     this.stats = {
       combo: -1,
-      b2b: -1
+      b2b: -1,
+      pieces: 0
     };
 
     this.pc = options.pc;
@@ -352,12 +353,9 @@ export class Engine {
   }
 
   maxSpin(...spins: SpinType[]) {
+    const score = (spin: SpinType) => ["none", "mini", "normal"].indexOf(spin);
     return spins.reduce((a, b) => {
-      if (a === "none") return b;
-      if (b === "none") return a;
-      if (a === "normal" && b === "mini") return "normal";
-      if (a === "mini" && b === "normal") return "normal";
-      return "normal";
+      return score(a) > score(b) ? a : b;
     });
   }
 
@@ -537,7 +535,7 @@ export class Engine {
     const res = {
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
-      garbage: gEvents,
+      garbage: gEvents.filter((g) => g > 0),
       dump: {
         garbage: garbage.garbage,
         lines,
@@ -554,7 +552,7 @@ export class Engine {
         if (res.garbage[0] === 0) {
           continue;
         }
-        const r = this.garbageQueue.cancel(res.garbage[0], this.pieceCount);
+        const r = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
         if (r === 0) res.garbage.shift();
         else {
           res.garbage[0] = r;
@@ -577,7 +575,7 @@ export class Engine {
     this.nextPiece(lines > 0);
 
     this.lastSpin = null;
-    this.pieceCount++;
+    this.stats.pieces++;
 
     try {
       if (!legal(this.falling.absoluteBlocks, this.board.state))

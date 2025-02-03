@@ -11,6 +11,7 @@ export const legal = (blocks: [number, number][], board: BoardSquare[][]) => {
     if (block[0] < 0) return false;
     if (block[0] >= board[0].length) return false;
     if (block[1] < 0) return false;
+    if (block[1] >= board.length) return false;
     if (board[block[1]][block[0]]) return false;
   }
 
@@ -26,45 +27,53 @@ export const performKick = (
   endRotation: Rotation,
   board: BoardSquare[][]
 ): { kick: [number, number]; id: string; index: number } | boolean => {
-  if (
-    legal(
-      blocks.map((block) => [
-        pieceLocation[0] + block[0],
-        pieceLocation[1] - block[1]
-      ]),
-      board
-    )
-  )
-    return true;
-
-  const kickID = `${startRotation}${endRotation}`;
-  const table = kicks[kicktable];
-  const customKicksetID = `${piece.toLowerCase()}_kicks` as keyof typeof table;
-  const kickset: [number, number][] =
-    customKicksetID in table
-      ? table[customKicksetID][
-          kickID as keyof (typeof table)[typeof customKicksetID]
-        ]
-      : (table.kicks[kickID as keyof typeof table.kicks] as [number, number][]);
-
-  for (let i = 0; i < kickset.length; i++) {
-    const [dx, dy] = kickset[i];
+  try {
     if (
       legal(
         blocks.map((block) => [
-          pieceLocation[0] + block[0] + dx,
-          pieceLocation[1] - block[1] - dy
+          pieceLocation[0] + block[0],
+          pieceLocation[1] - block[1]
         ]),
         board
       )
-    ) {
-      return {
-        kick: [dx, -dy],
-        id: kickID,
-        index: i
-      };
-    }
-  }
+    )
+      return true;
 
-  return false;
+    const kickID = `${startRotation}${endRotation}`;
+    const table = kicks[kicktable];
+    const customKicksetID =
+      `${piece.toLowerCase()}_kicks` as keyof typeof table;
+    const kickset: [number, number][] =
+      customKicksetID in table
+        ? table[customKicksetID][
+            kickID as keyof (typeof table)[typeof customKicksetID]
+          ]
+        : (table.kicks[kickID as keyof typeof table.kicks] as [
+            number,
+            number
+          ][]);
+
+    for (let i = 0; i < kickset.length; i++) {
+      const [dx, dy] = kickset[i];
+      if (
+        legal(
+          blocks.map((block) => [
+            pieceLocation[0] + block[0] + dx,
+            pieceLocation[1] - block[1] - dy
+          ]),
+          board
+        )
+      ) {
+        return {
+          kick: [dx, -dy],
+          id: kickID,
+          index: i
+        };
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
 };

@@ -151,7 +151,7 @@ export const garbageCalcV2 = (
     }
   }
 
-  if (b2bOptions.charging && b2b > 0 && spin === "mini" && garbage === 0) {
+  if (b2bOptions.charging && b2b > 0 && spin === "mini" && garbage === 0 && lines >= 1) {
     garbage++;
   }
 
