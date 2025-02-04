@@ -252,7 +252,7 @@ export class Engine {
       boardHeight: this.board.height,
       boardWidth: this.board.width,
       initialRotation:
-			piece.toLowerCase() in this.kickTable.spawn_rotation
+        piece.toLowerCase() in this.kickTable.spawn_rotation
           ? this.kickTable.spawn_rotation[
               piece.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
             ]
@@ -469,18 +469,26 @@ export class Engine {
     );
 
     const { lines, garbageCleared } = this.board.clearLines();
+    const pc = this.board.perfectClear;
 
-    let brokeB2B: false | number = false;
+    let brokeB2B: false | number = this.stats.b2b;
     if (lines > 0) {
       this.stats.combo++;
       if ((this.lastSpin && this.lastSpin.type !== "none") || lines >= 4) {
         this.stats.b2b++;
-      } else {
-        brokeB2B = this.stats.b2b;
+        brokeB2B = false;
+      }
+      if (pc && this.pc && this.pc.b2b) {
+        this.stats.b2b += this.pc.b2b;
+        brokeB2B = false;
+      }
+
+      if (brokeB2B !== false) {
         this.stats.b2b = -1;
       }
     } else {
       this.stats.combo = -1;
+      brokeB2B = false;
     }
 
     const gSpecialBonus =
@@ -505,7 +513,6 @@ export class Engine {
         b2b: { chaining: this.b2b.chaining, charging: !!this.b2b.charging }
       }
     );
-    const pc = this.board.perfectClear;
     const gEvents =
       garbage.garbage > 0 || gSpecialBonus > 0
         ? [this.garbageQueue.round(garbage.garbage + gSpecialBonus)]
