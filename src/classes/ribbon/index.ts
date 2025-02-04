@@ -324,12 +324,6 @@ export class Ribbon {
 
     if (!this.spool.tokenid) {
       this.pipe("new");
-      this.pipe("server.authorize", {
-        token: this.token,
-        handling: this.handling,
-        signature: await this.spool.signature,
-        i: undefined
-      });
     } else {
       this.pipe("session", {
         ribbonid: this.session.id,

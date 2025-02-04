@@ -137,7 +137,7 @@ export class Game {
     this.listen("game.replay.ige", (data) => this.handleIGE(data));
     this.listen("game.replay", ({ gameid, frames, provisioned }) => {
       const game = this.opponents.find((player) => player.gameid === gameid);
-      if (!game) return false;
+      if (!game || game.engine.toppedOut) return false;
 
       while (game.engine.frame < provisioned - 1)
         game.engine.tick(

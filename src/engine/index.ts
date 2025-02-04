@@ -252,7 +252,7 @@ export class Engine {
       boardHeight: this.board.height,
       boardWidth: this.board.width,
       initialRotation:
-        piece.toLowerCase() in this.kickTable.spawn_rotation
+			piece.toLowerCase() in this.kickTable.spawn_rotation
           ? this.kickTable.spawn_rotation[
               piece.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
             ]
@@ -262,16 +262,20 @@ export class Engine {
   }
 
   get toppedOut() {
-    for (const block of this.falling.blocks) {
-      if (
-        this.board.state[-block[1] + this.falling.location[1]][
-          block[0] + this.falling.location[0]
-        ] !== null
-      )
-        return true;
-    }
+    try {
+      for (const block of this.falling.blocks) {
+        if (
+          this.board.state[-block[1] + this.falling.location[1]][
+            block[0] + this.falling.location[0]
+          ] !== null
+        )
+          return true;
+      }
 
-    return false;
+      return false;
+    } catch {
+      return true;
+    }
   }
 
   isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate180>) {
@@ -437,7 +441,9 @@ export class Engine {
           ? true
           : y < 0
             ? true
-            : this.board.state[y][x] !== null;
+            : y >= this.board.fullHeight
+              ? true
+              : this.board.state[y][x] !== null;
 
     return [
       getLocation(x - 1, y + 1),

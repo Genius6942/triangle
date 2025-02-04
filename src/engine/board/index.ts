@@ -54,6 +54,7 @@ export class Board {
 
   add(...blocks: [BoardSquare, number, number][]) {
     blocks.forEach(([char, x, y]) => {
+			if (y < 0 || y >= this.fullHeight || x < 0 || x >= this.width) return;
       this.state[y][x] = char;
     });
   }
