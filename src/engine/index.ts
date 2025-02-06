@@ -542,7 +542,6 @@ export class Engine {
     }
     if (pc && this.pc) {
       gEvents.push(this.garbageQueue.round(this.pc.garbage * gMultiplier));
-      this.stats.b2b += this.pc.b2b;
     }
 
     const res = {
