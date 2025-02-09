@@ -11,6 +11,7 @@ export const garbageData = {
   tspinMiniSingle: 0,
   tspinSingle: 2,
   tspinMiniDouble: 1,
+  tspinMiniTriple: 2,
   tspinDouble: 4,
   tspinTriple: 6,
   tspinQuad: 10,
@@ -97,7 +98,12 @@ export const garbageCalcV2 = (
             : garbageData.double;
       break;
     case 3:
-      garbage = spin ? garbageData.tspinTriple : garbageData.triple;
+      garbage =
+        spin === "mini"
+          ? garbageData.tspinMiniTriple
+          : spin === "normal"
+            ? garbageData.tspinTriple
+            : garbageData.triple;
       break;
     case 4:
       garbage = spin ? garbageData.tspinQuad : garbageData.quad;
@@ -151,7 +157,13 @@ export const garbageCalcV2 = (
     }
   }
 
-  if (b2bOptions.charging && b2b > 0 && spin === "mini" && garbage === 0 && lines >= 1) {
+  if (
+    b2bOptions.charging &&
+    b2b > 0 &&
+    spin === "mini" &&
+    garbage === 0 &&
+    lines >= 1
+  ) {
     garbage++;
   }
 

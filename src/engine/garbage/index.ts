@@ -86,8 +86,8 @@ export class GarbageQueue {
 
   cancel(amount: number, pieceCount: number) {
     let openerPhased = false;
-    if (pieceCount < this.options.openerPhase - 1 && this.size > amount) {
-      amount *= 2;
+    if (pieceCount < this.options.openerPhase - 1 && this.size >= amount) {
+      amount += amount;
       openerPhased = true;
     }
     while (amount > 0) {

@@ -18,7 +18,7 @@ export class IGEHandler {
   private players: polyfills.Map<
     number,
     // { incoming: number; outgoing: GarbageRecord[] }
-		//! there was an issue where as an object some garbage numbers would magically turn into other numbers, wtf js
+    //! there was an issue where as an object some garbage numbers would magically turn into other numbers, wtf js
     string
   >;
   /** @hidden */

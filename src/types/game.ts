@@ -15,6 +15,7 @@ export namespace Game {
   /** Game config preset */
   export type Preset =
     | "default"
+    | "tetra league"
     | "tetra league (season 1)"
     | "enforced delays"
     | "4wide"

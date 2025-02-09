@@ -1,5 +1,5 @@
 export namespace polyfills {
-	export class Map<K, V> {
+  export class Map<K, V> {
     private _entries: Array<[K, V]> = [];
 
     constructor(iterable?: Iterable<[K, V]>) {

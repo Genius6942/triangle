@@ -460,6 +460,7 @@ export class Engine {
   }
 
   lock() {
+    this.stats.pieces++;
     this.board.add(
       ...(this.falling.blocks.map((block) => [
         this.falling.symbol,
@@ -588,7 +589,6 @@ export class Engine {
     this.nextPiece(lines > 0);
 
     this.lastSpin = null;
-    this.stats.pieces++;
 
     try {
       if (!legal(this.falling.absoluteBlocks, this.board.state))
@@ -634,7 +634,6 @@ export class Engine {
 
   tick(frames: Game.Replay.Frame[]) {
     this.frame++;
-
     if (this.frame > this.gravity.marginTime)
       this.gravity.value += this.gravity.increase;
 
@@ -798,7 +797,6 @@ export class Engine {
         this.softDrop();
       }
     });
-
     return { ...res, spin };
   }
 

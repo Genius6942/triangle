@@ -310,7 +310,7 @@ export class Room {
   /**
    * Sets the room's preset
    * @example
-   * await client.room!.usePreset('tetra league');
+   * await client.room!.usePreset('tetra league (season 1)');
    */
   async usePreset(preset: GameTypes.Preset) {
     return await this.update(...roomConfigPresets[preset]);
