@@ -42,6 +42,10 @@ export class GarbageQueue {
   private lastTankTime: number = 0;
   private lastColumn: number | null = null;
   private rng: ReturnType<typeof garbageRNG>;
+
+  // for opener phase calculations
+  private sent = 0;
+
   constructor(options: GarbageQueueInitializeParams) {
     this.options = options;
     if (!this.options.cap.absolute) this.options.cap.absolute = Infinity;
@@ -85,23 +89,19 @@ export class GarbageQueue {
   }
 
   cancel(amount: number, pieceCount: number) {
-    let openerPhased = false;
-    if (pieceCount < this.options.openerPhase - 1 && this.size >= amount) {
-      amount += amount;
-      openerPhased = true;
+    let send = amount,
+      cancel = 0;
+    if (pieceCount + 1 < this.options.openerPhase && this.size >= this.sent)
+      cancel += amount;
+    while ((send > 0 || cancel > 0) && this.size > 0) {
+      this.queue[0].amount--;
+      if (this.queue[0].amount <= 0) this.queue.shift();
+      if (send > 0) send--;
+      else cancel--;
     }
-    while (amount > 0) {
-      if (this.queue.length <= 0) break;
-      if (amount >= this.queue[0].amount) {
-        amount -= this.queue[0].amount;
-        this.queue.shift();
-      } else {
-        this.queue[0].amount -= amount;
-        amount = 0;
-        break;
-      }
-    }
-    return openerPhased ? 0 : amount;
+
+    this.sent += send;
+    return send;
   }
 
   private reroll_column() {

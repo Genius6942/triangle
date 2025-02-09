@@ -506,7 +506,7 @@ export class Engine {
         lines,
         piece: this.falling.symbol,
         spin: this.lastSpin ? this.lastSpin.type : "none",
-        frame: this.frame
+        frame: this.frame + 1
       },
       {
         ...this.gameOptions,
@@ -597,7 +597,6 @@ export class Engine {
     }
 
     this.stats.pieces++;
-
     return res;
   }
 
