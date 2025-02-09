@@ -460,7 +460,6 @@ export class Engine {
   }
 
   lock() {
-    this.stats.pieces++;
     this.board.add(
       ...(this.falling.blocks.map((block) => [
         this.falling.symbol,
@@ -596,6 +595,9 @@ export class Engine {
     } catch {
       res.topout = true;
     }
+
+    this.stats.pieces++;
+
     return res;
   }
 
