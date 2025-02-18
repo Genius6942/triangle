@@ -1,4 +1,4 @@
-import { Piece } from "../queue/types";
+import { Mino } from "../queue/types";
 
 export interface BoardInitializeParams {
   width: number;
@@ -6,7 +6,7 @@ export interface BoardInitializeParams {
   buffer: number;
 }
 
-export type BoardSquare = Piece | "gb" | null;
+export type BoardSquare = Mino | "gb" | null;
 
 export class Board {
   state: BoardSquare[][];

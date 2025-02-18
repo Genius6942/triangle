@@ -1,5 +1,5 @@
 import { BagType, RngInnerFunction, rngMap } from "./rng";
-import { Piece } from "./types";
+import { Mino } from "./types";
 
 export interface QueueInitializeParams {
   seed: number;
@@ -11,10 +11,10 @@ export class Queue {
   seed: number;
   type: BagType;
   genFunction!: RngInnerFunction;
-  value: Piece[];
+  value: Mino[];
   _minLength!: number;
   index: number;
-  repopulateListener: ((pieces: Piece[]) => void) | null = null;
+  repopulateListener: ((pieces: Mino[]) => void) | null = null;
   constructor(options: QueueInitializeParams) {
     this.seed = options.seed;
     this.type = options.type;
@@ -64,7 +64,7 @@ export class Queue {
   }
 
   private repopulate() {
-    const added: Piece[] = [];
+    const added: Mino[] = [];
     while (this.value.length < this.minLength) {
       const newValues = this.genFunction();
       this.value.push(...newValues);

@@ -71,6 +71,14 @@ export class IGEHandler {
         outgoing: [...this.extract(player).outgoing, { iid, amount }]
       })
     );
+
+    console.log(
+      "send",
+      playerID,
+      Object.fromEntries(
+        [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
+      )
+    );
   }
 
   /**
@@ -120,6 +128,14 @@ export class IGEHandler {
     this.players.set(
       playerID,
       this.stringify({ incoming: incomingIID, outgoing: newIGEs })
+    );
+
+    console.log(
+      "receive",
+      playerID,
+      Object.fromEntries(
+        [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
+      )
     );
 
     return runningAmount;

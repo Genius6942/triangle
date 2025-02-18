@@ -1,23 +1,31 @@
 import { rng } from ".";
-import { Piece } from "../types";
+import { Mino } from "../types";
 
-export const bag7_X = (seed: number): (() => Piece[]) => {
+export const bag7_X = (seed: number): (() => Mino[]) => {
   const gen = rng(seed);
   const extraPieceCount = [3, 2, 1, 1];
   let bagid = 0;
-  let extraBag: Piece[] = [];
+  let extraBag: Mino[] = [];
   return () => {
     const extra = extraPieceCount[bagid++] ?? 0;
     if (extraBag.length < extra)
-      extraBag = gen.shuffleArray(["z", "l", "o", "s", "i", "j", "t"] as const);
+      extraBag = gen.shuffleArray([
+        Mino.Z,
+        Mino.L,
+        Mino.O,
+        Mino.S,
+        Mino.I,
+        Mino.J,
+        Mino.T
+      ] as const);
     return gen.shuffleArray([
-      "z",
-      "l",
-      "o",
-      "s",
-      "i",
-      "j",
-      "t",
+      Mino.Z,
+      Mino.L,
+      Mino.O,
+      Mino.S,
+      Mino.I,
+      Mino.J,
+      Mino.T,
       ...extraBag.splice(0, extra)
     ] as const);
   };

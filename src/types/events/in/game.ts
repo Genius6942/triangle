@@ -103,4 +103,72 @@ export interface Game {
       killer: { gameid: number; type: "sizzle"; username: null | string };
     };
   };
+
+  "game.spectate": {
+    id: number;
+    data: {
+      players: {
+        userid: string;
+        gameid: number;
+        alive: boolean;
+        naturalorder: number;
+        options: GameTypes.ReadyOptions;
+      }[];
+      match: {
+        gamemode: string;
+        modename: string;
+        rb: {
+          type: "elimination";
+          options: {
+            ft: number;
+            wb: number;
+            gp: number;
+          };
+          leaderboard: {
+            id: string;
+            username: string;
+            active: boolean;
+            naturalorder: number;
+            shadows: any[];
+            shadowedBy: (null | any)[];
+            wins: number;
+            stats: {
+              apm: number | null;
+              pps: number | null;
+              vsscore: number | null;
+              garbagesent: number;
+              garbagereceived: number;
+              kills: number;
+              altitude: number;
+              rank: number;
+              targetingfactor: number;
+              targetinggrace: number;
+              btb: number;
+              revives: number;
+            };
+          }[];
+        };
+        rrb: {
+          type: string;
+          options: Record<string, unknown>;
+          scoreboard: {
+            sb: {
+              stats: {
+                rank: number;
+                altitude: number;
+                btb: number;
+                revives: number;
+              };
+              allies: any[];
+              gameid: number;
+              specCount: number;
+              speedrun: boolean;
+              nearWR: boolean;
+              lovers: boolean;
+            }[];
+          };
+        };
+      };
+    };
+  };
 }

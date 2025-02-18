@@ -1,4 +1,4 @@
-import { BagType, Engine, KickTable, Piece } from "../engine";
+import { BagType, Engine, KickTable } from "../engine";
 
 export namespace Game {
   /** Handling config interface (test on TETR.IO for limits) */
@@ -10,6 +10,8 @@ export namespace Game {
     safelock: boolean;
     cancel: boolean;
     may20g: boolean;
+    irs: "off" | "hold" | "tap";
+    ihs: "off" | "hold" | "tap";
   }
 
   /** Game config preset */
@@ -92,6 +94,7 @@ export namespace Game {
     garbageincrease: number;
     garbagecap: number;
     garbagecapincrease: number;
+    garbagecapmargin: number;
     garbagecapmax: number;
     garbageabsolutecap: boolean;
     garbageholesize: number;
@@ -171,6 +174,7 @@ export namespace Game {
     garbageare: number;
     garbagecap: number;
     garbagecapincrease: number;
+    garbagecapmargin: number;
     garbagecapmax: number;
     garbageabsolutecap: number;
     garbageattackcap: number;
@@ -273,15 +277,7 @@ export namespace Game {
     };
     boardskin: string;
     map: string;
-    handling: {
-      arr: number;
-      das: number;
-      dcd: number;
-      sdf: number;
-      safelock: boolean;
-      cancel: boolean;
-      may20g: boolean;
-    };
+    handling: Handling;
     room_handling: boolean;
     room_handling_arr: number;
     room_handling_das: number;
@@ -369,7 +365,7 @@ export namespace Game {
         x: number;
         y: number;
         size: number;
-        zthalt?: any; // TODO: what is this? something with zenith (qp)
+        zthalt?: any; //! IRRELEVANT (qp)
       }
 
       export interface Targeted {
@@ -455,9 +451,9 @@ export namespace Game {
         data: {
           game: {
             board: BoardSquare[][];
-            bag: Piece[];
+            bag: Mino[];
             hold: {
-              piece: null | Piece;
+              piece: null | Mino;
               locked: boolean;
             };
             g: number;
@@ -478,7 +474,7 @@ export namespace Game {
               inputSoftdrop: boolean;
             };
             falling: {
-              type: Piece;
+              type: Mino;
               x: number;
               y: number;
               r: number;

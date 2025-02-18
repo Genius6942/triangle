@@ -69,7 +69,12 @@ export class Game {
     this.options = self.options;
     this.readyData = ready;
 
-    this.engine = this.createEngine(this.options, this.gameid);
+    try {
+      this.engine = this.createEngine(this.options, this.gameid);
+    } catch (e) {
+      console.error(e);
+      throw e;
+    }
 
     ready.players.forEach((player) =>
       this.client.emit("game.scope.start", player.gameid)
@@ -96,7 +101,7 @@ export class Game {
     this.listeners.forEach((l) => this.client.off(l[0], l[1]));
     if (this.timeout)
       this.timeout = (clearTimeout(this.timeout) as any) || null;
-    this.over = true;
+    true;
     delete this.client.game;
   }
 
@@ -122,16 +127,14 @@ export class Game {
     );
 
     const p = this.readyData.players;
-    if (p.length === 2) {
-      // TODO: Add support for larger game spectating, including choosing who to spectate
-      const opponents = p.filter((p) => p.gameid !== this.gameid);
-      this.opponents = opponents.map((o) => ({
-        name: o.options.username,
-        userid: o.userid,
-        gameid: o.gameid,
-        engine: this.createEngine(o.options, o.gameid)
-      }));
-    }
+    // TODO: Add support for choosing who to spectate
+    const opponents = p.filter((p) => p.gameid !== this.gameid);
+    this.opponents = opponents.map((o) => ({
+      name: o.options.username,
+      userid: o.userid,
+      gameid: o.gameid,
+      engine: this.createEngine(o.options, o.gameid)
+    }));
 
     // this.listen("game.replay.ige", (data) => this.addIGE(data));
     this.listen("game.replay.ige", (data) => this.handleIGE(data));
@@ -195,15 +198,9 @@ export class Game {
       options: {
         comboTable: options.combotable as any,
         garbageBlocking: options.garbageblocking as any,
-        garbageMultiplier: {
-          value: options.garbagemultiplier,
-          increase: options.garbageincrease,
-          marginTime: options.garbagemargin
-        },
         clutch: options.clutch,
         garbageTargetBonus: options.garbagetargetbonus,
-        spinBonuses: options.spinbonuses,
-        garbageAttackCap: Infinity // TODO idk what but this is wrong
+        spinBonuses: options.spinbonuses
       },
       queue: {
         minLength: 31,
@@ -213,10 +210,16 @@ export class Game {
 
       garbage: {
         cap: {
-          absolute: Infinity, // TODO also fix this idk
+          absolute: options.garbageabsolutecap,
           increase: options.garbagecapincrease,
           max: options.garbagecapmax,
-          value: options.garbagecap
+          value: options.garbagecap,
+          marginTime: options.garbagecapmargin
+        },
+        multiplier: {
+          value: options.garbagemultiplier,
+          increase: options.garbageincrease,
+          marginTime: options.garbagemargin
         },
         boardWidth: options.boardwidth,
         garbage: {
@@ -250,6 +253,20 @@ export class Game {
         value: options.g,
         increase: options.gincrease,
         marginTime: options.gmargin
+      },
+      misc: {
+        movement: {
+          infinite: options.infinite_movement,
+          lockResets: options.lockresets,
+          lockTime: options.locktime,
+          may20G: options.gravitymay20g
+        },
+        allowed: {
+          spin180: options.allow180,
+          hardDrop: options.allow_harddrop,
+          hold: options.display_hold
+        },
+        infiniteHold: options.infinite_hold
       },
       handling: options.handling
     });
@@ -311,49 +328,54 @@ export class Game {
 
     keys.splice(0, keys.length, ...keys.reverse());
 
-    const { garbage, pieces } = this.engine.tick([
-      ...this.incomingGarbage.splice(0, this.incomingGarbage.length),
-      ...keys
-    ]);
+    try {
+      const { garbage, pieces } = this.engine.tick([
+        ...this.incomingGarbage.splice(0, this.incomingGarbage.length),
+        ...keys
+      ]);
 
-    this.stats.piecesPlaced += pieces;
+      this.stats.piecesPlaced += pieces;
 
-    this.messageQueue.push(
-      ...garbage.received.map((g) => ({
-        type: "garbage" as const,
-        ...g
-      }))
-    );
+      this.messageQueue.push(
+        ...garbage.received.map((g) => ({
+          type: "garbage" as const,
+          ...g
+        }))
+      );
 
-    this.pipe(...keys);
+      this.pipe(...keys);
 
-    // // handle buffered IGE data
-    // const flattenedIGEBuffer = this.igeBuffer.flat();
-    // this.handleIGE(flattenedIGEBuffer);
-    // this.igeBuffer = [];
+      // // handle buffered IGE data
+      // const flattenedIGEBuffer = this.igeBuffer.flat();
+      // this.handleIGE(flattenedIGEBuffer);
+      // this.igeBuffer = [];
 
-    if (this.frame !== 0 && this.frame % Game.fpm === 0) {
-      const frames = this.flushFrames();
-      this.client.emit("game.replay", {
-        gameid: this.gameid,
-        provisioned: this.frame,
-        frames
-      });
+      if (this.frame !== 0 && this.frame % Game.fpm === 0) {
+        const frames = this.flushFrames();
+        this.client.emit("game.replay", {
+          gameid: this.gameid,
+          provisioned: this.frame,
+          frames
+        });
 
-      this.messageQueue.push({
-        type: "frameset",
-        provisioned: this.frame,
-        frames
-      });
+        this.messageQueue.push({
+          type: "frameset",
+          provisioned: this.frame,
+          frames
+        });
+      }
+
+      runAfter.forEach((f) => f());
+
+      this.timeout = setTimeout(
+        this.tickGame.bind(this),
+        ((this.frame + 1) / Game.fps) * 1000 -
+          (performance.now() - this.startTime!)
+      );
+    } catch (e) {
+      console.error(e);
+      throw e;
     }
-
-    runAfter.forEach((f) => f());
-
-    this.timeout = setTimeout(
-      this.tickGame.bind(this),
-      ((this.frame + 1) / Game.fps) * 1000 -
-        (performance.now() - this.startTime!)
-    );
   }
 
   /**

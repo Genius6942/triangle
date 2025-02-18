@@ -1,4 +1,4 @@
-import { calculateIncrease } from "..";
+import { Mino, SpinType } from "../..";
 
 export const garbageData = {
   single: 0,
@@ -32,24 +32,16 @@ export const garbageData = {
 export const garbageCalcV2 = (
   data: {
     lines: number;
-    spin: undefined | "none" | "mini" | "normal" | "full";
-    piece: "l" | "j" | "t" | "s" | "z" | "i" | "o";
+    spin?: SpinType;
+    piece: Mino;
     b2b: number;
     combo: number;
     enemies: number;
-    frame: number;
   },
   config: {
     spinBonuses: string;
     comboTable: keyof (typeof garbageData)["comboTable"] | "multiplier";
     garbageTargetBonus: "none" | "normal" | string;
-    garbageMultiplier: {
-      value: number;
-      increase: number;
-      marginTime: number;
-    };
-    garbageAttackCap?: number;
-    garbageBlocking: "combo blocking" | "limited blocking" | "none";
     b2b: {
       chaining: boolean;
       charging: boolean;
@@ -61,15 +53,12 @@ export const garbageCalcV2 = (
   const {
     spinBonuses,
     comboTable,
-    garbageMultiplier,
     garbageTargetBonus,
-    garbageAttackCap,
-    garbageBlocking,
     b2b: b2bOptions
   } = config;
 
   const spin: "mini" | "normal" | null | undefined =
-    rawSpin === "none" ? null : rawSpin === "full" ? "normal" : rawSpin;
+    rawSpin === "none" ? null : rawSpin;
 
   switch (lines) {
     // might be the issue here for z spin mini single being counted as 1 line?
@@ -167,13 +156,6 @@ export const garbageCalcV2 = (
     garbage++;
   }
 
-  const garbageMultiplierValue = calculateIncrease(
-    garbageMultiplier.value,
-    data.frame,
-    garbageMultiplier.increase,
-    garbageMultiplier.marginTime
-  );
-
   let garbageBonus = 0;
   if (lines > 0 && garbageTargetBonus !== "none") {
     let targetBonus = 0;
@@ -200,20 +182,13 @@ export const garbageCalcV2 = (
     if (garbageTargetBonus === "normal") {
       garbage += targetBonus;
     } else {
-      garbageBonus = Math.floor(targetBonus * garbageMultiplierValue);
+      garbageBonus = targetBonus;
     }
   }
 
-  let l = Math.floor(garbage * garbageMultiplierValue);
-  if (garbageAttackCap) {
-    l = Math.floor(Math.min(garbageAttackCap, l));
-  }
-  switch (garbageBlocking) {
-  }
-
-  // TODO: what is e.atm.fightlines, what is garbagebonus
+  // TODO: how to bonus
   return {
-    garbage: l,
+    garbage,
     bonus: garbageBonus
   };
 };

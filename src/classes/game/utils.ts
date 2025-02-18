@@ -15,7 +15,7 @@ export const getFullFrame = (
         type: options.bagtype,
         minLength: 7,
         seed: options.seed
-      }).value,
+      }).value as Game.Mino[],
       hold: {
         piece: null,
         locked: false

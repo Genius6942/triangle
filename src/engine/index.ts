@@ -1,22 +1,22 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
 import {
-  Garbage,
   GarbageQueue,
   GarbageQueueInitializeParams,
+  IncomingGarbage,
   OutgoingGarbage
 } from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
-import { Piece } from "./queue/types";
-import { bfs } from "./search";
-import { Handling, IncreasableValue, KeyPress } from "./types";
+import { Mino } from "./queue/types";
+import { IncreasableValue } from "./types";
 import { EngineCheckpoint, SpinType } from "./types";
-import { calculateIncrease, deepCopy } from "./utils";
+import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
 import { KickTable, legal } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
+import { Falling, Rotation } from "./utils/tetromino/types";
 
 import chalk from "chalk";
 
@@ -24,15 +24,7 @@ export interface GameOptions {
   spinBonuses: Game.SpinBonuses;
   comboTable: keyof (typeof garbageData)["comboTable"] | "multiplier";
   garbageTargetBonus: "none" | "normal" | string;
-  garbageMultiplier: {
-    value: number;
-    increase: number;
-    marginTime: number;
-  };
-
   clutch: boolean;
-
-  garbageAttackCap?: number;
   garbageBlocking: "combo blocking" | "limited blocking" | "none";
 }
 
@@ -53,6 +45,21 @@ export interface B2BOptions {
       };
 }
 
+export interface MiscellaneousOptions {
+  movement: {
+    infinite: boolean;
+    lockResets: number;
+    lockTime: number;
+    may20G: boolean;
+  };
+  allowed: {
+    spin180: boolean;
+    hardDrop: boolean;
+    hold: boolean;
+  };
+  infiniteHold: boolean;
+}
+
 export interface EngineInitializeParams {
   queue: QueueInitializeParams;
   board: BoardInitializeParams;
@@ -60,20 +67,22 @@ export interface EngineInitializeParams {
   options: GameOptions;
   gravity: IncreasableValue;
   garbage: GarbageQueueInitializeParams;
-  handling: Handling;
+  handling: Game.Handling;
   pc: PCOptions;
   b2b: B2BOptions;
   multiplayer?: MultiplayerOptions;
+  misc: MiscellaneousOptions;
 }
 
 export class Engine {
   queue!: Queue;
-  held!: Piece | null;
+  held!: Mino | null;
+  holdLocked!: boolean;
   falling!: Tetromino;
   private _kickTable!: KickTableName;
   board!: Board;
   lastSpin!: {
-    piece: Piece;
+    piece: Mino;
     type: SpinType;
   } | null;
   stats!: {
@@ -85,24 +94,33 @@ export class Engine {
   garbageQueue!: GarbageQueue;
 
   frame!: number;
+  subframe!: number;
   checkpoints!: EngineCheckpoint[];
 
   initializer: EngineInitializeParams;
 
-  handling!: Handling;
-  keys: {
-    left: [number, number];
-    right: [number, number];
-    soft: [number, number];
-  } = {
-    left: [-1, -1],
-    right: [-1, -1],
-    soft: [-1, -1]
+  handling!: Game.Handling;
+
+  input!: {
+    lDas: number;
+    lDasIter: number;
+    lShift: boolean;
+    rDas: number;
+    rDasIter: number;
+    rShift: boolean;
+    lastShift: number;
+    softDrop: boolean;
+    keys: { [k in Game.Key]: boolean };
   };
 
   pc!: PCOptions;
   b2b!: B2BOptions;
-  gravity!: IncreasableValue;
+
+  dynamic!: {
+    gravity: IncreaseTracker;
+    garbageMultiplier: IncreaseTracker;
+    garbageCap: IncreaseTracker;
+  };
 
   multiplayer?: {
     options: MultiplayerOptions;
@@ -114,7 +132,19 @@ export class Engine {
     };
   };
   igeHandler!: IGEHandler;
+
+  misc!: MiscellaneousOptions;
+
   onGarbageSpawn?: (column: number, size: number) => void;
+
+  private resCache!: {
+    pieces: number;
+    garbage: {
+      sent: number[];
+      received: OutgoingGarbage[];
+    };
+  };
+
   constructor(options: EngineInitializeParams) {
     this.initializer = options;
     this.init();
@@ -146,8 +176,8 @@ export class Engine {
         }
       };
 
-    this.nextPiece();
     this.held = null;
+    this.holdLocked = false;
     this.lastSpin = null;
 
     this.stats = {
@@ -162,14 +192,71 @@ export class Engine {
       charging: options.b2b.charging
     };
 
-    this.gravity = options.gravity;
+    this.dynamic = {
+      gravity: new IncreaseTracker(
+        options.gravity.value,
+        options.gravity.increase,
+        options.gravity.marginTime
+      ),
+      garbageMultiplier: new IncreaseTracker(
+        options.garbage.multiplier.value,
+        options.garbage.multiplier.increase,
+        options.garbage.multiplier.marginTime
+      ),
+      garbageCap: new IncreaseTracker(
+        options.garbage.cap.value,
+        options.garbage.cap.increase,
+        options.garbage.cap.marginTime
+      )
+    };
+
+    this.misc = options.misc;
 
     this.gameOptions = options.options;
     this.handling = options.handling;
+    this.input = {
+      lDas: 0,
+      lDasIter: 0,
+      lShift: false,
+      rDas: 0,
+      rDasIter: 0,
+      rShift: false,
+      lastShift: 0,
+      softDrop: false,
+      keys: {
+        moveRight: false,
+        moveLeft: false,
+        softDrop: false,
+        hold: false,
+        rotateCW: false,
+        rotateCCW: false,
+        rotate180: false,
+        hardDrop: false
+      }
+    };
     this.frame = 0;
+    this.subframe = 0;
+
+    this.flushRes();
+
+    this.nextPiece();
 
     this.checkpoints = [];
+
     this.bindAll();
+  }
+
+  private flushRes() {
+    const res = this.resCache ? deepCopy(this.resCache) : null;
+    this.resCache = {
+      pieces: 0,
+      garbage: {
+        sent: [],
+        received: []
+      }
+    };
+
+    return res!;
   }
 
   reset() {
@@ -187,23 +274,9 @@ export class Engine {
     this.rotateCW = this.rotateCW.bind(this);
     this.rotateCCW = this.rotateCCW.bind(this);
     this.rotate180 = this.rotate180.bind(this);
-    this.revert = this.revert.bind(this);
     this.save = this.save.bind(this);
     this.checkpoint = this.checkpoint.bind(this);
     this.nextPiece = this.nextPiece.bind(this);
-  }
-
-  revert() {
-    if (this.checkpoints.length === 0)
-      throw new Error("No checkpoints to revert to");
-    const checkpoint = this.checkpoints.at(-1)!;
-    this.queue.reset(checkpoint.queue);
-    this.board.state = deepCopy(checkpoint.board);
-    this.stats.b2b = checkpoint.b2b;
-    this.stats.combo = checkpoint.combo;
-    this.initiatePiece(checkpoint.falling);
-    this.garbageQueue.queue = deepCopy(checkpoint.garbage);
-    this.checkpoints.pop();
   }
 
   checkpoint() {
@@ -235,6 +308,15 @@ export class Engine {
 
   nextPiece(canClutch = false) {
     const newTetromino = this.queue.shift()!;
+
+    const isFirstPiece = this.falling === undefined;
+
+    const { clamped, ihs, irs } = this.falling || {
+      clamped: false,
+      ihs: false,
+      irs: 0
+    };
+
     this.initiatePiece(newTetromino);
     if (canClutch && this.gameOptions.clutch) {
       while (
@@ -245,9 +327,61 @@ export class Engine {
         this.falling.location[1]++;
       }
     }
+
+    if (!isFirstPiece) {
+      if (clamped && this.handling.dcd > 0) {
+        this.input.lDas = Math.min(
+          this.input.lDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.lDasIter = this.handling.arr;
+
+        this.input.rDas = Math.min(
+          this.input.rDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.rDasIter = this.handling.arr;
+      }
+
+      // TODO: dead??
+
+      if (ihs) {
+        this.falling.ihs = false;
+        this.hold();
+      }
+
+      if (irs !== 0) {
+        this.rotate(irs as Rotation);
+      }
+    }
+
+    if (this.is20G()) this.slam();
   }
 
-  initiatePiece(piece: Piece) {
+  private is20G() {
+    const is20G = this.dynamic.gravity.get() > this.board.height;
+    const mode20G = this.misc.movement.may20G;
+
+    if (this.input.softDrop) {
+      const preferSoftDrop = this.handling.may20g || (is20G && mode20G);
+      return (
+        (this.handling.sdf === 41 ||
+          this.dynamic.gravity.get() * this.handling.sdf > this.board.height) &&
+        preferSoftDrop
+      );
+    }
+
+    return is20G && mode20G;
+  }
+
+  private slam() {
+    const gravity = this.dynamic.gravity.get();
+    this.dynamic.gravity.set(Number.MAX_SAFE_INTEGER);
+    this.fall(null, 1);
+    this.dynamic.gravity.set(gravity);
+  }
+
+  initiatePiece(piece: Mino) {
     this.falling = new Tetromino({
       boardHeight: this.board.height,
       boardWidth: this.board.width,
@@ -265,7 +399,7 @@ export class Engine {
     try {
       for (const block of this.falling.blocks) {
         if (
-          this.board.state[-block[1] + this.falling.location[1]][
+          this.board.state[-block[1] + this.falling.y][
             block[0] + this.falling.location[0]
           ] !== null
         )
@@ -278,7 +412,7 @@ export class Engine {
     }
   }
 
-  isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate180>) {
+  isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate>) {
     if (typeof kick === "object") {
       return (
         // fin cw and tst ccw
@@ -295,35 +429,141 @@ export class Engine {
     return false;
   }
 
+  rotate(amt: Rotation) {
+    const currentRotation = this.falling.rotation;
+    const newRotation = (currentRotation + amt) % 4;
+
+    let lastRotation = Falling.LastRotationKind.None;
+
+    if (newRotation < currentRotation) {
+      lastRotation = Falling.LastRotationKind.Right;
+    } else {
+      lastRotation = Falling.LastRotationKind.Left;
+    }
+
+    if (newRotation == 0 && currentRotation == 3) {
+      lastRotation = Falling.LastRotationKind.Right;
+    }
+
+    if (newRotation == 3 && currentRotation == 3) {
+      lastRotation = Falling.LastRotationKind.Left;
+    }
+
+    if (newRotation == 2 && currentRotation == 0)
+      lastRotation = Falling.LastRotationKind.Vertical;
+    if (newRotation == 0 && currentRotation == 2)
+      lastRotation = Falling.LastRotationKind.Vertical;
+    if (newRotation == 3 && currentRotation == 1)
+      lastRotation = Falling.LastRotationKind.Horizontal;
+    if (newRotation == 1 && currentRotation == 3)
+      lastRotation = Falling.LastRotationKind.Horizontal;
+
+    const res = this.falling.rotate(
+      this.board.state,
+      this.kickTableName,
+      amt,
+      !this.misc.movement.infinite &&
+        this.falling.totalRotations > this.misc.movement.lockResets + 15
+    );
+
+    if (res === true) {
+      this.falling.aox = 0;
+      this.falling.aoy = 0;
+      this.falling.last = Falling.LastKind.Rotate;
+      this.falling.lastRotation = lastRotation;
+      this.falling.lastKick = 0;
+
+      const spin = this.detectSpin(false);
+
+      this.lastSpin = {
+        piece: this.falling.symbol,
+        type: spin
+      };
+
+      this.falling.spinType =
+        spin === "none"
+          ? Falling.SpinTypeKind.Null
+          : spin === "mini"
+            ? Falling.SpinTypeKind.Mini
+            : Falling.SpinTypeKind.Normal;
+      this.falling.fallingRotations++;
+      this.falling.totalRotations++;
+
+      if (this.falling.clamped && this.handling.dcd > 0) {
+        this.input.lDas = Math.min(
+          this.input.lDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.lDasIter = this.handling.arr;
+        this.input.rDas = Math.min(
+          this.input.rDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.rDasIter = this.handling.arr;
+      }
+
+      if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
+        this.falling.locking = 0;
+      }
+
+      return true;
+    }
+
+    if (this.falling.symbol === Mino.O) return;
+
+    if (typeof res === "object") {
+      this.falling.aox = 0;
+      this.falling.aoy = 0;
+      this.falling.last = Falling.LastKind.Rotate;
+      this.falling.lastRotation = lastRotation;
+      this.falling.lastKick = res.index + 1;
+      const spin = this.detectSpin(this.isTSpinKick(res));
+
+      this.lastSpin = {
+        piece: this.falling.symbol,
+        type: spin
+      };
+
+      this.falling.spinType =
+        spin === "none"
+          ? Falling.SpinTypeKind.Null
+          : spin === "mini"
+            ? Falling.SpinTypeKind.Mini
+            : Falling.SpinTypeKind.Normal;
+      this.falling.fallingRotations++;
+      this.falling.totalRotations++;
+
+      if (this.falling.clamped && this.handling.dcd > 0) {
+        this.input.lDas = Math.min(
+          this.input.lDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.lDasIter = this.handling.arr;
+        this.input.rDas = Math.min(
+          this.input.rDas,
+          this.handling.das - this.handling.dcd
+        );
+        this.input.rDasIter = this.handling.arr;
+      }
+
+      if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
+        this.falling.locking = 0;
+      }
+
+      return true;
+    }
+  }
+
   rotateCW() {
-    this.lastSpin = {
-      piece: this.falling.symbol,
-      type: this.detectSpin(
-        this.isTSpinKick(
-          this.falling.rotateCW(this.board.state, this.kickTableName)
-        )
-      )
-    };
+    return this.rotate(1);
   }
+
   rotateCCW() {
-    this.lastSpin = {
-      piece: this.falling.symbol,
-      type: this.detectSpin(
-        this.isTSpinKick(
-          this.falling.rotateCCW(this.board.state, this.kickTableName)
-        )
-      )
-    };
+    return this.rotate(3);
   }
+
   rotate180() {
-    this.lastSpin = {
-      piece: this.falling.symbol,
-      type: this.detectSpin(
-        this.isTSpinKick(
-          this.falling.rotate180(this.board.state, this.kickTableName)
-        )
-      )
-    };
+    return this.rotate(2);
   }
 
   moveRight() {
@@ -426,14 +666,14 @@ export class Engine {
   }
 
   /**
-   * Returns array of true/false corners in this form (numbers represent array indicies):
+   * Returns array of true/false corners in this form (numbers represent array indices):
    * @example
    *  0    1
    *  🟦🟦🟦
    *  3 🟦 2
    */
   getTCorners() {
-    const [x, y] = [this.falling.location[0] + 1, this.falling.location[1] - 1];
+    const [x, y] = [this.falling.location[0] + 1, this.falling.y - 1];
     const getLocation = (x: number, y: number) =>
       x < 0
         ? true
@@ -459,12 +699,128 @@ export class Engine {
     return this.lock();
   }
 
-  lock() {
+  fall(value: number | null = null, subFrameDiff = 1) {
+    if (this.falling.safeLock > 0) this.falling.safeLock--;
+    if (this.falling.sleep || this.falling.deepSleep) return;
+
+    let subFrameGravity = this.dynamic.gravity.get() * subFrameDiff;
+
+    // ASSUME SOFTDROP, LATEST VERSION
+    if (this.input.softDrop) {
+      if (this.handling.sdf === 41) subFrameGravity = 400 * subFrameDiff;
+      else
+        subFrameGravity = Math.max(
+          subFrameGravity * this.handling.sdf,
+          0.05 * this.handling.sdf
+        );
+    }
+
+    if (value !== null) subFrameGravity = Math.floor(value);
+
+    if (
+      !this.misc.movement.infinite &&
+      this.falling.lockResets >= this.misc.movement.lockResets &&
+      !legal(
+        this.falling.absoluteBlocks.map((block) => [block[0], block[1] - 1]),
+        this.board.state
+      )
+    ) {
+      subFrameGravity = 20;
+      this.falling.forceLock = true;
+    }
+
+    if (
+      !this.misc.movement.infinite &&
+      this.falling.fallingRotations > this.misc.movement.lockResets + 15
+    ) {
+      subFrameGravity +=
+        0.5 *
+        subFrameDiff *
+        (this.falling.fallingRotations - (this.misc.movement.lockResets + 15));
+    }
+
+    while (subFrameGravity > 0) {
+      const y = this.falling.y;
+      if (!this.fallInner(Math.min(1, subFrameGravity))) {
+        if (value !== null) this.falling.forceLock = true;
+        this.locking(value != null, subFrameDiff);
+        break;
+      }
+
+      subFrameGravity -= Math.min(1, subFrameGravity);
+      if (y !== this.falling.y) {
+        this.falling.last = Falling.LastKind.Fall;
+        // something about score goes here, irrelevant
+      }
+    }
+  }
+
+  private fallInner(v1: number): boolean {
+    const TERA10 = Math.pow(10, 13);
+
+    let y1 = Math.ceil(TERA10 * this.falling.location[1]) / TERA10 - v1;
+
+    if (y1 % 1 === 0) y1 -= 0.00001;
+
+    let y2 = Math.ceil(TERA10 * this.falling.location[1]) / TERA10 - 1;
+
+    if (y2 % 1 === 0) y2 += 0.00002;
+
+    if (
+      legal(this.falling.absoluteAt({ y: y1 }), this.board.state) &&
+      legal(this.falling.absoluteAt({ y: y2 }), this.board.state)
+    ) {
+      const highestY = this.falling.highestY;
+
+      y2 = this.falling.location[1];
+
+      this.falling.location[1] = y1;
+
+      this.falling.highestY = Math.floor(Math.min(this.falling.highestY, y1));
+      this.falling.floored = false;
+      if (Math.floor(y1) !== Math.floor(y2)) {
+        // nothing goes here??? idk
+      }
+
+      if (y1 < highestY || this.misc.movement.infinite) {
+        this.falling.lockResets = 0;
+        this.falling.fallingRotations = 0;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+  private locking(value = false, subframe = 1) {
+    this.falling.locking += subframe;
+    this.falling.floored = true;
+
+    if (
+      this.falling.locking > this.misc.movement.lockTime ||
+      this.falling.forceLock ||
+      (this.falling.lockResets > this.misc.movement.lockResets &&
+        !this.misc.movement.infinite)
+    )
+      this.lock(value);
+  }
+
+  lock(emptyDrop = false) {
+    this.falling.sleep = true;
+    this.holdLocked = false;
+
+    if (!emptyDrop && this.handling.safelock) {
+      this.falling.safeLock = 7;
+    }
+
+    // TODO: ARE (line clear, garbage)
+
     this.board.add(
       ...(this.falling.blocks.map((block) => [
         this.falling.symbol,
         this.falling.location[0] + block[0],
-        this.falling.location[1] - block[1]
+        this.falling.y - block[1]
       ]) as any)
     );
 
@@ -505,31 +861,30 @@ export class Engine {
         enemies: 0,
         lines,
         piece: this.falling.symbol,
-        spin: this.lastSpin ? this.lastSpin.type : "none",
-        frame: this.frame + 1
+        spin: this.lastSpin ? this.lastSpin.type : "none"
       },
       {
         ...this.gameOptions,
         b2b: { chaining: this.b2b.chaining, charging: !!this.b2b.charging }
       }
     );
+
     const gEvents =
       garbage.garbage > 0 || gSpecialBonus > 0
-        ? [this.garbageQueue.round(garbage.garbage + gSpecialBonus)]
-        : []; // TODO: do this after calculating increase instead, margin time issues
-    const m = this.gameOptions.garbageMultiplier;
+        ? [
+            this.garbageQueue.round(
+              garbage.garbage * this.dynamic.garbageMultiplier.get() +
+                gSpecialBonus
+            )
+          ]
+        : [];
 
-    const gMultiplier = calculateIncrease(
-      m.value,
-      this.frame,
-      m.increase,
-      m.marginTime
-    );
     if (brokeB2B !== false) {
       let btb = brokeB2B;
       if (this.b2b.charging !== false && btb > this.b2b.charging.at) {
         const value = Math.floor(
-          (btb - this.b2b.charging.at + this.b2b.charging.base) * gMultiplier
+          (btb - this.b2b.charging.at + this.b2b.charging.base) *
+            this.dynamic.garbageMultiplier.get()
         );
         const garbages = [
           Math.round(value / 3),
@@ -541,7 +896,11 @@ export class Engine {
       }
     }
     if (pc && this.pc) {
-      gEvents.push(this.garbageQueue.round(this.pc.garbage * gMultiplier));
+      gEvents.push(
+        this.garbageQueue.round(
+          this.pc.garbage * this.dynamic.garbageMultiplier.get()
+        )
+      );
     }
 
     const res = {
@@ -573,7 +932,10 @@ export class Engine {
         }
       }
     } else {
-      const garbages = this.garbageQueue.tank(this.frame);
+      const garbages = this.garbageQueue.tank(
+        this.frame,
+        this.dynamic.garbageCap.get()
+      );
       res.garbageAdded = garbages;
       if (res.garbageAdded) {
         garbages.forEach((garbage) => {
@@ -596,216 +958,293 @@ export class Engine {
       res.topout = true;
     }
 
+    if (res.garbage.length > 0)
+      if (this.multiplayer)
+        this.multiplayer.targets.forEach((target) =>
+          res.garbage.forEach((g) =>
+            this.igeHandler.send({ amount: g, playerID: target })
+          )
+        );
+
+    this.resCache.garbage.sent.push(...res.garbage);
+    this.resCache.garbage.received.push(...(res.garbageAdded || []));
+
     this.stats.pieces++;
+
     return res;
   }
 
-  press<T extends KeyPress>(key: T) {
+  press<T extends Game.Key>(key: T) {
     if (key in this) return this[key]() as ReturnType<(typeof this)[T]>;
     else throw new Error("invalid key: " + key);
   }
 
-  testKeys(keys: KeyPress[], target: [number, number][]) {
-    const targetSet = new Set(target.map(([x, y]) => `${x},${y}`));
+  keydown(event: Game.Replay.Frames.Keypress) {
+    this.input.keys[event.data.key] = true;
 
-    const state = {
-      location: this.falling.location.slice() as [number, number],
-      rotation: this.falling.rotation,
-      lastSpin: this.lastSpin ? { ...this.lastSpin } : null
-    };
+    if (event.data.subframe > this.subframe) {
+      this.processShift(false, event.data.subframe - this.subframe);
+      this.fall(null, event.data.subframe - this.subframe);
+      this.subframe = event.data.subframe;
+    }
 
-    keys.forEach((key) => this[key]());
+    if (event.data.key === "moveLeft") {
+      this.input.lShift = true;
+      this.input.lastShift = -1;
+      this.input.lDas = event.hoisted
+        ? this.handling.das - this.handling.dcd
+        : 0;
+      this.input.lDasIter = this.handling.arr;
 
-    const res = this.falling.blocks
-      .map(
-        (block) =>
-          `${this.falling.location[0] + block[0]},${
-            this.falling.location[1] - block[1]
-          }`
-      )
-      .every((block) => targetSet.has(block));
+      this.processLShift(true, 0);
+      return;
+    }
 
-    // reset
-    this.falling.location = state.location;
-    this.falling.rotation = state.rotation;
-    this.lastSpin = state.lastSpin;
+    if (event.data.key === "moveRight") {
+      this.input.rShift = true;
+      this.input.lastShift = 1;
+      this.input.rDas = event.hoisted
+        ? this.handling.das - this.handling.dcd
+        : 0;
+      this.input.rDasIter = this.handling.arr;
 
-    return res;
+      this.processRShift(true, 0);
+      return;
+    }
+
+    if (event.data.key === "softDrop") {
+      this.input.softDrop = true;
+      return;
+    }
+
+    if (!this.falling.deepSleep) {
+      if (this.falling.sleep) {
+        if (event.data.key === "rotateCCW") {
+          const irs = this.falling.irs - 1;
+          this.falling.irs = irs < 0 ? 3 : irs;
+        } else if (event.data.key === "rotateCW") {
+          this.falling.irs = (this.falling.irs + 1) % 4;
+        } else if (event.data.key === "rotate180") {
+          this.falling.irs = (this.falling.irs + 2) % 4;
+        } else if (event.data.key === "hold") {
+          this.falling.ihs = true;
+        }
+      } else {
+        if (event.data.key === "rotateCCW") return this.rotateCCW();
+        else if (event.data.key === "rotateCW") return this.rotateCW();
+        else if (event.data.key === "rotate180" && this.misc.allowed.spin180)
+          return this.rotate180();
+        else if (
+          event.data.key === "hardDrop" &&
+          this.misc.allowed.hardDrop &&
+          this.falling.safeLock === 0
+        )
+          return this.hardDrop();
+        else if (event.data.key === "hold" && this.misc.allowed.hold)
+          return this.hold();
+      }
+    }
+  }
+
+  keyup(event: Game.Replay.Frames.Keypress) {
+    this.input.keys[event.data.key] = false;
+
+    if (event.data.subframe > this.subframe) {
+      this.processShift(false, event.data.subframe - this.subframe);
+      this.fall(null, event.data.subframe - this.subframe);
+      this.subframe = event.data.subframe;
+    }
+
+    if (event.data.key === "moveLeft") {
+      this.input.lShift = false;
+      this.input.lDas = 0;
+
+      if (this.handling.cancel) {
+        this.input.rDas = 0;
+        this.input.rDasIter = this.handling.arr;
+      }
+
+      return;
+    }
+
+    if (event.data.key === "moveRight") {
+      this.input.rShift = false;
+      this.input.rDas = 0;
+
+      if (this.handling.cancel) {
+        this.input.lDas = 0;
+        this.input.lDasIter = this.handling.arr;
+      }
+
+      return;
+    }
+
+    if (event.data.key === "softDrop") {
+      this.input.softDrop = false;
+    }
+  }
+
+  private processLShift(value: boolean, subFrameDiff = 1) {
+    if (
+      !this.input.lShift ||
+      (this.input.rShift && this.input.lastShift !== -1)
+    )
+      return;
+
+    let subFrameDiffForDas = subFrameDiff;
+    const dasDiff = Math.max(0, this.handling.das - this.input.lDas);
+
+    this.input.lDas += value ? 0 : subFrameDiff;
+    if (this.input.lDas < this.handling.das && !value) return;
+
+    subFrameDiffForDas = Math.max(0, subFrameDiffForDas - dasDiff);
+    if (this.falling.sleep || this.falling.deepSleep) return;
+
+    let moveLoopCount = 1;
+    if (!value) {
+      this.input.lDasIter += subFrameDiffForDas;
+      if (this.input.lDasIter < this.handling.arr) return;
+
+      moveLoopCount =
+        this.handling.arr === 0
+          ? 10
+          : Math.floor(this.input.lDasIter / this.handling.arr);
+
+      this.input.lDasIter -= this.handling.arr * moveLoopCount;
+    }
+
+    for (let i = 0; i < moveLoopCount; i++) {
+      // Try moving left
+      const moved = this.falling.moveLeft(this.board.state);
+      if (moved) {
+        this.falling.last = Falling.LastKind.Move;
+        this.falling.clamped = false;
+        if (this.is20G()) this.slam();
+        if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
+          this.falling.locking = 0;
+        }
+      } else {
+        this.falling.clamped = true;
+      }
+    }
+  }
+
+  private processRShift(value: boolean, subFrameDiff = 1) {
+    if (!this.input.rShift || (this.input.lShift && this.input.lastShift !== 1))
+      return;
+
+    let subFrameDiffForDas = subFrameDiff;
+    const dasDiff = Math.max(0, this.handling.das - this.input.rDas);
+
+    this.input.rDas += value ? 0 : subFrameDiff;
+    if (this.input.rDas < this.handling.das && !value) return;
+
+    subFrameDiffForDas = Math.max(0, subFrameDiffForDas - dasDiff);
+    if (this.falling.sleep || this.falling.deepSleep) return;
+
+    let moveLoopCount = 1;
+    if (!value) {
+      this.input.rDasIter += subFrameDiffForDas;
+      if (this.input.rDasIter < this.handling.arr) return;
+
+      moveLoopCount =
+        this.handling.arr === 0
+          ? 10
+          : Math.floor(this.input.rDasIter / this.handling.arr);
+
+      this.input.rDasIter -= this.handling.arr * moveLoopCount;
+    }
+
+    for (let i = 0; i < moveLoopCount; i++) {
+      // Try moving right
+      const moved = this.falling.moveRight(this.board.state);
+      if (moved) {
+        this.falling.last = Falling.LastKind.Move;
+        this.falling.clamped = false;
+        if (this.is20G()) this.slam();
+        if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
+          this.falling.locking = 0;
+        }
+      } else {
+        this.falling.clamped = true;
+      }
+    }
+  }
+
+  private processShift(value: boolean, subFrameDiff = 1) {
+    this.processLShift(value, subFrameDiff);
+    this.processRShift(value, subFrameDiff);
+  }
+
+  run(...frames: Game.Replay.Frame[]) {
+    frames.forEach((frame) => {
+      switch (frame.type) {
+        case "keydown":
+          this.keydown(frame);
+          break;
+        case "keyup":
+          this.keyup(frame);
+          break;
+        case "ige":
+          if (frame.data.type === "interaction") {
+            if (frame.data.data.type === "garbage") {
+              this.receiveGarbage({
+                frame:
+                  Number.MAX_SAFE_INTEGER -
+                  this.garbageQueue.options.garbage.speed,
+                amount: this.multiplayer?.passthrough?.network
+                  ? this.igeHandler.receive({
+                      playerID: frame.data.data.gameid,
+                      ackiid: frame.data.data.ackiid,
+                      amount: frame.data.data.amt,
+                      iid: frame.data.data.iid
+                    })
+                  : frame.data.data.amt,
+                size: frame.data.data.size,
+                cid: frame.data.data.iid,
+                gameid: frame.data.data.gameid,
+                confirmed: false
+              });
+            }
+          } else if (frame.data.type === "interaction_confirm") {
+            if (frame.data.data.type === "garbage") {
+              console.log("CONFIRM", frame.data.data, frame.frame);
+              this.garbageQueue.confirm(
+                frame.data.data.iid,
+                frame.data.data.gameid,
+                frame.frame
+              );
+            }
+          } else if (frame.data.type === "target" && this.multiplayer) {
+            this.multiplayer.targets = frame.data.data.targets;
+          }
+          break;
+      }
+    });
   }
 
   tick(frames: Game.Replay.Frame[]) {
+    this.subframe = 0;
+
+    this.run(...frames);
+
     this.frame++;
-    if (this.frame > this.gravity.marginTime)
-      this.gravity.value += this.gravity.increase;
+    this.processShift(false, 1 - this.subframe);
+    this.fall(null, 1 - this.subframe);
+    // TODO: EXECUTE WAITING FRAMES
+    Object.keys(this.dynamic).forEach((key) =>
+      this.dynamic[key as keyof typeof this.dynamic].tick()
+    );
 
-    const r = (n: number) => Math.round(n * 10) / 10;
-    let spin = "none";
-    // array of arrays of frames, each arr has a subframe
-    const f: Game.Replay.Frame[][] = Array.from({ length: 10 }, () => []);
-    frames.forEach((frame) => {
-      if (frame.type === "keyup" || frame.type === "keydown") {
-        if (frame.data && typeof frame.data.subframe === "number") {
-          const i = Math.round(frame.data.subframe * 10);
-          const ci = Math.max(0, Math.min(9, i));
-          f[ci].push(frame);
-        }
-      } else if (frame.type === "ige") {
-        if (frame.data.type === "interaction_confirm") {
-          if (frame.data.data.type === "garbage") {
-            this.receiveGarbage({
-              frame: frame.frame,
-              amount: this.multiplayer?.passthrough?.network
-                ? this.igeHandler.receive({
-                    playerID: frame.data.data.gameid,
-                    ackiid: frame.data.data.ackiid,
-                    amount: frame.data.data.amt,
-                    iid: frame.data.data.iid
-                  })
-                : frame.data.data.amt,
-              size: frame.data.data.size
-            });
-          }
-        } else if (frame.data.type === "target" && this.multiplayer) {
-          this.multiplayer.targets = frame.data.data.targets;
-        }
-      }
-    });
-
-    const res: {
-      pieces: number;
-      garbage: {
-        sent: number[];
-        received: OutgoingGarbage[];
-      };
-    } = {
-      pieces: 0,
-      garbage: {
-        sent: [],
-        received: []
-      }
-    };
-
-    f.forEach((frames, subf) => {
-      subf = r(subf / 10);
-      frames.forEach((frame) => {
-        if (frame.type === "keydown") {
-          const {
-            hoisted,
-            data: { subframe, key }
-          } = frame;
-          if (key === "moveRight") {
-            if (hoisted) {
-              if (this.handling.arr === 0) {
-                this.dasRight();
-                const target = r(this.frame + subframe + 0.1);
-                this.keys.right = [Math.floor(target), r(target % 1)];
-              } else {
-                const target = r(this.frame + subframe + this.handling.arr);
-                this.keys.right = [Math.floor(target), r(target % 1)];
-                this.moveRight();
-              }
-            } else {
-              const target = r(this.frame + subframe + this.handling.das);
-              this.keys.right = [Math.floor(target), r(target % 1)];
-              this.moveRight();
-            }
-          } else if (key === "moveLeft") {
-            if (hoisted) {
-              if (this.handling.arr === 0) {
-                this.dasLeft();
-                const target = r(this.frame + subframe + 0.1);
-                this.keys.left = [Math.floor(target), r(target % 1)];
-              } else {
-                const target = r(this.frame + subframe + this.handling.arr);
-                this.keys.left = [Math.floor(target), r(target % 1)];
-                this.moveLeft();
-              }
-            } else {
-              const target = r(this.frame + subframe + this.handling.das);
-              this.keys.left = [Math.floor(target), r(target % 1)];
-              this.moveLeft();
-            }
-          } else if (key === "softDrop") {
-            this.keys.soft = [frame.frame, subframe];
-          } else if (key === "hardDrop") {
-            const { garbage: g, garbageAdded, spin: s } = this.hardDrop();
-            res.garbage.sent.push(...g);
-            if (g.length > 0) {
-              if (this.multiplayer)
-                this.multiplayer.targets.forEach((target) =>
-                  g.forEach((g) =>
-                    this.igeHandler.send({ amount: g, playerID: target })
-                  )
-                );
-            }
-            res.garbage.received.push(...(garbageAdded || []));
-            res.pieces++;
-            spin = s;
-          } else if (key === "hold") {
-            this.hold();
-          } else if (key === "rotateCW") {
-            this.rotateCW();
-          } else if (key === "rotateCCW") {
-            this.rotateCCW();
-          } else if (key === "rotate180") {
-            this.rotate180();
-          }
-        } else if (frame.type === "keyup") {
-          if (frame.data.key === "moveRight") this.keys.right = [-1, -1];
-          if (frame.data.key === "moveLeft") this.keys.left = [-1, -1];
-          if (frame.data.key === "softDrop") this.keys.soft = [-1, -1];
-        }
-      });
-
-      if (this.frame === this.keys.left[0] && subf === this.keys.left[1]) {
-        if (this.handling.arr === 0) {
-          this.dasLeft();
-          const t = r(this.frame + subf + 0.1);
-          this.keys.left = [Math.floor(t), r(t % 1)];
-        } else {
-          this.moveLeft();
-          const t = r(this.frame + subf + this.handling.arr);
-          this.keys.left = [Math.floor(t), r(t % 1)];
-        }
-      }
-
-      if (this.frame === this.keys.right[0] && subf === this.keys.right[1]) {
-        if (this.handling.arr === 0) {
-          this.dasRight();
-          const t = r(this.frame + subf + 0.1);
-          this.keys.right = [Math.floor(t), r(t % 1)];
-        } else {
-          this.moveRight();
-          const t = r(this.frame + subf + this.handling.arr);
-          this.keys.right = [Math.floor(t), r(t % 1)];
-        }
-      }
-
-      if (
-        r(this.frame + subf) >= r(this.keys.soft[0] + this.keys.soft[1]) &&
-        !(this.keys.soft[0] === -1 && this.keys.soft[1] === -1)
-      ) {
-        // const o = 1; // TODO: wtf is this?
-        // let dropFactor =
-        //   this.handling.sdf === 41
-        //     ? 400 * o
-        //     : Math.max(
-        //         this.gravity.value * o * this.handling.sdf,
-        //         0.05 * this.handling.sdf
-        //       );
-
-        // TODO: do real softdrop cause idk how it works
-        this.softDrop();
-      }
-    });
-    return { ...res, spin };
+    return { ...this.flushRes() };
   }
 
-  receiveGarbage(...garbage: Garbage[]) {
+  receiveGarbage(...garbage: IncomingGarbage[]) {
     this.garbageQueue.receive(...garbage);
   }
 
   hold() {
+    if (this.holdLocked) return;
     if (this.held) {
       const save = this.held;
       this.held = this.falling.symbol;
@@ -814,14 +1253,12 @@ export class Engine {
       this.held = this.falling.symbol;
       this.nextPiece();
     }
+
+    this.holdLocked = !this.misc.infiniteHold;
   }
 
-  getPreview(piece: Piece) {
+  getPreview(piece: Mino) {
     return tetrominoes[piece.toLowerCase()].preview;
-  }
-
-  bfs(depth: number, target: [number, number][], finesse?: boolean) {
-    return bfs(this, depth, target, finesse);
   }
 
   onQueuePieces(
@@ -879,7 +1316,6 @@ export class Engine {
 
 export * from "./queue";
 export * from "./garbage";
-export * from "./search";
 export * from "./utils";
 export * from "./board";
 export * from "./types";

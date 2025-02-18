@@ -1,3 +1,4 @@
+import { Types } from "../..";
 import { Events, Game as GameTypes } from "../../types";
 import { API, CONSTANTS, parseToken } from "../../utils";
 import { Game } from "../game";
@@ -167,14 +168,16 @@ export class Client {
     api.update({ token });
     const me = api.users.me();
 
-    const handling = options.handling || {
+    const handling: Types.Game.Handling = options.handling || {
       arr: 0,
       cancel: false,
       das: 5,
       dcd: 0,
       safelock: false,
       may20g: true,
-      sdf: 41
+      sdf: 41,
+      irs: "tap",
+      ihs: "tap"
     };
 
     const ribbonConfig = {

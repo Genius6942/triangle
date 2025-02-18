@@ -1,11 +1,11 @@
 import { BoardSquare } from "../../board";
-import { Piece } from "../../queue/types";
+import { Mino } from "../../queue/types";
 import { KickTable, legal, performKick } from "../kicks";
 import { tetrominoes } from "./data";
-import { Rotation } from "./types";
+import { Rotation, Falling } from "./types";
 
 export interface TetrominoInitializeParams {
-  symbol: Piece;
+  symbol: Mino;
   initialRotation: Rotation;
   boardHeight: number;
   boardWidth: number;
@@ -13,9 +13,31 @@ export interface TetrominoInitializeParams {
 
 export class Tetromino {
   private _rotation!: Rotation;
-  symbol: Piece;
+  symbol: Mino;
   states: [number, number][][];
   location: [number, number];
+
+  sleep: boolean;
+  deepSleep: boolean;
+  hibernated: boolean;
+  locking: number;
+  lockResets: number;
+  forceLock: boolean;
+  floored: boolean;
+  clamped: boolean;
+  safeLock: number;
+  highestY: number;
+  last: Falling.LastKind;
+  lastKick: number;
+  lastRotation: Falling.LastRotationKind;
+  fallingRotations: number;
+  totalRotations: number;
+  irs: number;
+  ihs: boolean;
+  aox: number;
+  aoy: number;
+  readonly keys: number;
+  spinType: Falling.SpinTypeKind;
 
   constructor(options: TetrominoInitializeParams) {
     this.rotation = options.initialRotation;
@@ -26,8 +48,31 @@ export class Tetromino {
 
     this.location = [
       Math.floor(options.boardWidth / 2 - tetromino.matrix.w / 2),
-      options.boardHeight + 2
+      options.boardHeight + 2.04
     ];
+
+    // other stuff
+    this.sleep = false;
+    this.deepSleep = false;
+    this.hibernated = false;
+    this.locking = 0;
+    this.lockResets = 0;
+    this.forceLock = false;
+    this.floored = false;
+    this.clamped = false;
+    this.safeLock = 0;
+    this.highestY = this.location[1];
+    this.last = Falling.LastKind.None;
+    this.lastKick = 0;
+    this.lastRotation = Falling.LastRotationKind.None;
+    this.fallingRotations = 0;
+    this.totalRotations = 0;
+    this.irs = 0;
+    this.ihs = false;
+    this.aox = 0;
+    this.aoy = 0;
+    this.keys = 0;
+    this.spinType = Falling.SpinTypeKind.Null;
   }
 
   get blocks() {
@@ -37,8 +82,30 @@ export class Tetromino {
   get absoluteBlocks() {
     return this.blocks.map((block): [number, number] => [
       block[0] + this.location[0],
-      -block[1] + this.location[1]
+      -block[1] + this.y
     ]);
+  }
+
+  absoluteAt({
+    x = this.location[0],
+    y = this.location[1],
+    rotation = this.rotation
+  }: {
+    x?: number;
+    y?: number;
+    rotation?: number;
+  }) {
+    const currentState = [this.location[0], this.location[1], this.rotation];
+
+    this.location = [x, y];
+    this.rotation = rotation;
+
+    const res = this.absoluteBlocks;
+
+    this.location = [currentState[0], currentState[1]];
+    this.rotation = currentState[2];
+
+    return res;
   }
 
   get rotation(): Rotation {
@@ -58,7 +125,7 @@ export class Tetromino {
   }
 
   get y() {
-    return this.location[1];
+    return Math.floor(this.location[1]);
   }
 
   set y(value: number) {
@@ -69,7 +136,7 @@ export class Tetromino {
     return !legal(
       this.blocks.map((block) => [
         block[0] + this.location[0],
-        -block[1] + this.location[1] - 1
+        -block[1] + this.y - 1
       ]),
       board
     );
@@ -80,40 +147,47 @@ export class Tetromino {
       !legal(
         this.blocks.map((block) => [
           block[0] + this.location[0] - 1,
-          -block[1] + this.location[1]
+          -block[1] + this.y
         ]),
         board
       ) &&
       !legal(
         this.blocks.map((block) => [
           block[0] + this.location[0] + 1,
-          -block[1] + this.location[1]
+          -block[1] + this.y
         ]),
         board
       ) &&
       !legal(
         this.blocks.map((block) => [
           block[0] + this.location[0],
-          -block[1] + this.location[1] + 1
+          -block[1] + this.y + 1
         ]),
         board
       ) &&
       !legal(
         this.blocks.map((block) => [
           block[0] + this.location[0],
-          -block[1] + this.location[1] - 1
+          -block[1] + this.y - 1
         ]),
         board
       )
     );
   }
 
-  rotate(board: BoardSquare[][], kickTable: KickTable, amt: Rotation) {
+  rotate(
+    board: BoardSquare[][],
+    kickTable: KickTable,
+    amt: Rotation,
+    maxMovement: boolean
+  ) {
     const rotatedBlocks = this.states[(this.rotation + amt) % 4];
     const kickRes = performKick(
       kickTable,
       this.symbol,
       this.location,
+      [this.aox, this.aoy],
+      maxMovement,
       rotatedBlocks,
       this.rotation,
       ((this.rotation + amt) % 4) as any,
@@ -121,8 +195,7 @@ export class Tetromino {
     );
 
     if (typeof kickRes === "object") {
-      const kick = kickRes.kick;
-      this.location = [this.location[0] + kick[0], this.location[1] + kick[1]];
+      this.location = [...kickRes.newLocation];
     }
     if (kickRes) {
       this.rotation = this.rotation + amt;
@@ -133,24 +206,12 @@ export class Tetromino {
     return false;
   }
 
-  rotateCW(board: BoardSquare[][], kickTable: KickTable) {
-    return this.rotate(board, kickTable, 1);
-  }
-
-  rotateCCW(board: BoardSquare[][], kickTable: KickTable) {
-    return this.rotate(board, kickTable, 3);
-  }
-
-  rotate180(board: BoardSquare[][], kickTable: KickTable) {
-    return this.rotate(board, kickTable, 2);
-  }
-
   moveRight(board: BoardSquare[][]) {
     if (
       legal(
         this.blocks.map((block) => [
           block[0] + this.location[0] + 1,
-          -block[1] + this.location[1]
+          -block[1] + this.y
         ]),
         board
       )
@@ -165,7 +226,7 @@ export class Tetromino {
       legal(
         this.blocks.map((block) => [
           block[0] + this.location[0] - 1,
-          -block[1] + this.location[1]
+          -block[1] + this.y
         ]),
         board
       )
@@ -199,7 +260,7 @@ export class Tetromino {
       legal(
         this.blocks.map((block) => [
           block[0] + this.location[0],
-          -block[1] + this.location[1] - 1
+          -block[1] + this.y - 1
         ]),
         board
       )

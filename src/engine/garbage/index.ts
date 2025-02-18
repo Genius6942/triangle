@@ -1,12 +1,13 @@
-import { calculateIncrease, deepCopy } from "../utils";
+import { deepCopy } from "../utils";
 import { columnWidth, garbageRNG } from "./utils";
 
 export interface GarbageQueueInitializeParams {
   cap: {
     value: number;
+    marginTime: number;
+    increase: number;
     absolute: number;
     max: number;
-    increase: number;
   };
   messiness: {
     change: number;
@@ -19,6 +20,13 @@ export interface GarbageQueueInitializeParams {
     speed: number;
     holeSize: number;
   };
+
+  multiplier: {
+    value: number;
+    increase: number;
+    marginTime: number;
+  };
+
   seed: number;
   boardWidth: number;
   rounding: "down" | "rng";
@@ -32,12 +40,19 @@ export interface Garbage {
   size: number;
 }
 
-export type OutgoingGarbage = Garbage & { column: number };
+export interface IncomingGarbage extends Garbage {
+  cid: number;
+  gameid: number;
+  confirmed: boolean;
+}
+export interface OutgoingGarbage extends Garbage {
+  column: number;
+}
 
 export class GarbageQueue {
   options: GarbageQueueInitializeParams;
 
-  queue: Garbage[];
+  queue: IncomingGarbage[];
 
   private lastTankTime: number = 0;
   private lastColumn: number | null = null;
@@ -63,19 +78,8 @@ export class GarbageQueue {
     return this.queue.reduce((a, b) => a + b.amount, 0);
   }
 
-  cap(frame: number) {
-    return Math.min(
-      calculateIncrease(
-        this.options.cap.value,
-        frame,
-        this.options.cap.increase,
-        0
-      ),
-      this.options.cap.max
-    );
-  }
-
-  receive(...args: Garbage[]) {
+  receive(...args: IncomingGarbage[]) {
+    console.log("INCOMING GARBAGE", args);
     this.queue.push(...args.filter((arg) => arg.amount > 0));
 
     while (this.size > this.options.cap.absolute) {
@@ -86,6 +90,14 @@ export class GarbageQueue {
         this.queue.at(-1)!.amount -= total - this.options.cap.absolute;
       }
     }
+  }
+
+  confirm(cid: number, gameid: number, frame: number) {
+    const obj = this.queue.find((g) => g.cid === cid && g.gameid === gameid);
+    if (!obj) return false;
+    obj.frame = frame;
+    obj.confirmed = true;
+    return true;
   }
 
   cancel(amount: number, pieceCount: number) {
@@ -122,7 +134,7 @@ export class GarbageQueue {
     return col;
   }
 
-  tank(frame: number): OutgoingGarbage[] {
+  tank(frame: number, cap: number): OutgoingGarbage[] {
     if (this.queue.length === 0) return [];
 
     const res: OutgoingGarbage[] = [];
@@ -139,17 +151,17 @@ export class GarbageQueue {
 
     let total = 0;
 
-    while (total < this.cap(frame) && this.queue.length > 0) {
+    while (total < cap && this.queue.length > 0) {
       const item = deepCopy(this.queue[0]);
 
-      if (item.frame + this.options.garbage.speed > frame - 1) break; // do not spawn garbage that is still traveling
-
+      if (item.frame + this.options.garbage.speed > frame) break; // do not spawn garbage that is still traveling
+      console.log("TANK", deepCopy(item));
       total += item.amount;
 
       let exausted = false;
 
-      if (total > this.cap(frame)) {
-        const excess = total - this.cap(frame);
+      if (total > cap) {
+        const excess = total - cap;
         this.queue[0].amount = excess;
         item.amount -= excess;
       } else {

@@ -1,5 +1,5 @@
 import { rng } from ".";
-import { Piece } from "../types";
+import { Mino } from "../types";
 
 export const bag14 = (seed: number) => {
   const gen = rng(seed);
@@ -19,5 +19,5 @@ export const bag14 = (seed: number) => {
       "i",
       "j",
       "t"
-    ] as Piece[]);
+    ] as Mino[]);
 };

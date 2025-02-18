@@ -1,8 +1,16 @@
 import { rng } from ".";
-import { Piece } from "../types";
+import { Mino } from "../types";
 
 export const classic = (seed: number) => {
-  const TETROMINOS: Piece[] = ["z", "l", "o", "s", "i", "j", "t"];
+  const TETROMINOS: Mino[] = [
+    Mino.Z,
+    Mino.L,
+    Mino.O,
+    Mino.S,
+    Mino.I,
+    Mino.J,
+    Mino.T
+  ];
   let lastGenerated: number | null = null;
   const gen = rng(seed);
 

@@ -1,5 +1,5 @@
 import { BoardSquare } from "../../board";
-import { Piece } from "../../queue/types";
+import { Mino } from "../../queue/types";
 import { Rotation } from "../tetromino/types";
 import { kicks } from "./data";
 
@@ -20,19 +20,28 @@ export const legal = (blocks: [number, number][], board: BoardSquare[][]) => {
 
 export const performKick = (
   kicktable: KickTable,
-  piece: Piece,
+  piece: Mino,
   pieceLocation: [number, number],
+  ao: [number, number],
+  maxMovement: boolean,
   blocks: [number, number][],
   startRotation: Rotation,
   endRotation: Rotation,
   board: BoardSquare[][]
-): { kick: [number, number]; id: string; index: number } | boolean => {
+):
+  | {
+      kick: [number, number];
+      newLocation: [number, number];
+      id: string;
+      index: number;
+    }
+  | boolean => {
   try {
     if (
       legal(
         blocks.map((block) => [
-          pieceLocation[0] + block[0],
-          pieceLocation[1] - block[1]
+          pieceLocation[0] + block[0] - ao[0],
+          Math.floor(pieceLocation[1]) - block[1] - ao[1]
         ]),
         board
       )
@@ -55,16 +64,22 @@ export const performKick = (
 
     for (let i = 0; i < kickset.length; i++) {
       const [dx, dy] = kickset[i];
+
+      const newY = !maxMovement
+        ? Math.floor(pieceLocation[1]) + 0.1 - dy + ao[1]
+        : pieceLocation[1] - dy + ao[1];
+
       if (
         legal(
           blocks.map((block) => [
-            pieceLocation[0] + block[0] + dx,
-            pieceLocation[1] - block[1] - dy
+            pieceLocation[0] + block[0] + dx - ao[0],
+            Math.floor(newY) - block[1]
           ]),
           board
         )
       ) {
         return {
+          newLocation: [pieceLocation[0] + dx - ao[0], newY],
           kick: [dx, -dy],
           id: kickID,
           index: i
