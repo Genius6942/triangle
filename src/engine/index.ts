@@ -961,7 +961,7 @@ export class Engine {
   }
 
   hardDrop() {
-    this.softDrop();
+    while (this.#__internal_fall(1));
 
     return this.#lock();
   }
