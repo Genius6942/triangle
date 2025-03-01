@@ -17,7 +17,7 @@ import { garbageCalcV2, garbageData } from "./utils/damageCalc";
 import { KickTable, legal, performKick } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
-import { Falling, Rotation } from "./utils/tetromino/types";
+import { Rotation } from "./utils/tetromino/types";
 
 import chalk from "chalk";
 
@@ -333,6 +333,7 @@ export class Engine {
     return !!(this.state & constants.flags.STATE_WALL);
   }
 
+  // @ts-expect-error unused
   #hasRotated() {
     return !!(
       this.state &
@@ -340,14 +341,17 @@ export class Engine {
     );
   }
 
+  // @ts-expect-error unused
   #hasRotated180() {
     return !!(this.state & constants.flags.ROTATION_180);
   }
 
+  // @ts-expect-error unused
   #isSpin() {
     return !!(this.state & constants.flags.ROTATION_SPIN);
   }
 
+  // @ts-expect-error unused
   #isSpinMini() {
     return !(
       ~this.state &
@@ -355,6 +359,7 @@ export class Engine {
     );
   }
 
+  // @ts-expect-error unused
   #isSpinAll() {
     return !!(this.state & constants.flags.ROTATION_SPIN_ALL);
   }
@@ -363,14 +368,17 @@ export class Engine {
     return !!(this.state & constants.flags.STATE_SLEEP);
   }
 
+  // @ts-expect-error unused
   #isFloored() {
     return !!(this.state & constants.flags.STATE_FLOOR);
   }
 
+  // @ts-expect-error unused
   #isVisible() {
     return !(this.state & constants.flags.STATE_NODRAW);
   }
 
+  // @ts-expect-error unused
   #isSoftDropped() {
     return !!(this.state & constants.flags.ACTION_SOFTDROP);
   }
@@ -437,8 +445,7 @@ export class Engine {
     )
       return false;
 
-    const { highestY } = this.falling,
-      y = this.falling.location[1];
+    const { highestY } = this.falling;
     if (highestY > y1) this.falling.highestY = Math.floor(y1);
     this.falling.location[1] = y1;
     this.state &= ~constants.flags.STATE_FLOOR;
@@ -451,6 +458,7 @@ export class Engine {
     return true;
   }
 
+  // @ts-expect-error unused
   #__internal_lockout() {
     // TODO: implement
     // if (this.options.nolockout) return;
@@ -580,6 +588,11 @@ export class Engine {
     // Check for T-Spin
     const spin = this.detectSpin(this.isTSpinKick(kick));
 
+    this.lastSpin = {
+      piece: this.falling.symbol,
+      type: spin
+    };
+
     if (spin) {
       this.state |= constants.flags.ROTATION_SPIN;
       if (spin === "mini") {
@@ -653,13 +666,6 @@ export class Engine {
     const newTetromino = this.queue.shift()!;
 
     this.initiatePiece(newTetromino, canClutch, ignoreBlockout);
-  }
-
-  private slam() {
-    const gravity = this.dynamic.gravity.get();
-    this.dynamic.gravity.set(Number.MAX_SAFE_INTEGER);
-    this.#fall(1);
-    this.dynamic.gravity.set(gravity);
   }
 
   initiatePiece(
