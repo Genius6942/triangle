@@ -79,7 +79,6 @@ export class GarbageQueue {
   }
 
   receive(...args: IncomingGarbage[]) {
-    console.log("INCOMING GARBAGE", args);
     this.queue.push(...args.filter((arg) => arg.amount > 0));
 
     while (this.size > this.options.cap.absolute) {
@@ -103,7 +102,7 @@ export class GarbageQueue {
   cancel(amount: number, pieceCount: number) {
     let send = amount,
       cancel = 0;
-    if (pieceCount + 1 < this.options.openerPhase && this.size >= this.sent)
+    if (pieceCount + 1 <= this.options.openerPhase && this.size >= this.sent)
       cancel += amount;
     while ((send > 0 || cancel > 0) && this.size > 0) {
       this.queue[0].amount--;
@@ -155,7 +154,6 @@ export class GarbageQueue {
       const item = deepCopy(this.queue[0]);
 
       if (item.frame + this.options.garbage.speed > frame) break; // do not spawn garbage that is still traveling
-      console.log("TANK", deepCopy(item));
       total += item.amount;
 
       let exausted = false;

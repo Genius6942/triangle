@@ -1,5 +1,6 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
+import { constants } from "./constants";
 import {
   GarbageQueue,
   GarbageQueueInitializeParams,
@@ -13,7 +14,7 @@ import { IncreasableValue } from "./types";
 import { EngineCheckpoint, SpinType } from "./types";
 import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
-import { KickTable, legal } from "./utils/kicks";
+import { KickTable, legal, performKick } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Falling, Rotation } from "./utils/tetromino/types";
@@ -102,15 +103,26 @@ export class Engine {
   handling!: Game.Handling;
 
   input!: {
-    lDas: number;
-    lDasIter: number;
-    lShift: boolean;
-    rDas: number;
-    rDasIter: number;
-    rShift: boolean;
+    lShift: { held: boolean; arr: number; das: number; dir: -1 };
+    rShift: { held: boolean; arr: number; das: number; dir: 1 };
     lastShift: number;
-    softDrop: boolean;
-    keys: { [k in Game.Key]: boolean };
+    keys: {
+      [k in
+        | "softDrop"
+        | "rotateCCW"
+        | "rotateCW"
+        | "rotate180"
+        | "hold"]: boolean;
+    };
+    firstInputTime: number;
+    time: {
+      start: number;
+      zero: boolean;
+      locked: boolean;
+      prev: number;
+      frameoffset: number;
+    };
+    lastPieceTime: number;
   };
 
   pc!: PCOptions;
@@ -121,6 +133,8 @@ export class Engine {
     garbageMultiplier: IncreaseTracker;
     garbageCap: IncreaseTracker;
   };
+
+  glock!: number;
 
   multiplayer?: {
     options: MultiplayerOptions;
@@ -134,6 +148,8 @@ export class Engine {
   igeHandler!: IGEHandler;
 
   misc!: MiscellaneousOptions;
+
+  state!: number;
 
   onGarbageSpawn?: (column: number, size: number) => void;
 
@@ -210,32 +226,31 @@ export class Engine {
       )
     };
 
+    this.glock = 0;
+
     this.misc = options.misc;
 
     this.gameOptions = options.options;
     this.handling = options.handling;
     this.input = {
-      lDas: 0,
-      lDasIter: 0,
-      lShift: false,
-      rDas: 0,
-      rDasIter: 0,
-      rShift: false,
-      lastShift: 0,
-      softDrop: false,
+      lShift: { held: false, arr: 0, das: 0, dir: -1 },
+      rShift: { held: false, arr: 0, das: 0, dir: 1 },
+      lastShift: -1,
+      firstInputTime: -1,
+      time: { start: 0, zero: true, locked: false, prev: 0, frameoffset: 0 },
+      lastPieceTime: 0,
       keys: {
-        moveRight: false,
-        moveLeft: false,
         softDrop: false,
         hold: false,
         rotateCW: false,
         rotateCCW: false,
-        rotate180: false,
-        hardDrop: false
+        rotate180: false
       }
     };
     this.frame = 0;
     this.subframe = 0;
+
+    this.state = 0;
 
     this.flushRes();
 
@@ -306,63 +321,69 @@ export class Engine {
     this._kickTable = value;
   }
 
-  nextPiece(canClutch = false) {
-    const newTetromino = this.queue.shift()!;
-
-    const isFirstPiece = this.falling === undefined;
-
-    const { clamped, ihs, irs } = this.falling || {
-      clamped: false,
-      ihs: false,
-      irs: 0
-    };
-
-    this.initiatePiece(newTetromino);
-    if (canClutch && this.gameOptions.clutch) {
-      while (
-        Math.max(...this.falling.absoluteBlocks.map((block) => block[1])) <
-          this.board.fullHeight &&
-        !legal(this.falling.absoluteBlocks, this.board.state)
-      ) {
-        this.falling.location[1]++;
-      }
-    }
-
-    if (!isFirstPiece) {
-      if (clamped && this.handling.dcd > 0) {
-        this.input.lDas = Math.min(
-          this.input.lDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.lDasIter = this.handling.arr;
-
-        this.input.rDas = Math.min(
-          this.input.rDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.rDasIter = this.handling.arr;
-      }
-
-      // TODO: dead??
-
-      if (ihs) {
-        this.falling.ihs = false;
-        this.hold();
-      }
-
-      if (irs !== 0) {
-        this.rotate(irs as Rotation);
-      }
-    }
-
-    if (this.is20G()) this.slam();
+  #getEffectiveGravity() {
+    return this.glock <= 0
+      ? this.dynamic.gravity.get()
+      : this.glock <= 180
+        ? (1 - this.glock / 180) ** 2 * this.dynamic.gravity.get()
+        : 0;
   }
 
-  private is20G() {
+  #hasHitWall() {
+    return !!(this.state & constants.flags.STATE_WALL);
+  }
+
+  #hasRotated() {
+    return !!(
+      this.state &
+      (constants.flags.ROTATION_LEFT | constants.flags.ROTATION_RIGHT)
+    );
+  }
+
+  #hasRotated180() {
+    return !!(this.state & constants.flags.ROTATION_180);
+  }
+
+  #isSpin() {
+    return !!(this.state & constants.flags.ROTATION_SPIN);
+  }
+
+  #isSpinMini() {
+    return !(
+      ~this.state &
+      (constants.flags.ROTATION_SPIN | constants.flags.ROTATION_MINI)
+    );
+  }
+
+  #isSpinAll() {
+    return !!(this.state & constants.flags.ROTATION_SPIN_ALL);
+  }
+
+  #isSleep() {
+    return !!(this.state & constants.flags.STATE_SLEEP);
+  }
+
+  #isFloored() {
+    return !!(this.state & constants.flags.STATE_FLOOR);
+  }
+
+  #isVisible() {
+    return !(this.state & constants.flags.STATE_NODRAW);
+  }
+
+  #isSoftDropped() {
+    return !!(this.state & constants.flags.ACTION_SOFTDROP);
+  }
+
+  #isForcedToLock() {
+    return !!(this.state & constants.flags.ACTION_FORCELOCK);
+  }
+
+  #is20G() {
     const is20G = this.dynamic.gravity.get() > this.board.height;
     const mode20G = this.misc.movement.may20G;
 
-    if (this.input.softDrop) {
+    if (this.input.keys.softDrop) {
       const preferSoftDrop = this.handling.may20g || (is20G && mode20G);
       return (
         (this.handling.sdf === 41 ||
@@ -374,14 +395,310 @@ export class Engine {
     return is20G && mode20G;
   }
 
+  #shouldLock() {
+    return (
+      !this.misc.movement.infinite &&
+      this.falling.lockResets >= this.misc.movement.lockResets
+    );
+  }
+
+  #shouldFallFaster() {
+    return this.misc.movement.infinite
+      ? false
+      : this.falling.rotResets > this.misc.movement.lockResets + 15;
+  }
+
+  #clearFlags(e: number) {
+    this.state &= e;
+  }
+
+  #__internal_lock(subframe = 1 - this.subframe) {
+    this.falling.locking += subframe;
+
+    return (
+      this.falling.locking > this.misc.movement.lockTime ||
+      this.#isForcedToLock() ||
+      (this.falling.lockResets > this.misc.movement.lockResets &&
+        !this.misc.movement.infinite) ||
+      this.#shouldLock()
+    );
+  }
+
+  #__internal_fall(value: number) {
+    let y1 = Math.round(1e6 * (this.falling.location[1] - value)) / 1e6,
+      y2 = this.falling.location[1] - 1;
+
+    if (y1 % 1 === 0) y1 -= 1e-6;
+    if (y2 % 1 === 0) y2 += 2e-6;
+
+    if (
+      !legal(this.falling.absoluteAt({ y: y1 }), this.board.state) ||
+      !legal(this.falling.absoluteAt({ y: y2 }), this.board.state)
+    )
+      return false;
+
+    const { highestY } = this.falling,
+      y = this.falling.location[1];
+    if (highestY > y1) this.falling.highestY = Math.floor(y1);
+    this.falling.location[1] = y1;
+    this.state &= ~constants.flags.STATE_FLOOR;
+
+    if (y1 > highestY || this.misc.movement.infinite) {
+      this.falling.lockResets = 0;
+      this.falling.rotResets = 0;
+    }
+
+    return true;
+  }
+
+  #__internal_lockout() {
+    // TODO: implement
+    // if (this.options.nolockout) return;
+    // if (!e || false === this.options.clutch)
+    //   return this.self.stm.LoseStockOrGameOver(
+    //     this.options.topoutisclear ? "topout_clear" : "topout",
+    //   );
+  }
+
+  #__internal_dcd() {
+    if (!this.#hasHitWall() || !this.handling.dcd) return;
+
+    this.input.lShift.das = Math.min(
+      this.input.lShift.das,
+      this.handling.das - this.handling.dcd
+    );
+    this.input.lShift.arr = this.handling.arr;
+
+    this.input.rShift.das = Math.min(
+      this.input.rShift.das,
+      this.handling.das - this.handling.dcd
+    );
+    this.input.rShift.arr = this.handling.arr;
+  }
+
+  #fall(subframe = 1 - this.subframe) {
+    if (this.falling.safeLock > 0) this.falling.safeLock--;
+    // TODO: if pause, return: if ((this.piece.safelock > 0 && this.piece.safelock--, this.S.pause)) return;
+
+    if (this.#isSleep()) return;
+
+    let fall = this.#getEffectiveGravity() * subframe;
+
+    if (this.glock > 0) this.glock -= subframe;
+    if (this.glock < 0) this.glock = 0;
+
+    if (this.input.keys.softDrop) {
+      if (this.handling.sdf === 41) fall = 400 * subframe;
+      else {
+        fall *= this.handling.sdf;
+
+        fall = Math.max(fall, 0.05 * this.handling.sdf);
+      }
+    }
+
+    if (
+      this.#shouldLock() &&
+      !legal(
+        this.falling.absoluteAt({ y: this.falling.location[1] - 1 }),
+        this.board.state
+      )
+    ) {
+      fall = 20;
+      this.state |= constants.flags.ACTION_FORCELOCK;
+    }
+
+    if (this.#shouldFallFaster()) {
+      fall +=
+        0.5 *
+        subframe *
+        (this.falling.rotResets - (this.misc.movement.lockResets + 15));
+    }
+
+    for (
+      let dropFactor = fall;
+      dropFactor > 0;
+      dropFactor -= Math.min(1, dropFactor)
+    ) {
+      const y = this.falling.location[1];
+
+      if (!this.#__internal_fall(Math.min(1, dropFactor))) {
+        if (this.#__internal_lock(subframe)) {
+          if (this.handling.safelock) this.falling.safeLock = 7;
+          this.#lock();
+        }
+        break;
+      }
+
+      if (Math.floor(y) !== Math.floor(this.falling.location[1])) {
+        this.state &= ~constants.flags.ROTATION_ALL;
+      }
+    }
+  }
+
+  #clampRotation(amount: number): Rotation {
+    return ((((this.falling.rotation + amount) % 4) + 4) % 4) as Rotation;
+  }
+
+  #__internal_rotate(
+    newX: number,
+    newY: number,
+    newRotation: number,
+    rotationDirection: number,
+    kick: ReturnType<typeof performKick>,
+    _isIRS = false
+  ) {
+    // Handle rotation flags based on direction
+    if (rotationDirection >= 2) {
+      // 180 degree rotation
+      rotationDirection = newRotation > this.falling.rotation ? 1 : -1;
+      this.state |= constants.flags.ROTATION_180;
+    }
+
+    // Update this.falling properties
+    this.falling.x = newX;
+    this.falling.y = newY;
+    this.falling.rotation = newRotation;
+
+    // Set rotation direction flags
+    this.state |=
+      rotationDirection === 1
+        ? constants.flags.ROTATION_RIGHT
+        : constants.flags.ROTATION_LEFT;
+    this.state &= ~(
+      constants.flags.ROTATION_SPIN |
+      constants.flags.ROTATION_MINI |
+      constants.flags.ROTATION_SPIN_ALL
+    );
+
+    // Record kick information
+    this.falling.kick = typeof kick === "boolean" ? 0 : kick.index;
+
+    // Update lock and rotation resets with caps
+    if (this.falling.lockResets < 31) this.falling.lockResets++;
+    if (this.falling.rotResets < 63) this.falling.rotResets++;
+
+    // Check for T-Spin
+    const spin = this.detectSpin(this.isTSpinKick(kick));
+
+    if (spin) {
+      this.state |= constants.flags.ROTATION_SPIN;
+      if (spin === "mini") {
+        this.state |= constants.flags.ROTATION_MINI;
+      }
+    }
+
+    this.falling.totalRotations++;
+
+    // Handle post-rotation actions
+    this.#__internal_dcd();
+
+    // Reset locking if not going to lock
+    if (!this.#shouldLock()) {
+      this.falling.locking = 0;
+    }
+  }
+
+  #kick(to: Rotation): false | Exclude<ReturnType<typeof performKick>, true> {
+    const kick = performKick(
+      this.kickTableName,
+      this.falling.symbol,
+      this.falling.location,
+      [this.falling.aox, this.falling.aoy],
+      !this.misc.movement.infinite &&
+        this.falling.totalRotations > this.misc.movement.lockResets + 15,
+      this.falling.states[to],
+      this.falling.rotation,
+      to,
+      this.board.state
+    );
+
+    if (typeof kick === "object") return kick;
+    else
+      return kick === false
+        ? false
+        : {
+            kick: [0, 0],
+            newLocation: [this.falling.location[0], this.falling.location[1]],
+            id: "00",
+            index: 0
+          };
+  }
+
+  #rotate(amount: number, isIRS = false) {
+    if (this.#isSleep()) {
+      if (this.handling.irs === "tap")
+        this.falling.irs = (((this.falling.irs + amount) % 4) + 4) % 4;
+      return;
+    }
+
+    const to = this.#clampRotation(amount);
+
+    this.state |= constants.flags.ACTION_MOVE;
+    this.state |= constants.flags.ACTION_ROTATE;
+    const kick = this.#kick(to);
+
+    return kick
+      ? this.#__internal_rotate(
+          kick.newLocation[0],
+          kick.newLocation[1],
+          to,
+          amount,
+          kick,
+          isIRS
+        )
+      : undefined;
+  }
+
+  nextPiece(canClutch = false, ignoreBlockout = false) {
+    const newTetromino = this.queue.shift()!;
+
+    this.initiatePiece(newTetromino, canClutch, ignoreBlockout);
+  }
+
   private slam() {
     const gravity = this.dynamic.gravity.get();
     this.dynamic.gravity.set(Number.MAX_SAFE_INTEGER);
-    this.fall(null, 1);
+    this.#fall(1);
     this.dynamic.gravity.set(gravity);
   }
 
-  initiatePiece(piece: Mino) {
+  initiatePiece(
+    piece: Mino,
+    canClutch: boolean = false,
+    ignoreBlockout = false,
+    isHold = false
+  ) {
+    if (this.handling.ihs === "hold") {
+      let rotationState = 0;
+
+      // Calculate rotation based on input
+      if (this.input.keys.rotateCCW) rotationState -= 1;
+      if (this.input.keys.rotateCW) rotationState += 1;
+      if (this.input.keys.rotate180) rotationState += 2;
+
+      // Ensure rotation state is in 0-3 range
+      this.falling.irs = ((rotationState % 4) + 4) % 4;
+    }
+
+    if (this.handling.ihs === "hold" && this.input.keys.hold && !isHold) {
+      this.state |= constants.flags.ACTION_IHS;
+    }
+
+    this.#__internal_dcd();
+
+    this.state &= ~(
+      constants.flags.ROTATION_ALL |
+      constants.flags.STATE_ALL |
+      constants.flags.ACTION_FORCELOCK |
+      constants.flags.ACTION_SOFTDROP |
+      constants.flags.ACTION_MOVE |
+      constants.flags.ACTION_ROTATE
+    );
+
+    this.input.firstInputTime = -1;
+
+    if (!isHold) this.holdLocked = false;
+
     this.falling = new Tetromino({
       boardHeight: this.board.height,
       boardWidth: this.board.width,
@@ -391,8 +708,77 @@ export class Engine {
               piece.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
             ]
           : 0,
-      symbol: piece
+      symbol: piece,
+      from: this.falling
     });
+
+    if (!ignoreBlockout && this.#considerBlockout(canClutch, isHold)) {
+      // Lose Stock or Game Over
+      this.state ^= constants.flags.ACTION_IHS;
+      this.falling.irs = 0;
+    } else {
+      if (this.state & constants.flags.ACTION_IHS) {
+        this.state ^= constants.flags.ACTION_IHS;
+        this.hold(true, ignoreBlockout);
+      } else {
+        if (this.falling.irs !== 0) {
+          this.#rotate(this.falling.irs, true);
+          this.falling.irs = 0;
+        }
+
+        if (this.#considerBlockout(canClutch, !ignoreBlockout || isHold)) {
+          // lose stock or game over
+        } else {
+          if (this.#is20G()) {
+            this.#slamToFloor();
+          }
+        }
+      }
+    }
+  }
+
+  #considerBlockout(canClutch: boolean, isSilent: boolean = false) {
+    if (legal(this.falling.absoluteBlocks, this.board.state)) {
+      // TODO: clutch count
+      // if (!isSilent) {
+      //   this.S.clutchCount = 0;
+      // }
+      return false;
+    }
+
+    let clutched = false;
+
+    if (canClutch && this.gameOptions.clutch !== false) {
+      const originalY = this.falling.location[1];
+      const originalHy = this.falling.highestY;
+
+      while (this.falling.y < this.board.fullHeight) {
+        this.falling.location[1]++;
+        this.falling.highestY++;
+
+        if (legal(this.falling.absoluteBlocks, this.board.state)) {
+          clutched = true;
+          break;
+        }
+      }
+
+      if (!clutched) {
+        this.falling.location[1] = originalY;
+        this.falling.highestY = originalHy;
+      }
+    }
+
+    if (!clutched) return true;
+
+    if (!isSilent) {
+      // TODO: update clutch count +1
+    }
+
+    return false;
+  }
+
+  #slamToFloor() {
+    while (this.#__internal_fall(1)) {}
   }
 
   get toppedOut() {
@@ -429,141 +815,16 @@ export class Engine {
     return false;
   }
 
-  rotate(amt: Rotation) {
-    const currentRotation = this.falling.rotation;
-    const newRotation = (currentRotation + amt) % 4;
-
-    let lastRotation = Falling.LastRotationKind.None;
-
-    if (newRotation < currentRotation) {
-      lastRotation = Falling.LastRotationKind.Right;
-    } else {
-      lastRotation = Falling.LastRotationKind.Left;
-    }
-
-    if (newRotation == 0 && currentRotation == 3) {
-      lastRotation = Falling.LastRotationKind.Right;
-    }
-
-    if (newRotation == 3 && currentRotation == 3) {
-      lastRotation = Falling.LastRotationKind.Left;
-    }
-
-    if (newRotation == 2 && currentRotation == 0)
-      lastRotation = Falling.LastRotationKind.Vertical;
-    if (newRotation == 0 && currentRotation == 2)
-      lastRotation = Falling.LastRotationKind.Vertical;
-    if (newRotation == 3 && currentRotation == 1)
-      lastRotation = Falling.LastRotationKind.Horizontal;
-    if (newRotation == 1 && currentRotation == 3)
-      lastRotation = Falling.LastRotationKind.Horizontal;
-
-    const res = this.falling.rotate(
-      this.board.state,
-      this.kickTableName,
-      amt,
-      !this.misc.movement.infinite &&
-        this.falling.totalRotations > this.misc.movement.lockResets + 15
-    );
-
-    if (res === true) {
-      this.falling.aox = 0;
-      this.falling.aoy = 0;
-      this.falling.last = Falling.LastKind.Rotate;
-      this.falling.lastRotation = lastRotation;
-      this.falling.lastKick = 0;
-
-      const spin = this.detectSpin(false);
-
-      this.lastSpin = {
-        piece: this.falling.symbol,
-        type: spin
-      };
-
-      this.falling.spinType =
-        spin === "none"
-          ? Falling.SpinTypeKind.Null
-          : spin === "mini"
-            ? Falling.SpinTypeKind.Mini
-            : Falling.SpinTypeKind.Normal;
-      this.falling.fallingRotations++;
-      this.falling.totalRotations++;
-
-      if (this.falling.clamped && this.handling.dcd > 0) {
-        this.input.lDas = Math.min(
-          this.input.lDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.lDasIter = this.handling.arr;
-        this.input.rDas = Math.min(
-          this.input.rDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.rDasIter = this.handling.arr;
-      }
-
-      if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
-        this.falling.locking = 0;
-      }
-
-      return true;
-    }
-
-    if (this.falling.symbol === Mino.O) return;
-
-    if (typeof res === "object") {
-      this.falling.aox = 0;
-      this.falling.aoy = 0;
-      this.falling.last = Falling.LastKind.Rotate;
-      this.falling.lastRotation = lastRotation;
-      this.falling.lastKick = res.index + 1;
-      const spin = this.detectSpin(this.isTSpinKick(res));
-
-      this.lastSpin = {
-        piece: this.falling.symbol,
-        type: spin
-      };
-
-      this.falling.spinType =
-        spin === "none"
-          ? Falling.SpinTypeKind.Null
-          : spin === "mini"
-            ? Falling.SpinTypeKind.Mini
-            : Falling.SpinTypeKind.Normal;
-      this.falling.fallingRotations++;
-      this.falling.totalRotations++;
-
-      if (this.falling.clamped && this.handling.dcd > 0) {
-        this.input.lDas = Math.min(
-          this.input.lDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.lDasIter = this.handling.arr;
-        this.input.rDas = Math.min(
-          this.input.rDas,
-          this.handling.das - this.handling.dcd
-        );
-        this.input.rDasIter = this.handling.arr;
-      }
-
-      if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
-        this.falling.locking = 0;
-      }
-
-      return true;
-    }
-  }
-
   rotateCW() {
-    return this.rotate(1);
+    return this.#processRotate(1);
   }
 
   rotateCCW() {
-    return this.rotate(3);
+    return this.#processRotate(-1);
   }
 
   rotate180() {
-    return this.rotate(2);
+    return this.#processRotate(2);
   }
 
   moveRight() {
@@ -696,117 +957,10 @@ export class Engine {
   hardDrop() {
     this.softDrop();
 
-    return this.lock();
+    return this.#lock();
   }
 
-  fall(value: number | null = null, subFrameDiff = 1) {
-    if (this.falling.safeLock > 0) this.falling.safeLock--;
-    if (this.falling.sleep || this.falling.deepSleep) return;
-
-    let subFrameGravity = this.dynamic.gravity.get() * subFrameDiff;
-
-    // ASSUME SOFTDROP, LATEST VERSION
-    if (this.input.softDrop) {
-      if (this.handling.sdf === 41) subFrameGravity = 400 * subFrameDiff;
-      else
-        subFrameGravity = Math.max(
-          subFrameGravity * this.handling.sdf,
-          0.05 * this.handling.sdf
-        );
-    }
-
-    if (value !== null) subFrameGravity = Math.floor(value);
-
-    if (
-      !this.misc.movement.infinite &&
-      this.falling.lockResets >= this.misc.movement.lockResets &&
-      !legal(
-        this.falling.absoluteBlocks.map((block) => [block[0], block[1] - 1]),
-        this.board.state
-      )
-    ) {
-      subFrameGravity = 20;
-      this.falling.forceLock = true;
-    }
-
-    if (
-      !this.misc.movement.infinite &&
-      this.falling.fallingRotations > this.misc.movement.lockResets + 15
-    ) {
-      subFrameGravity +=
-        0.5 *
-        subFrameDiff *
-        (this.falling.fallingRotations - (this.misc.movement.lockResets + 15));
-    }
-
-    while (subFrameGravity > 0) {
-      const y = this.falling.y;
-      if (!this.fallInner(Math.min(1, subFrameGravity))) {
-        if (value !== null) this.falling.forceLock = true;
-        this.locking(value != null, subFrameDiff);
-        break;
-      }
-
-      subFrameGravity -= Math.min(1, subFrameGravity);
-      if (y !== this.falling.y) {
-        this.falling.last = Falling.LastKind.Fall;
-        // something about score goes here, irrelevant
-      }
-    }
-  }
-
-  private fallInner(v1: number): boolean {
-    const TERA10 = Math.pow(10, 13);
-
-    let y1 = Math.ceil(TERA10 * this.falling.location[1]) / TERA10 - v1;
-
-    if (y1 % 1 === 0) y1 -= 0.00001;
-
-    let y2 = Math.ceil(TERA10 * this.falling.location[1]) / TERA10 - 1;
-
-    if (y2 % 1 === 0) y2 += 0.00002;
-
-    if (
-      legal(this.falling.absoluteAt({ y: y1 }), this.board.state) &&
-      legal(this.falling.absoluteAt({ y: y2 }), this.board.state)
-    ) {
-      const highestY = this.falling.highestY;
-
-      y2 = this.falling.location[1];
-
-      this.falling.location[1] = y1;
-
-      this.falling.highestY = Math.floor(Math.min(this.falling.highestY, y1));
-      this.falling.floored = false;
-      if (Math.floor(y1) !== Math.floor(y2)) {
-        // nothing goes here??? idk
-      }
-
-      if (y1 < highestY || this.misc.movement.infinite) {
-        this.falling.lockResets = 0;
-        this.falling.fallingRotations = 0;
-      }
-
-      return true;
-    }
-
-    return false;
-  }
-
-  private locking(value = false, subframe = 1) {
-    this.falling.locking += subframe;
-    this.falling.floored = true;
-
-    if (
-      this.falling.locking > this.misc.movement.lockTime ||
-      this.falling.forceLock ||
-      (this.falling.lockResets > this.misc.movement.lockResets &&
-        !this.misc.movement.infinite)
-    )
-      this.lock(value);
-  }
-
-  lock(emptyDrop = false) {
+  #lock(emptyDrop = false) {
     this.falling.sleep = true;
     this.holdLocked = false;
 
@@ -979,211 +1133,234 @@ export class Engine {
     else throw new Error("invalid key: " + key);
   }
 
-  keydown(event: Game.Replay.Frames.Keypress) {
-    this.input.keys[event.data.key] = true;
+  #keydown({ data: event }: Game.Replay.Frames.Keypress) {
+    this.#processSubframe(event.subframe);
+    // TODO: inversion?
+    // if (this.misc.inverted)
+    //   switch (e.key) {
+    //     case "moveLeft":
+    //       e.key = "moveRight";
+    //       break;
+    //     case "moveRight":
+    //       e.key = "moveLeft";
+    //   }
 
-    if (event.data.subframe > this.subframe) {
-      this.processShift(false, event.data.subframe - this.subframe);
-      this.fall(null, event.data.subframe - this.subframe);
-      this.subframe = event.data.subframe;
+    switch (event.key) {
+      case "moveLeft":
+        this.falling.keys++;
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        this.#activateShift("lShift", !!event.hoisted);
+        this.#__internal_shift();
+        return;
+
+      case "moveRight":
+        this.falling.keys++;
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        this.#activateShift("rShift", !!event.hoisted);
+        this.#__internal_shift();
+        return;
+
+      case "softDrop":
+        this.input.keys.softDrop = true;
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        return;
+
+      case "rotateCCW":
+        this.input.keys.rotateCCW = true;
+        break;
+
+      case "rotateCW":
+        this.input.keys.rotateCW = true;
+        break;
+
+      case "rotate180":
+        this.input.keys.rotate180 = true;
+        break;
     }
 
-    if (event.data.key === "moveLeft") {
-      this.input.lShift = true;
-      this.input.lastShift = -1;
-      this.input.lDas = event.hoisted
-        ? this.handling.das - this.handling.dcd
-        : 0;
-      this.input.lDasIter = this.handling.arr;
+    // todo: all in if (!this.pause)
+    switch (event.key) {
+      case "rotateCCW":
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        this.#processRotate(-1);
+        break;
 
-      this.processLShift(true, 0);
-      return;
+      case "rotateCW":
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        this.#processRotate(1);
+        break;
+
+      case "rotate180":
+        if (!this.misc.allowed.spin180) return;
+        if (this.input.firstInputTime == -1)
+          this.input.firstInputTime = this.frame + this.subframe;
+        this.#processRotate(2);
+        break;
+
+      case "hardDrop":
+        if (this.misc.allowed.hardDrop === false || this.falling.safeLock !== 0)
+          return;
+        this.hardDrop();
+        return;
+
+      case "hold":
+        this.hold();
+        return;
     }
+  }
 
-    if (event.data.key === "moveRight") {
-      this.input.rShift = true;
-      this.input.lastShift = 1;
-      this.input.rDas = event.hoisted
-        ? this.handling.das - this.handling.dcd
-        : 0;
-      this.input.rDasIter = this.handling.arr;
+  #keyup({ data: event }: Game.Replay.Frames.Keypress) {
+    this.#processSubframe(event.subframe);
+    // TODO: inversion?
+    // if (this.misc.inverted)
+    //   switch (e.key) {
+    //     case "moveLeft":
+    //       e.key = "moveRight";
+    //       break;
+    //     case "moveRight":
+    //       e.key = "moveLeft";
+    //   }
 
-      this.processRShift(true, 0);
-      return;
-    }
-
-    if (event.data.key === "softDrop") {
-      this.input.softDrop = true;
-      return;
-    }
-
-    if (!this.falling.deepSleep) {
-      if (this.falling.sleep) {
-        if (event.data.key === "rotateCCW") {
-          const irs = this.falling.irs - 1;
-          this.falling.irs = irs < 0 ? 3 : irs;
-        } else if (event.data.key === "rotateCW") {
-          this.falling.irs = (this.falling.irs + 1) % 4;
-        } else if (event.data.key === "rotate180") {
-          this.falling.irs = (this.falling.irs + 2) % 4;
-        } else if (event.data.key === "hold") {
-          this.falling.ihs = true;
+    switch (event.key) {
+      case "moveLeft":
+        this.input.lShift.held = false;
+        this.input.lShift.das = 0;
+        this.input.lastShift = this.input.rShift.held
+          ? this.input.rShift.dir
+          : this.input.lastShift;
+        if (this.handling.cancel) {
+          this.input.rShift.arr = this.handling.arr;
+          this.input.rShift.das = 0;
         }
-      } else {
-        if (event.data.key === "rotateCCW") return this.rotateCCW();
-        else if (event.data.key === "rotateCW") return this.rotateCW();
-        else if (event.data.key === "rotate180" && this.misc.allowed.spin180)
-          return this.rotate180();
-        else if (
-          event.data.key === "hardDrop" &&
-          this.misc.allowed.hardDrop &&
-          this.falling.safeLock === 0
+        break;
+
+      case "moveRight":
+        this.input.rShift.held = false;
+        this.input.rShift.das = 0;
+        this.input.lastShift = this.input.lShift.held
+          ? this.input.lShift.dir
+          : this.input.lastShift;
+        if (this.handling.cancel) {
+          this.input.lShift.arr = this.handling.arr;
+          this.input.lShift.das = 0;
+        }
+        break;
+
+      case "softDrop":
+        this.state |= constants.flags.ACTION_SOFTDROP;
+        this.input.keys.softDrop = false;
+        break;
+
+      case "rotateCCW":
+        this.input.keys.rotateCCW = false;
+        break;
+
+      case "rotateCW":
+        this.input.keys.rotateCW = false;
+        break;
+
+      case "rotate180":
+        this.input.keys.rotate180 = false;
+        break;
+
+      case "hold":
+        this.input.keys.hold = false;
+        break;
+    }
+  }
+
+  #activateShift(shift: "lShift" | "rShift", hoisted: boolean) {
+    this.input[shift].held = true;
+    this.input[shift].das = hoisted ? this.handling.das - this.handling.dcd : 0;
+    this.input[shift].arr = this.handling.arr;
+    this.input.lastShift = this.input[shift].dir;
+  }
+
+  #processRotate(rotation: number) {
+    this.falling.keys += rotation >= 2 ? 2 : 1;
+    this.#rotate(rotation as Rotation);
+  }
+
+  #processSubframe(subframe: number) {
+    if (subframe <= this.subframe) return;
+    const delta = subframe - this.subframe;
+    this.#processAllShift(delta);
+    this.#fall(delta);
+    this.subframe = subframe;
+  }
+
+  #__internal_shift() {
+    if (!this.#isSleep()) {
+      // TODO: missing: && !this.pause
+      this.state |= constants.flags.ACTION_MOVE;
+      if (
+        legal(
+          this.falling.absoluteAt({
+            x: this.falling.location[0] + this.input.lastShift
+          }),
+          this.board.state
         )
-          return this.hardDrop();
-        else if (event.data.key === "hold" && this.misc.allowed.hold)
-          return this.hold();
+      ) {
+        this.falling.location[0] += this.input.lastShift;
+        if (this.falling.lockResets < 31) this.falling.lockResets++;
+        this.#clearFlags(
+          constants.flags.ROTATION_ALL | constants.flags.STATE_WALL
+        );
+        // fallingdirty = true;
+        if (this.#is20G()) this.#slamToFloor();
+        if (!this.#shouldLock()) this.falling.locking = 0;
+        return true;
+      } else {
+        this.state |= constants.flags.STATE_WALL;
+        return false;
       }
     }
   }
 
-  keyup(event: Game.Replay.Frames.Keypress) {
-    this.input.keys[event.data.key] = false;
-
-    if (event.data.subframe > this.subframe) {
-      this.processShift(false, event.data.subframe - this.subframe);
-      this.fall(null, event.data.subframe - this.subframe);
-      this.subframe = event.data.subframe;
-    }
-
-    if (event.data.key === "moveLeft") {
-      this.input.lShift = false;
-      this.input.lDas = 0;
-
-      if (this.handling.cancel) {
-        this.input.rDas = 0;
-        this.input.rDasIter = this.handling.arr;
-      }
-
-      return;
-    }
-
-    if (event.data.key === "moveRight") {
-      this.input.rShift = false;
-      this.input.rDas = 0;
-
-      if (this.handling.cancel) {
-        this.input.lDas = 0;
-        this.input.lDasIter = this.handling.arr;
-      }
-
-      return;
-    }
-
-    if (event.data.key === "softDrop") {
-      this.input.softDrop = false;
-    }
-  }
-
-  private processLShift(value: boolean, subFrameDiff = 1) {
+  #processShift(shift: "lShift" | "rShift", delta: number) {
     if (
-      !this.input.lShift ||
-      (this.input.rShift && this.input.lastShift !== -1)
+      !this.input[shift].held ||
+      this.input.lastShift !== this.input[shift].dir
     )
       return;
-
-    let subFrameDiffForDas = subFrameDiff;
-    const dasDiff = Math.max(0, this.handling.das - this.input.lDas);
-
-    this.input.lDas += value ? 0 : subFrameDiff;
-    if (this.input.lDas < this.handling.das && !value) return;
-
-    subFrameDiffForDas = Math.max(0, subFrameDiffForDas - dasDiff);
-    if (this.falling.sleep || this.falling.deepSleep) return;
-
-    let moveLoopCount = 1;
-    if (!value) {
-      this.input.lDasIter += subFrameDiffForDas;
-      if (this.input.lDasIter < this.handling.arr) return;
-
-      moveLoopCount =
-        this.handling.arr === 0
-          ? 10
-          : Math.floor(this.input.lDasIter / this.handling.arr);
-
-      this.input.lDasIter -= this.handling.arr * moveLoopCount;
-    }
-
-    for (let i = 0; i < moveLoopCount; i++) {
-      // Try moving left
-      const moved = this.falling.moveLeft(this.board.state);
-      if (moved) {
-        this.falling.last = Falling.LastKind.Move;
-        this.falling.clamped = false;
-        if (this.is20G()) this.slam();
-        if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
-          this.falling.locking = 0;
-        }
-      } else {
-        this.falling.clamped = true;
-      }
-    }
+    const arrDelta = Math.max(
+      0,
+      delta - Math.max(0, this.handling.das - this.input[shift].das)
+    );
+    this.input[shift].das = Math.min(
+      this.input[shift].das + delta,
+      this.handling.das
+    );
+    if (this.input[shift].das < this.handling.das) return;
+    if (this.#isSleep()) return; // TODO: missing: && !this.pause
+    this.input[shift].arr += arrDelta;
+    if (this.input[shift].arr < this.handling.arr) return;
+    const arrMultiplier =
+      this.handling.arr === 0
+        ? this.board.width
+        : Math.floor(this.input[shift].arr / this.handling.arr);
+    this.input[shift].arr -= this.handling.arr * arrMultiplier;
+    for (let i = 0; i < arrMultiplier; i++) this.#__internal_shift();
   }
 
-  private processRShift(value: boolean, subFrameDiff = 1) {
-    if (!this.input.rShift || (this.input.lShift && this.input.lastShift !== 1))
-      return;
-
-    let subFrameDiffForDas = subFrameDiff;
-    const dasDiff = Math.max(0, this.handling.das - this.input.rDas);
-
-    this.input.rDas += value ? 0 : subFrameDiff;
-    if (this.input.rDas < this.handling.das && !value) return;
-
-    subFrameDiffForDas = Math.max(0, subFrameDiffForDas - dasDiff);
-    if (this.falling.sleep || this.falling.deepSleep) return;
-
-    let moveLoopCount = 1;
-    if (!value) {
-      this.input.rDasIter += subFrameDiffForDas;
-      if (this.input.rDasIter < this.handling.arr) return;
-
-      moveLoopCount =
-        this.handling.arr === 0
-          ? 10
-          : Math.floor(this.input.rDasIter / this.handling.arr);
-
-      this.input.rDasIter -= this.handling.arr * moveLoopCount;
-    }
-
-    for (let i = 0; i < moveLoopCount; i++) {
-      // Try moving right
-      const moved = this.falling.moveRight(this.board.state);
-      if (moved) {
-        this.falling.last = Falling.LastKind.Move;
-        this.falling.clamped = false;
-        if (this.is20G()) this.slam();
-        if (++this.falling.lockResets < 15 || this.misc.movement.infinite) {
-          this.falling.locking = 0;
-        }
-      } else {
-        this.falling.clamped = true;
-      }
-    }
-  }
-
-  private processShift(value: boolean, subFrameDiff = 1) {
-    this.processLShift(value, subFrameDiff);
-    this.processRShift(value, subFrameDiff);
+  #processAllShift(subFrameDiff = 1 - this.subframe) {
+    for (const shift of ["lShift", "rShift"] as const)
+      this.#processShift(shift, subFrameDiff);
   }
 
   run(...frames: Game.Replay.Frame[]) {
     frames.forEach((frame) => {
       switch (frame.type) {
         case "keydown":
-          this.keydown(frame);
+          this.#keydown(frame);
           break;
         case "keyup":
-          this.keyup(frame);
+          this.#keyup(frame);
           break;
         case "ige":
           if (frame.data.type === "interaction") {
@@ -1208,7 +1385,6 @@ export class Engine {
             }
           } else if (frame.data.type === "interaction_confirm") {
             if (frame.data.data.type === "garbage") {
-              console.log("CONFIRM", frame.data.data, frame.frame);
               this.garbageQueue.confirm(
                 frame.data.data.iid,
                 frame.data.data.gameid,
@@ -1229,9 +1405,10 @@ export class Engine {
     this.run(...frames);
 
     this.frame++;
-    this.processShift(false, 1 - this.subframe);
-    this.fall(null, 1 - this.subframe);
-    // TODO: EXECUTE WAITING FRAMES
+    this.#processAllShift();
+    this.#fall();
+    // TODO: execute waiting frames
+    // TODO: process garbage are
     Object.keys(this.dynamic).forEach((key) =>
       this.dynamic[key as keyof typeof this.dynamic].tick()
     );
@@ -1243,15 +1420,20 @@ export class Engine {
     this.garbageQueue.receive(...garbage);
   }
 
-  hold() {
-    if (this.holdLocked) return;
+  hold(_ihs = false, ignoreBlockout = false) {
+    if (this.#isSleep()) {
+      if (this.handling.ihs === "tap") this.state |= constants.flags.ACTION_IHS;
+      return;
+    }
+    if (this.holdLocked || !this.misc.allowed.hold) return;
+    this.holdLocked = !this.misc.infiniteHold;
     if (this.held) {
       const save = this.held;
       this.held = this.falling.symbol;
       this.initiatePiece(save);
     } else {
       this.held = this.falling.symbol;
-      this.nextPiece();
+      this.nextPiece(false, ignoreBlockout);
     }
 
     this.holdLocked = !this.misc.infiniteHold;

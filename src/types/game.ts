@@ -576,8 +576,8 @@ export namespace Game {
         data: {
           key: Key;
           subframe: number;
+					hoisted?: boolean;
         };
-        hoisted?: boolean;
       }
 
       export interface End {

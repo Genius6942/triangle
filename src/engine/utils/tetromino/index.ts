@@ -9,6 +9,7 @@ export interface TetrominoInitializeParams {
   initialRotation: Rotation;
   boardHeight: number;
   boardWidth: number;
+	from?: Tetromino;
 }
 
 export class Tetromino {
@@ -18,17 +19,17 @@ export class Tetromino {
   location: [number, number];
 
   sleep: boolean;
-  deepSleep: boolean;
   hibernated: boolean;
   locking: number;
   lockResets: number;
+  rotResets: number;
   forceLock: boolean;
   floored: boolean;
   clamped: boolean;
   safeLock: number;
   highestY: number;
   last: Falling.LastKind;
-  lastKick: number;
+  kick: number;
   lastRotation: Falling.LastRotationKind;
   fallingRotations: number;
   totalRotations: number;
@@ -36,7 +37,7 @@ export class Tetromino {
   ihs: boolean;
   aox: number;
   aoy: number;
-  readonly keys: number;
+  keys: number;
   spinType: Falling.SpinTypeKind;
 
   constructor(options: TetrominoInitializeParams) {
@@ -52,23 +53,23 @@ export class Tetromino {
     ];
 
     // other stuff
-    this.sleep = false;
-    this.deepSleep = false;
+    this.sleep = options.from?.sleep ?? false;
     this.hibernated = false;
     this.locking = 0;
     this.lockResets = 0;
+    this.rotResets = 0;
     this.forceLock = false;
     this.floored = false;
-    this.clamped = false;
-    this.safeLock = 0;
-    this.highestY = this.location[1];
+    this.clamped = options.from?.clamped ?? false;
+    this.safeLock = options.from?.safeLock ?? 0;
+    this.highestY = options.boardHeight + 2;
     this.last = Falling.LastKind.None;
-    this.lastKick = 0;
+    this.kick = 0;
     this.lastRotation = Falling.LastRotationKind.None;
     this.fallingRotations = 0;
     this.totalRotations = 0;
-    this.irs = 0;
-    this.ihs = false;
+    this.irs = options.from?.irs ?? 0;
+    this.ihs = options.from?.ihs ?? false;
     this.aox = 0;
     this.aoy = 0;
     this.keys = 0;

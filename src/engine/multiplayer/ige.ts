@@ -72,13 +72,13 @@ export class IGEHandler {
       })
     );
 
-    console.log(
-      "send",
-      playerID,
-      Object.fromEntries(
-        [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
-      )
-    );
+    // console.log(
+    //   "send",
+    //   playerID,
+    //   Object.fromEntries(
+    //     [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
+    //   )
+    // );
   }
 
   /**
@@ -130,13 +130,13 @@ export class IGEHandler {
       this.stringify({ incoming: incomingIID, outgoing: newIGEs })
     );
 
-    console.log(
-      "receive",
-      playerID,
-      Object.fromEntries(
-        [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
-      )
-    );
+    // console.log(
+    //   "receive",
+    //   playerID,
+    //   Object.fromEntries(
+    //     [...this.players.entries()].map(([k, v]) => [k, this.extract(v)])
+    //   )
+    // );
 
     return runningAmount;
   }
