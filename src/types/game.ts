@@ -576,7 +576,7 @@ export namespace Game {
         data: {
           key: Key;
           subframe: number;
-					hoisted?: boolean;
+          hoisted?: boolean;
         };
       }
 
