@@ -59,7 +59,7 @@ export class GarbageQueue {
   private rng: ReturnType<typeof garbageRNG>;
 
   // for opener phase calculations
-  private sent = 0;
+  sent = 0;
 
   constructor(options: GarbageQueueInitializeParams) {
     this.options = options;
@@ -73,6 +73,10 @@ export class GarbageQueue {
   rngex() {
     return this.rng.nextFloat();
   }
+
+	get currentSeed() {
+		return this.rng.getCurrentSeed();
+	}
 
   get size() {
     return this.queue.reduce((a, b) => a + b.amount, 0);

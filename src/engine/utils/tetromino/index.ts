@@ -2,7 +2,7 @@ import { BoardSquare } from "../../board";
 import { Mino } from "../../queue/types";
 import { KickTable, legal, performKick } from "../kicks";
 import { tetrominoes } from "./data";
-import { Rotation, Falling } from "./types";
+import { Rotation } from "./types";
 
 export interface TetrominoInitializeParams {
   symbol: Mino;
@@ -18,19 +18,11 @@ export class Tetromino {
   states: [number, number][][];
   location: [number, number];
 
-  sleep: boolean;
-  hibernated: boolean;
   locking: number;
   lockResets: number;
   rotResets: number;
-  forceLock: boolean;
-  floored: boolean;
-  clamped: boolean;
   safeLock: number;
   highestY: number;
-  last: Falling.LastKind;
-  kick: number;
-  lastRotation: Falling.LastRotationKind;
   fallingRotations: number;
   totalRotations: number;
   irs: number;
@@ -38,7 +30,6 @@ export class Tetromino {
   aox: number;
   aoy: number;
   keys: number;
-  spinType: Falling.SpinTypeKind;
 
   constructor(options: TetrominoInitializeParams) {
     this.rotation = options.initialRotation;
@@ -53,19 +44,11 @@ export class Tetromino {
     ];
 
     // other stuff
-    this.sleep = options.from?.sleep ?? false;
-    this.hibernated = false;
     this.locking = 0;
     this.lockResets = 0;
     this.rotResets = 0;
-    this.forceLock = false;
-    this.floored = false;
-    this.clamped = options.from?.clamped ?? false;
     this.safeLock = options.from?.safeLock ?? 0;
     this.highestY = options.boardHeight + 2;
-    this.last = Falling.LastKind.None;
-    this.kick = 0;
-    this.lastRotation = Falling.LastRotationKind.None;
     this.fallingRotations = 0;
     this.totalRotations = 0;
     this.irs = options.from?.irs ?? 0;
@@ -73,7 +56,6 @@ export class Tetromino {
     this.aox = 0;
     this.aoy = 0;
     this.keys = 0;
-    this.spinType = Falling.SpinTypeKind.Null;
   }
 
   get blocks() {

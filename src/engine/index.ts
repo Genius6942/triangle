@@ -1,17 +1,12 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
 import { constants } from "./constants";
-import {
-  GarbageQueue,
-  GarbageQueueInitializeParams,
-  IncomingGarbage,
-  OutgoingGarbage
-} from "./garbage";
+import { GarbageQueue, GarbageQueueInitializeParams, IncomingGarbage, OutgoingGarbage } from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
 import { Mino } from "./queue/types";
-import { IncreasableValue } from "./types";
-import { EngineCheckpoint, SpinType } from "./types";
+import { EngineSnapshot, IncreasableValue } from "./types";
+import { SpinType } from "./types";
 import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
 import { KickTable, legal, performKick } from "./utils/kicks";
@@ -19,7 +14,10 @@ import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
 
+
+
 import chalk from "chalk";
+
 
 export interface GameOptions {
   spinBonuses: Game.SpinBonuses;
@@ -96,7 +94,6 @@ export class Engine {
 
   frame!: number;
   subframe!: number;
-  checkpoints!: EngineCheckpoint[];
 
   initializer: EngineInitializeParams;
 
@@ -256,8 +253,6 @@ export class Engine {
 
     this.nextPiece();
 
-    this.checkpoints = [];
-
     this.bindAll();
   }
 
@@ -289,24 +284,88 @@ export class Engine {
     this.rotateCW = this.rotateCW.bind(this);
     this.rotateCCW = this.rotateCCW.bind(this);
     this.rotate180 = this.rotate180.bind(this);
-    this.save = this.save.bind(this);
-    this.checkpoint = this.checkpoint.bind(this);
+    this.snapshot = this.snapshot.bind(this);
+    this.fromSnapshot = this.fromSnapshot.bind(this);
     this.nextPiece = this.nextPiece.bind(this);
   }
 
-  checkpoint() {
-    this.save();
+  snapshot(): EngineSnapshot {
+    return {
+      board: deepCopy(this.board.state),
+      falling: {
+        aox: this.falling.aox,
+        aoy: this.falling.aoy,
+        fallingRotations: this.falling.fallingRotations,
+        highestY: this.falling.highestY,
+        ihs: this.falling.ihs,
+        irs: this.falling.irs,
+        keys: this.falling.keys,
+        location: this.falling.location,
+        locking: this.falling.lockResets,
+        lockResets: this.falling.lockResets,
+        rotResets: this.falling.rotResets,
+        safeLock: this.falling.safeLock,
+        symbol: this.falling.symbol,
+        totalRotations: this.falling.totalRotations
+      },
+      frame: this.frame,
+      garbage: {
+        queue: deepCopy(this.garbageQueue.queue),
+        seed: this.garbageQueue.currentSeed,
+        sent: this.garbageQueue.sent
+      },
+      hold: this.held,
+      holdLocked: this.holdLocked,
+      lastSpin: deepCopy(this.lastSpin),
+      queue: this.queue.index,
+      shift: {
+        l: deepCopy(this.input.lShift),
+        r: deepCopy(this.input.rShift)
+      },
+      subframe: this.subframe
+    };
   }
 
-  save() {
-    this.checkpoints.push({
-      garbage: deepCopy(this.garbageQueue.queue),
-      board: deepCopy(this.board.state),
-      falling: this.falling.symbol,
-      queue: this.queue.index,
-      b2b: this.stats.b2b,
-      combo: this.stats.combo
-    });
+	fromSnapshot(snapshot: EngineSnapshot) {
+    this.board.state = deepCopy(snapshot.board);
+    this.initiatePiece(snapshot.falling.symbol);
+    for (const key of Object.keys(snapshot.falling.symbol)) {
+      // @ts-expect-error
+      this.falling[key] = snapshot.falling[key];
+    }
+    this.frame = snapshot.frame;
+    this.subframe = snapshot.subframe;
+    this.garbageQueue.queue = deepCopy(snapshot.garbage.queue);
+    this.held = snapshot.hold;
+    this.holdLocked = snapshot.holdLocked;
+    this.lastSpin = deepCopy(snapshot.lastSpin);
+    this.queue = new Queue(this.initializer.queue);
+    for (let i = 0; i < snapshot.queue; i++) this.queue.shift();
+
+    this.dynamic = {
+      gravity: new IncreaseTracker(
+        this.initializer.gravity.value,
+        this.initializer.gravity.increase,
+        this.initializer.gravity.marginTime
+      ),
+      garbageMultiplier: new IncreaseTracker(
+        this.initializer.garbage.multiplier.value,
+        this.initializer.garbage.multiplier.increase,
+        this.initializer.garbage.multiplier.marginTime
+      ),
+      garbageCap: new IncreaseTracker(
+        this.initializer.garbage.cap.value,
+        this.initializer.garbage.cap.increase,
+        this.initializer.garbage.cap.marginTime
+      )
+    };
+
+		for (let i = 0; i < this.frame; i++)
+			for (const key of Object.keys(this.dynamic))
+				this.dynamic[key as keyof typeof this.dynamic].tick();
+		
+		this.input.lShift = deepCopy(snapshot.shift.l);
+		this.input.rShift = deepCopy(snapshot.shift.r);
   }
 
   get kickTable(): (typeof kicks)[KickTableName] {
@@ -577,9 +636,6 @@ export class Engine {
       constants.flags.ROTATION_MINI |
       constants.flags.ROTATION_SPIN_ALL
     );
-
-    // Record kick information
-    this.falling.kick = typeof kick === "boolean" ? 0 : kick.index;
 
     // Update lock and rotation resets with caps
     if (this.falling.lockResets < 31) this.falling.lockResets++;
@@ -967,7 +1023,6 @@ export class Engine {
   }
 
   #lock(emptyDrop = false) {
-    this.falling.sleep = true;
     this.holdLocked = false;
 
     if (!emptyDrop && this.handling.safelock) {

@@ -1,20 +1,44 @@
-import { Board } from "./board";
-import { GarbageQueue } from "./garbage";
-import { Mino } from "./queue";
+import { Board, Engine, GarbageQueue, Mino } from ".";
 
 export type SpinType = "none" | "mini" | "normal";
-
-export interface EngineCheckpoint {
-  garbage: GarbageQueue["queue"];
-  queue: number;
-  board: Board["state"];
-  falling: Mino;
-  b2b: number;
-  combo: number;
-}
 
 export interface IncreasableValue {
   value: number;
   increase: number;
   marginTime: number;
+}
+
+export interface EngineSnapshot {
+  frame: number;
+	subframe: number;
+  queue: number;
+  hold: Mino | null;
+	holdLocked: boolean;
+  shift: {
+    l: Engine["input"]["lShift"];
+    r: Engine["input"]["rShift"];
+  };
+  falling: {
+    symbol: Mino;
+    location: [number, number];
+    locking: number;
+    lockResets: number;
+    rotResets: number;
+    safeLock: number;
+    highestY: number;
+    fallingRotations: number;
+    totalRotations: number;
+    irs: number;
+    ihs: boolean;
+    aox: number;
+    aoy: number;
+    keys: number;
+  };
+  lastSpin: Engine["lastSpin"];
+  garbage: {
+    queue: GarbageQueue["queue"];
+    sent: number;
+    seed: number;
+  };
+	board: Board['state'];
 }
