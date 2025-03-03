@@ -1,4 +1,5 @@
 import { Board, Engine, GarbageQueue, Mino } from ".";
+import { Rotation } from "./utils/tetromino/types";
 
 export type SpinType = "none" | "mini" | "normal";
 
@@ -26,6 +27,7 @@ export interface EngineSnapshot {
     rotResets: number;
     safeLock: number;
     highestY: number;
+    rotation: Rotation;
     fallingRotations: number;
     totalRotations: number;
     irs: number;

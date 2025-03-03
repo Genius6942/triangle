@@ -300,6 +300,7 @@ export class Engine {
         ihs: this.falling.ihs,
         irs: this.falling.irs,
         keys: this.falling.keys,
+        rotation: this.falling.rotation,
         location: this.falling.location,
         locking: this.falling.lockResets,
         lockResets: this.falling.lockResets,
@@ -329,10 +330,12 @@ export class Engine {
 	fromSnapshot(snapshot: EngineSnapshot) {
     this.board.state = deepCopy(snapshot.board);
     this.initiatePiece(snapshot.falling.symbol);
-    for (const key of Object.keys(snapshot.falling.symbol)) {
+    for (const key of Object.keys(snapshot.falling)) {
       // @ts-expect-error
       this.falling[key] = snapshot.falling[key];
     }
+    this.falling.location[0] = snapshot.falling.location[0];
+    this.falling.location[1] = snapshot.falling.location[1];
     this.frame = snapshot.frame;
     this.subframe = snapshot.subframe;
     this.garbageQueue.queue = deepCopy(snapshot.garbage.queue);
