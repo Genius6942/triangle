@@ -1,5 +1,6 @@
-import { Board, Engine, GarbageQueue, Mino } from ".";
-import { Rotation } from "./utils/tetromino/types";
+import type { Board, Engine, GarbageQueueSnapshot, Mino } from ".";
+import { IGEHandlerSnapshot } from "./multiplayer";
+import type { Rotation } from "./utils/tetromino/types";
 
 export type SpinType = "none" | "mini" | "normal";
 
@@ -15,10 +16,7 @@ export interface EngineSnapshot {
   queue: number;
   hold: Mino | null;
 	holdLocked: boolean;
-  shift: {
-    l: Engine["input"]["lShift"];
-    r: Engine["input"]["rShift"];
-  };
+  input: Engine['input'];
   falling: {
     symbol: Mino;
     location: [number, number];
@@ -37,10 +35,11 @@ export interface EngineSnapshot {
     keys: number;
   };
   lastSpin: Engine["lastSpin"];
-  garbage: {
-    queue: GarbageQueue["queue"];
-    sent: number;
-    seed: number;
-  };
+  garbage: GarbageQueueSnapshot;
 	board: Board['state'];
+	targets?: number[];
+	stats: Engine['stats'];
+	glock: number;
+	state: number;
+	ige: IGEHandlerSnapshot;
 }

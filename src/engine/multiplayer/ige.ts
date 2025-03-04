@@ -1,4 +1,4 @@
-import { polyfills } from "../utils";
+import { deepCopy, polyfills } from "../utils";
 
 interface GarbageRecord {
   amount: number;
@@ -10,6 +10,10 @@ interface PlayerData {
   outgoing: GarbageRecord[];
 }
 
+export interface IGEHandlerSnapshot {
+  iid: number;
+  players: IGEHandler["players"];
+}
 /**
  * Manages network IGE cancelling
  */
@@ -139,5 +143,17 @@ export class IGEHandler {
     // );
 
     return runningAmount;
+  }
+
+  snapshot(): IGEHandlerSnapshot {
+    return deepCopy({
+      players: this.players,
+      iid: this.iid
+    });
+  }
+
+  fromSnapshot(snapshot: IGEHandlerSnapshot) {
+    this.players = deepCopy(snapshot.players);
+    this.iid = snapshot.iid;
   }
 }

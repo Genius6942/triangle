@@ -1,7 +1,12 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
 import { constants } from "./constants";
-import { GarbageQueue, GarbageQueueInitializeParams, IncomingGarbage, OutgoingGarbage } from "./garbage";
+import {
+  GarbageQueue,
+  GarbageQueueInitializeParams,
+  IncomingGarbage,
+  OutgoingGarbage
+} from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
 import { Mino } from "./queue/types";
@@ -14,10 +19,7 @@ import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
 
-
-
 import chalk from "chalk";
-
 
 export interface GameOptions {
   spinBonuses: Game.SpinBonuses;
@@ -310,24 +312,22 @@ export class Engine {
         totalRotations: this.falling.totalRotations
       },
       frame: this.frame,
-      garbage: {
-        queue: deepCopy(this.garbageQueue.queue),
-        seed: this.garbageQueue.currentSeed,
-        sent: this.garbageQueue.
-      },
+      garbage: this.garbageQueue.snapshot(),
       hold: this.held,
       holdLocked: this.holdLocked,
       lastSpin: deepCopy(this.lastSpin),
       queue: this.queue.index,
-      shift: {
-        l: deepCopy(this.input.lShift),
-        r: deepCopy(this.input.rShift)
-      },
-      subframe: this.subframe
+      input: deepCopy(this.input),
+      subframe: this.subframe,
+      targets: this.multiplayer?.targets,
+      stats: deepCopy(this.stats),
+      glock: this.glock,
+      ige: this.igeHandler.snapshot(),
+      state: this.state
     };
   }
 
-	fromSnapshot(snapshot: EngineSnapshot) {
+  fromSnapshot(snapshot: EngineSnapshot) {
     this.board.state = deepCopy(snapshot.board);
     this.initiatePiece(snapshot.falling.symbol);
     for (const key of Object.keys(snapshot.falling)) {
@@ -338,7 +338,7 @@ export class Engine {
     this.falling.location[1] = snapshot.falling.location[1];
     this.frame = snapshot.frame;
     this.subframe = snapshot.subframe;
-    this.garbageQueue.queue = deepCopy(snapshot.garbage.queue);
+    this.garbageQueue.fromSnapshot(snapshot.garbage);
     this.held = snapshot.hold;
     this.holdLocked = snapshot.holdLocked;
     this.lastSpin = deepCopy(snapshot.lastSpin);
@@ -363,12 +363,19 @@ export class Engine {
       )
     };
 
-		for (let i = 0; i < this.frame; i++)
-			for (const key of Object.keys(this.dynamic))
-				this.dynamic[key as keyof typeof this.dynamic].tick();
-		
-		this.input.lShift = deepCopy(snapshot.shift.l);
-		this.input.rShift = deepCopy(snapshot.shift.r);
+    for (let i = 0; i < this.frame; i++)
+      for (const key of Object.keys(this.dynamic))
+        this.dynamic[key as keyof typeof this.dynamic].tick();
+
+    this.input = deepCopy(snapshot.input);
+
+    if (this.multiplayer && snapshot.targets)
+      this.multiplayer.targets = [...snapshot.targets];
+
+    this.stats = deepCopy(snapshot.stats);
+    this.glock = snapshot.glock;
+    this.state = snapshot.state;
+    this.igeHandler.fromSnapshot(snapshot.ige);
   }
 
   get kickTable(): (typeof kicks)[KickTableName] {

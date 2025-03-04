@@ -1,10 +1,6 @@
 import { deepCopy } from "../utils";
 import { columnWidth, garbageRNG } from "./utils";
 
-
-
-
-
 export interface GarbageQueueInitializeParams {
   cap: {
     value: number;
@@ -53,8 +49,13 @@ export interface OutgoingGarbage extends Garbage {
   column: number;
 }
 
-export type GarbageQueueSnapshot = ReturnType<GarbageQueue["snapshot"]>;;
-
+export interface GarbageQueueSnapshot {
+  index: number;
+  lastTankTime: number;
+  lastColumn: number | null;
+  sent: number;
+  queue: IncomingGarbage[];
+}
 
 export class GarbageQueue {
   options: GarbageQueueInitializeParams;
@@ -78,7 +79,7 @@ export class GarbageQueue {
     this.rng = garbageRNG(options.seed);
   }
 
-  snapshot() {
+  snapshot(): GarbageQueueSnapshot {
     return {
       index: this.rngIndex,
       lastTankTime: this.lastTankTime,
@@ -88,10 +89,13 @@ export class GarbageQueue {
     };
   }
 
-	fromSnapshot(snapshot: GarbageQueue['Snapshot']) {
-		this.queue = deepCopy(snapshot.queue);
-		
-	}
+  fromSnapshot(snapshot: GarbageQueueSnapshot) {
+    this.queue = deepCopy(snapshot.queue);
+    this.lastTankTime = snapshot.lastTankTime;
+    this.lastColumn = snapshot.lastColumn;
+    while (this.rngIndex < snapshot.index) this.rngex();	
+    this.sent = snapshot.sent;
+  }
 
   rngex() {
     this.rngIndex++;
