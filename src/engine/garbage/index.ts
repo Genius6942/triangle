@@ -1,6 +1,10 @@
 import { deepCopy } from "../utils";
 import { columnWidth, garbageRNG } from "./utils";
 
+
+
+
+
 export interface GarbageQueueInitializeParams {
   cap: {
     value: number;
@@ -49,14 +53,18 @@ export interface OutgoingGarbage extends Garbage {
   column: number;
 }
 
+export type GarbageQueueSnapshot = ReturnType<GarbageQueue["snapshot"]>;;
+
+
 export class GarbageQueue {
   options: GarbageQueueInitializeParams;
 
   queue: IncomingGarbage[];
 
-  private lastTankTime: number = 0;
-  private lastColumn: number | null = null;
-  private rng: ReturnType<typeof garbageRNG>;
+  lastTankTime: number = 0;
+  lastColumn: number | null = null;
+  rng: ReturnType<typeof garbageRNG>;
+  rngIndex = 0;
 
   // for opener phase calculations
   sent = 0;
@@ -70,13 +78,25 @@ export class GarbageQueue {
     this.rng = garbageRNG(options.seed);
   }
 
-  rngex() {
-    return this.rng.nextFloat();
+  snapshot() {
+    return {
+      index: this.rngIndex,
+      lastTankTime: this.lastTankTime,
+      lastColumn: this.lastColumn,
+      sent: this.sent,
+      queue: deepCopy(this.queue)
+    };
   }
 
-	get currentSeed() {
-		return this.rng.getCurrentSeed();
+	fromSnapshot(snapshot: GarbageQueue['Snapshot']) {
+		this.queue = deepCopy(snapshot.queue);
+		
 	}
+
+  rngex() {
+    this.rngIndex++;
+    return this.rng.nextFloat();
+  }
 
   get size() {
     return this.queue.reduce((a, b) => a + b.amount, 0);

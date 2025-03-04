@@ -313,7 +313,7 @@ export class Engine {
       garbage: {
         queue: deepCopy(this.garbageQueue.queue),
         seed: this.garbageQueue.currentSeed,
-        sent: this.garbageQueue.sent
+        sent: this.garbageQueue.
       },
       hold: this.held,
       holdLocked: this.holdLocked,
