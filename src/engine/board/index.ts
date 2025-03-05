@@ -60,12 +60,12 @@ export class Board {
   }
 
   clearLines() {
-    let garbageCleared = false;
+    let garbageCleared = 0;
     const lines: number[] = [];
     this.state.forEach((row, idx) => {
       if (row.every((block) => block !== null)) {
         lines.push(idx);
-        if (row.some((block) => block === "gb")) garbageCleared = true;
+        if (row.some((block) => block === "gb")) garbageCleared++;
       }
     });
 

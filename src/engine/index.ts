@@ -59,7 +59,7 @@ export interface MiscellaneousOptions {
     hold: boolean;
   };
   infiniteHold: boolean;
-	username?: string;
+  username?: string;
 }
 
 export interface EngineInitializeParams {
@@ -88,6 +88,12 @@ export class Engine {
     type: SpinType;
   } | null;
   stats!: {
+    garbage: {
+      sent: number;
+      attack: number;
+      recieved: number;
+      cleared: number;
+    };
     combo: number;
     b2b: number;
     pieces: number;
@@ -199,7 +205,13 @@ export class Engine {
     this.stats = {
       combo: -1,
       b2b: -1,
-      pieces: 0
+      pieces: 0,
+      garbage: {
+        sent: 0,
+        attack: 0,
+        recieved: 0,
+        cleared: 0
+      }
     };
 
     this.pc = options.pc;
@@ -389,6 +401,17 @@ export class Engine {
 
   set kickTable(value: KickTableName) {
     this._kickTable = value;
+  }
+
+  get dynamicStats() {
+    return {
+      apm: this.stats.garbage.attack / (this.frame / 60 / 60) || 0,
+      pps: this.stats.pieces / (this.frame / 60) || 0,
+      vs:
+        ((this.stats.garbage.attack + this.stats.garbage.cleared) /
+          (this.frame / 60)) *
+        100 || 0
+    };
   }
 
   #getEffectiveGravity() {
@@ -1049,6 +1072,8 @@ export class Engine {
     const { lines, garbageCleared } = this.board.clearLines();
     const pc = this.board.perfectClear;
 
+    this.stats.garbage.cleared += garbageCleared;
+
     let brokeB2B: false | number = this.stats.b2b;
     if (lines > 0) {
       this.stats.combo++;
@@ -1071,7 +1096,7 @@ export class Engine {
 
     const gSpecialBonus =
       this.initializer.garbage.specialBonus &&
-      garbageCleared &&
+      garbageCleared > 0 &&
       ((this.lastSpin && this.lastSpin.type !== "none") || lines >= 4)
         ? 1
         : 0;
@@ -1105,7 +1130,7 @@ export class Engine {
       let btb = brokeB2B;
       if (this.b2b.charging !== false && btb > this.b2b.charging.at) {
         const value = Math.floor(
-          (btb - this.b2b.charging.at + this.b2b.charging.base) *
+          (btb - this.b2b.charging.at + this.b2b.charging.base + 1) *
             this.dynamic.garbageMultiplier.get()
         );
         const garbages = [
@@ -1129,16 +1154,12 @@ export class Engine {
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
-      dump: {
-        garbage: garbage.garbage,
-        lines,
-        ...this.stats,
-        spin: this.lastSpin ? this.lastSpin.type : "none",
-        rawGarbage: [...gEvents]
-      },
+      stats: this.stats,
       garbageAdded: false as false | OutgoingGarbage[],
       topout: false
     };
+
+    for (const gb of res.garbage) this.stats.garbage.attack += gb;
 
     if (lines > 0) {
       while (res.garbage.length > 0) {
@@ -1187,6 +1208,8 @@ export class Engine {
             this.igeHandler.send({ amount: g, playerID: target })
           )
         );
+
+    res.garbage.forEach((gb) => (this.stats.garbage.sent += gb));
 
     this.resCache.garbage.sent.push(...res.garbage);
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
@@ -1421,7 +1444,7 @@ export class Engine {
       this.#processShift(shift, subFrameDiff);
   }
 
-  run(...frames: Game.Replay.Frame[]) {
+  #run(...frames: Game.Replay.Frame[]) {
     frames.forEach((frame) => {
       switch (frame.type) {
         case "keydown":
@@ -1433,23 +1456,25 @@ export class Engine {
         case "ige":
           if (frame.data.type === "interaction") {
             if (frame.data.data.type === "garbage") {
+              const amount = this.multiplayer?.passthrough?.network
+                ? this.igeHandler.receive({
+                    playerID: frame.data.data.gameid,
+                    ackiid: frame.data.data.ackiid,
+                    amount: frame.data.data.amt,
+                    iid: frame.data.data.iid
+                  })
+                : frame.data.data.amt;
               this.receiveGarbage({
                 frame:
                   Number.MAX_SAFE_INTEGER -
                   this.garbageQueue.options.garbage.speed,
-                amount: this.multiplayer?.passthrough?.network
-                  ? this.igeHandler.receive({
-                      playerID: frame.data.data.gameid,
-                      ackiid: frame.data.data.ackiid,
-                      amount: frame.data.data.amt,
-                      iid: frame.data.data.iid
-                    })
-                  : frame.data.data.amt,
+                amount,
                 size: frame.data.data.size,
                 cid: frame.data.data.iid,
                 gameid: frame.data.data.gameid,
                 confirmed: false
               });
+              this.stats.garbage.recieved += amount;
             }
           } else if (frame.data.type === "interaction_confirm") {
             if (frame.data.data.type === "garbage") {
@@ -1470,7 +1495,7 @@ export class Engine {
   tick(frames: Game.Replay.Frame[]) {
     this.subframe = 0;
 
-    this.run(...frames);
+    this.#run(...frames);
 
     this.frame++;
     this.#processAllShift();
