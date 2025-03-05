@@ -1,6 +1,7 @@
 // export * as API from "./wrapper";
 import { CONSTANTS } from "../constants";
 import { Get, Post, basic } from "./basic";
+import { channel } from "./channel";
 import { relationship } from "./relationship";
 import { rooms } from "./rooms";
 import { server } from "./server";
@@ -27,6 +28,7 @@ export class API {
   server!: ReturnType<typeof server>;
   users!: ReturnType<typeof users>;
   social!: ReturnType<typeof relationship>;
+	channel!: ReturnType<typeof channel>;
 
   /** @hideconstructor */
   constructor(options: Partial<APIDefaults> = {}) {
@@ -46,6 +48,7 @@ export class API {
     this.server = server(this.get, this.post, this.defaults);
     this.users = users(this.get, this.post, this.defaults);
     this.social = relationship(this.get, this.post, this.defaults);
+		this.channel = channel(this.get, this.post, this.defaults);
   }
 }
 

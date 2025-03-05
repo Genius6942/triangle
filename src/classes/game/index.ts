@@ -266,7 +266,8 @@ export class Game {
           hardDrop: options.allow_harddrop,
           hold: options.display_hold
         },
-        infiniteHold: options.infinite_hold
+        infiniteHold: options.infinite_hold,
+        username: options.username
       },
       handling: options.handling
     });

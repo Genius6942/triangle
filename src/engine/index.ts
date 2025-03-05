@@ -59,6 +59,7 @@ export interface MiscellaneousOptions {
     hold: boolean;
   };
   infiniteHold: boolean;
+	username?: string;
 }
 
 export interface EngineInitializeParams {

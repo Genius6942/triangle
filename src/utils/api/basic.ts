@@ -141,6 +141,7 @@ export const basic = (defaults: APIDefaults) => {
             path.join(os.homedir(), ".trianglejs", "errors", `${now}.html`),
             text
           );
+          console.log(text);
           if (copy.status === 404) throw new Error(`404 on POST to ${uri}`);
           if (text.includes("<title>Maintenance</title>"))
             throw new Error(
