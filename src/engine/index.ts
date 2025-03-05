@@ -1032,12 +1032,8 @@ export class Engine {
     return this.#lock();
   }
 
-  #lock(emptyDrop = false) {
+  #lock() {
     this.holdLocked = false;
-
-    if (!emptyDrop && this.handling.safelock) {
-      this.falling.safeLock = 7;
-    }
 
     // TODO: ARE (line clear, garbage)
 
