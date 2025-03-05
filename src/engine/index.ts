@@ -1489,6 +1489,7 @@ export class Engine {
 
   hold(_ihs = false, ignoreBlockout = false) {
     if (this.#isSleep()) {
+      console.log("SLEEP SKIP HOLD");
       if (this.handling.ihs === "tap") this.state |= constants.flags.ACTION_IHS;
       return;
     }

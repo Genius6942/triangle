@@ -65,9 +65,9 @@ export const performKick = (
     for (let i = 0; i < kickset.length; i++) {
       const [dx, dy] = kickset[i];
 
-      const newY = !maxMovement
-        ? Math.floor(pieceLocation[1]) + 0.1 - dy + ao[1]
-        : pieceLocation[1] - dy + ao[1];
+      const newY = maxMovement
+        ? pieceLocation[1] - dy - ao[1]
+        : Math.ceil(pieceLocation[1]) - 0.1 - dy - ao[1];
 
       if (
         legal(

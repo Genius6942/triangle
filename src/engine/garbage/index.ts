@@ -93,7 +93,7 @@ export class GarbageQueue {
     this.queue = deepCopy(snapshot.queue);
     this.lastTankTime = snapshot.lastTankTime;
     this.lastColumn = snapshot.lastColumn;
-    while (this.rngIndex < snapshot.index) this.rngex();	
+    while (this.rngIndex < snapshot.index) this.rngex();
     this.sent = snapshot.sent;
   }
 

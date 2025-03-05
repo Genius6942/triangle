@@ -12,11 +12,11 @@ export interface IncreasableValue {
 
 export interface EngineSnapshot {
   frame: number;
-	subframe: number;
+  subframe: number;
   queue: number;
   hold: Mino | null;
-	holdLocked: boolean;
-  input: Engine['input'];
+  holdLocked: boolean;
+  input: Engine["input"];
   falling: {
     symbol: Mino;
     location: [number, number];
@@ -36,10 +36,10 @@ export interface EngineSnapshot {
   };
   lastSpin: Engine["lastSpin"];
   garbage: GarbageQueueSnapshot;
-	board: Board['state'];
-	targets?: number[];
-	stats: Engine['stats'];
-	glock: number;
-	state: number;
-	ige: IGEHandlerSnapshot;
+  board: Board["state"];
+  targets?: number[];
+  stats: Engine["stats"];
+  glock: number;
+  state: number;
+  ige: IGEHandlerSnapshot;
 }
