@@ -50,7 +50,8 @@ export const getFullFrame = (
         safelock: 0,
         locking: 0,
         lockresets: 0,
-        rotresets: 0
+        rotresets: 0,
+        skip: []
       },
       handling: options.handling,
       playing: true

@@ -487,6 +487,7 @@ export namespace Game {
               locking: number;
               lockresets: number;
               rotresets: number;
+              skip: number[];
             };
             handling: Handling;
             playing: boolean;
@@ -617,6 +618,10 @@ export namespace Game {
       frame: number;
       amount: number;
       size: number;
+      cid: number;
+      gameid: number;
+      confirmed: boolean;
+      column: number;
     }
   }
 
