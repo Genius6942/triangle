@@ -96,7 +96,7 @@ The following example presses the hard drop key every 1/2 second
 
 ```ts
 room.start();
-const tick = await client.wait("client.game.start");
+const [tick, engine] = await client.wait("client.game.round.start");
 tick(async (data) => {
   if (data.frame % 30 === 29) {
     return {
@@ -121,6 +121,7 @@ await client.wait("game.end");
 console.log("game over");
 ```
 
+View more gameplay documentation [here](https://triangle.haelp.dev/documents/Gameplay.html).
 ### Chatting
 
 ```ts
