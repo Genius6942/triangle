@@ -53,9 +53,9 @@ export class Game {
   private static fpm = 12;
 
   /**
-	 * Game stats
-	 * @deprecated use engine.stats instead
-	*/
+   * Game stats
+   * @deprecated use engine.stats instead
+   */
   public stats = {
     piecesPlaced: 0
   };

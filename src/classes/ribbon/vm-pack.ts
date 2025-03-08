@@ -8,7 +8,7 @@ import { homedir } from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
-import * as msgpackr from 'msgpackr';
+import * as msgpackr from "msgpackr";
 
 let globalVM: Awaited<ReturnType<typeof vmPack>> | null = null;
 
@@ -132,7 +132,7 @@ export const vmPack = (
 
     const tetrio: any = {
       console: { log: () => {}, error: () => {}, warn: () => {} },
-			// console,
+      // console,
       performance: performance,
       Response: Response,
 
@@ -148,10 +148,10 @@ export const vmPack = (
       },
       addEventListener: () => {},
       exports: {},
-			imports: {
-				Buffer,
-				msgpackr
-			}
+      imports: {
+        Buffer,
+        msgpackr
+      }
     };
 
     tetrio.self = tetrio;

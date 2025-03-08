@@ -1,8 +1,8 @@
 // @ts-nocheck
-
 import { default as n } from "../../utils/theorypack/msgpackr.js";
 import { Bits as r } from "./codec";
-import { strictShallowEqual } from 'fast-equals';
+
+import { strictShallowEqual } from "fast-equals";
 
 const e = Buffer;
 
@@ -2414,18 +2414,46 @@ const spinbonuses_rules = {
     types_mini: ["t"]
   },
   "all-mini+": {
-        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
-        types_mini: ["t"]
+    types: [
+      "i1",
+      "i2",
+      "i3",
+      "l3",
+      "i5",
+      "z",
+      "l",
+      "o",
+      "s",
+      "i",
+      "j",
+      "t",
+      "oo"
+    ],
+    types_mini: ["t"]
   },
   "mini-only": {
-        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
-        types_mini: ["t"]
+    types: [
+      "i1",
+      "i2",
+      "i3",
+      "l3",
+      "i5",
+      "z",
+      "l",
+      "o",
+      "s",
+      "i",
+      "j",
+      "t",
+      "oo"
+    ],
+    types_mini: ["t"]
   },
   handheld: { types: ["t", "s", "z", "l", "j"], types_mini: ["t"] },
   "T-spins": { types: ["t"], types_mini: ["t"] },
   "T-spins+": {
-        types: ["t"],
-        types_mini: ["t"]
+    types: ["t"],
+    types_mini: ["t"]
   }
 };
 const minocolors = ["z", "l", "o", "s", "i", "j", "t", "g", "d", "gb", "gbd"];
@@ -3138,7 +3166,18 @@ const OptionsList = {
   },
   spinbonuses: {
     default: "T-spins",
-    allowed: ["none", "T-spins", "T-spins+", "all", "all+", "all-mini", "all-mini+", "mini-only", "handheld", "stupid"]
+    allowed: [
+      "none",
+      "T-spins",
+      "T-spins+",
+      "all",
+      "all+",
+      "all-mini",
+      "all-mini+",
+      "mini-only",
+      "handheld",
+      "stupid"
+    ]
   },
   combotable: {
     default: "multiplier",
@@ -3150,7 +3189,21 @@ const OptionsList = {
   },
   bagtype: {
     default: "7-bag",
-    allowed: ["total mayhem", "classic", "pairs", "14-bag", "7+1-bag", "7+2-bag", "7+x-bag", "7-bag+oo", "7+1-lone-bag", "14+1-lone-bag", "7+2-lone-bag", "14+2-lone-bag", "7-bag"]
+    allowed: [
+      "total mayhem",
+      "classic",
+      "pairs",
+      "14-bag",
+      "7+1-bag",
+      "7+2-bag",
+      "7+x-bag",
+      "7-bag+oo",
+      "7+1-lone-bag",
+      "14+1-lone-bag",
+      "7+2-lone-bag",
+      "14+2-lone-bag",
+      "7-bag"
+    ]
   },
   messiness_change: {
     default: 1
@@ -4558,12 +4611,9 @@ class Structure extends Serializable {
     this._cstFields = new Map();
     this._fixFields = new Map();
     this._optFields = new Map();
-    for (const [t, {
-      mode: n,
-      type: s,
-      size: i,
-      value: o
-    }] of Object.entries(e)) {
+    for (const [t, { mode: n, type: s, size: i, value: o }] of Object.entries(
+      e
+    )) {
       switch (n) {
         case "static":
           this._cstFields.set(t, o);
@@ -4586,16 +4636,10 @@ class Structure extends Serializable {
     super.AddTable("prop", Array.from(this._optFields.keys()));
   }
   static encode(e, t) {
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._fixFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
       e.writeByType(s, t[n], i);
     }
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._optFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._optFields.entries()) {
       if (t[n] != null) {
         e.writeTable(n, this.$$prop);
         e.writeByType(s, t[n], i);
@@ -4606,18 +4650,12 @@ class Structure extends Serializable {
   static decode(e) {
     const t = {};
     const n = this.$$prop.size;
-    for (const [n, {
-      type: s,
-      size: i
-    }] of this._fixFields.entries()) {
+    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
       t[n] = e.readByType(s, i);
     }
     for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
       const n = e.readTable(this.$$prop);
-      const {
-        type: s,
-        size: i
-      } = this._optFields.get(n);
+      const { type: s, size: i } = this._optFields.get(n);
       const o = e.readByType(s, i);
       t[n] = o;
     }
@@ -4643,7 +4681,12 @@ class IgeInteractionData extends Structure {
           });
           continue;
         case "2":
-          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
+          super.AddTable("position", [
+            "aboveStack",
+            "aboveUnclearable",
+            "abovePerma",
+            "bottom"
+          ]);
           continue;
         case "3":
           super.AddTable("colors", [null, ...minocolors]);
@@ -4839,7 +4882,12 @@ class SpecialLines extends Structure {
           super.AddTable("colors", [null, ...minocolors]);
           continue;
         case "3":
-          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
+          super.AddTable("position", [
+            "aboveStack",
+            "aboveUnclearable",
+            "abovePerma",
+            "bottom"
+          ]);
           continue;
         case "4":
           const t = {
@@ -5468,7 +5516,7 @@ class FallingPiece extends Serializable {
       rotresets: 0,
       skip: [],
       y: 0,
-      locking: 0, 
+      locking: 0
     };
     //@ts-ignore
     t.type = e.readTable(this.$$piece);
@@ -5507,7 +5555,25 @@ class GameStats extends Serializable {
       min: 16,
       max: 32
     });
-    this._clears = ["singles", "doubles", "triples", "quads", "pentas", "realtspins", "minitspins", "minitspinsingles", "tspinsingles", "minitspindoubles", "tspindoubles", "minitspintriples", "tspintriples", "minitspinquads", "tspinquads", "tspinpentas", "allclear"];
+    this._clears = [
+      "singles",
+      "doubles",
+      "triples",
+      "quads",
+      "pentas",
+      "realtspins",
+      "minitspins",
+      "minitspinsingles",
+      "tspinsingles",
+      "minitspindoubles",
+      "tspindoubles",
+      "minitspintriples",
+      "tspintriples",
+      "minitspinquads",
+      "tspinquads",
+      "tspinpentas",
+      "allclear"
+    ];
   }
   static encode(e, t) {
     const n = t.garbage;
@@ -5908,7 +5974,11 @@ class IgeCustomData extends Serializable {
 }
 class GameMap extends Serializable {
   static init() {
-    super.AddTable("letters", ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"], "flexible");
+    super.AddTable(
+      "letters",
+      ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"],
+      "flexible"
+    );
     super.AddProperty("word", {
       min: 16,
       max: 32
@@ -5943,7 +6013,11 @@ class Tetrominoes extends Serializable {
           });
           continue;
         case "1":
-          super.AddTable("spinbonus", [...Object.keys(spinbonuses_rules)], "flexible");
+          super.AddTable(
+            "spinbonus",
+            [...Object.keys(spinbonuses_rules)],
+            "flexible"
+          );
           continue;
         case "2":
           super.AddTable("colors", [...minocolors]);
@@ -5968,10 +6042,7 @@ class Tetrominoes extends Serializable {
       e.writeString(t);
     }
     for (const [t, o] of Object.entries(n)) {
-      const {
-        matrix: n,
-        preview: a
-      } = o;
+      const { matrix: n, preview: a } = o;
       e.writeDInt(n.w, this.$tiny);
       e.writeDInt(n.h, this.$tiny);
       e.writeUInt(n.dx, 5);
@@ -6027,10 +6098,7 @@ class Tetrominoes extends Serializable {
     }
     for (const i of o) {
       const o = t[i];
-      const {
-        matrix: a,
-        preview: r
-      } = o;
+      const { matrix: a, preview: r } = o;
       a.w = e.readDInt(this.$tiny);
       a.h = e.readDInt(this.$tiny);
       a.dx = e.readUInt(5);
@@ -6085,11 +6153,22 @@ class Tetrominoes extends Serializable {
   }
 }
 class IgeOptions extends Serializable {
-  static TypeOrders = ["boolean", "number", "table", "object", "array", "string"];
+  static TypeOrders = [
+    "boolean",
+    "number",
+    "table",
+    "object",
+    "array",
+    "string"
+  ];
   static OptsBook = OptionsList;
   static init() {
     super.AddTable("options", Object.keys(this.OptsBook));
-    super.AddTable("minoskin", ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"], "flexible");
+    super.AddTable(
+      "minoskin",
+      ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"],
+      "flexible"
+    );
     super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
     super.AddTable("ixs", ["off", "hold", "tap"]);
     for (const [e, t] of Object.entries(this.OptsBook)) {
@@ -6101,10 +6180,7 @@ class IgeOptions extends Serializable {
     }
   }
   static *ParseOptions(e) {
-    const {
-      TypeOrders: t,
-      OptsBook: n
-    } = this;
+    const { TypeOrders: t, OptsBook: n } = this;
     const s = Object.keys(e);
     for (const i of t) {
       for (const t of s) {
@@ -6156,7 +6232,9 @@ class IgeOptions extends Serializable {
           e.writeString(s);
           break;
         default:
-          throw new TypeError(`Unknown type for key: ${n} value: ${s} | got -> ${i.type}`);
+          throw new TypeError(
+            `Unknown type for key: ${n} value: ${s} | got -> ${i.type}`
+          );
       }
     }
     e.writeTable(null, this.$$options);
@@ -6212,7 +6290,9 @@ class IgeOptions extends Serializable {
           break;
         default:
           console.error("Options dump: ", s);
-          throw new TypeError(`Unknown type for key: ${t} | got -> ${a}\nLast Key: ${i}\nLast Value: ${o}\n`);
+          throw new TypeError(
+            `Unknown type for key: ${t} | got -> ${a}\nLast Key: ${i}\nLast Value: ${o}\n`
+          );
       }
       i = t;
       o = s[t];
@@ -6237,7 +6317,20 @@ class EndFrame extends Serializable {
     super.AddExtension(this, {
       ownBuffer: true
     });
-    super.AddTable("gor", [null, "topout", "garbagesmash", "zenith", "clear", "topout_clear", "winner", "forfeit", "retry", "drop", "dropnow", "disconnect"]);
+    super.AddTable("gor", [
+      null,
+      "topout",
+      "garbagesmash",
+      "zenith",
+      "clear",
+      "topout_clear",
+      "winner",
+      "forfeit",
+      "retry",
+      "drop",
+      "dropnow",
+      "disconnect"
+    ]);
   }
   static encode(e, t) {
     const n = t.successful;
@@ -6245,16 +6338,8 @@ class EndFrame extends Serializable {
     const i = t.killer.gameid;
     const o = t.killer.type === "spark";
     const a = t.killer.username ?? "";
-    const {
-      apm: r,
-      pps: l,
-      vsscore: c
-    } = t.aggregatestats;
-    const {
-      game: p,
-      stats: d,
-      diyusi: h
-    } = t;
+    const { apm: r, pps: l, vsscore: c } = t.aggregatestats;
+    const { game: p, stats: d, diyusi: h } = t;
     e.writeBoolean(n);
     e.writeTable(s, this.$$gor);
     e.writeUInt(i, 13);
@@ -6264,11 +6349,14 @@ class EndFrame extends Serializable {
     e.writeDouble(r);
     e.writeDouble(l);
     e.writeDouble(c);
-    e.writeStruct({
-      game: p,
-      stats: d,
-      diyusi: h
-    }, FullFrame);
+    e.writeStruct(
+      {
+        game: p,
+        stats: d,
+        diyusi: h
+      },
+      FullFrame
+    );
   }
   static decode(e) {
     const t = {
