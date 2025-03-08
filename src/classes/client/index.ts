@@ -180,10 +180,10 @@ export class Client {
       ihs: "tap"
     };
 
-    const ribbonConfig = {
+    const ribbonConfig: Partial<ConstructorParameters<typeof Ribbon>[0]> = {
       verbose: false,
       globalVM: false,
-      codec: "vm" as const,
+      codec: "teto",
       ...(options.ribbon || {})
     };
 

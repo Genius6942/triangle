@@ -2,6 +2,7 @@ import { Emitter, Events, Game } from "../../types";
 import { API, APITypes } from "../../utils";
 import { Bits, Codec, CodecType } from "./codec";
 import { FullCodec } from "./codec-full";
+import { tetoPack } from "./teto-pack";
 import { RibbonEvents } from "./types";
 import { vmPack } from "./vm-pack";
 
@@ -37,7 +38,9 @@ export class Ribbon {
   private codec2 = FullCodec;
   private codecMethod: CodecType;
   private codecVM?: Awaited<ReturnType<typeof vmPack>>;
+  private codecWrapper?: Awaited<ReturnType<typeof tetoPack>>;
   private globalVM: boolean;
+  private globalTeto: boolean;
 
   private spool: {
     endpoint?: string;
@@ -91,9 +94,10 @@ export class Ribbon {
     token,
     userAgent,
     handling,
-    codec = "vm",
+    codec = "teto",
     verbose = false,
-    globalVM = false
+    globalVM = false,
+    globalPacker = false
   }: {
     token: string;
     userAgent: string;
@@ -101,6 +105,7 @@ export class Ribbon {
     codec?: CodecType;
     verbose?: boolean;
     globalVM?: boolean;
+    globalPacker?: boolean;
   }) {
     this.token = token;
     this.handling = handling;
@@ -109,6 +114,7 @@ export class Ribbon {
     this.api = new API({ token, userAgent });
     this.verbose = verbose;
     this.globalVM = globalVM;
+    this.globalTeto = globalPacker;
   }
 
   log(
@@ -133,12 +139,16 @@ export class Ribbon {
 
   async connect() {
     const envPromise = this.api.server.environment();
-    // this is for vm checking against codec-2
-    // const vmPromise = vmPack(this.userAgent, { globalVM: this.globalVM });
+
     const vmPromise =
       this.codecMethod === "vm"
         ? vmPack(this.userAgent, { globalVM: this.globalVM })
         : Promise.resolve(undefined);
+    const packerPromise =
+      this.codecMethod === "teto"
+        ? tetoPack(this.userAgent, { global: this.globalTeto })
+        : Promise.resolve(undefined);
+
     const spool = this.spool.endpoint
       ? Promise.resolve({
           endpoint: this.spool.endpoint,
@@ -152,6 +162,8 @@ export class Ribbon {
     );
 
     this.codecVM = await vmPromise;
+    this.codecWrapper = await packerPromise;
+
     this.spool = { ...this.spool, ...(await spool) };
 
     if (this.verbose) {
@@ -211,6 +223,9 @@ export class Ribbon {
       case "vm":
         res = this.codecVM!.encode(msg, data);
         break;
+      case "teto":
+        res = this.codecWrapper!.encode(msg, data);
+        break;
       case "codec-2":
         res = this.codec2.encode(msg, data);
         break;
@@ -245,7 +260,8 @@ export class Ribbon {
         } catch (e) {
           if (this.codecVM) {
             res = this.codecVM.decode(data);
-            console.log("Decoded with VM", res);
+            this.log("Decoded with VM", { level: "warning", force: true });
+            console.warn(res);
           } else {
             throw e;
           }
@@ -255,6 +271,8 @@ export class Ribbon {
           switch (this.codecMethod) {
             case "vm":
               return this.codecVM!.decode(data);
+            case "teto":
+              return this.codecWrapper!.decode(data);
             case "json":
               return JSON.parse(data.toString());
             default:

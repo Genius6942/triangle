@@ -52,10 +52,12 @@ export class Game {
   /** Frames per message */
   private static fpm = 12;
 
-  /** Game stats */
+  /**
+	 * Game stats
+	 * @deprecated use engine.stats instead
+	*/
   public stats = {
     piecesPlaced: 0
-    // TODO: add more of the stats
   };
 
   /** @hideconstructor */

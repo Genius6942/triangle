@@ -410,7 +410,7 @@ export class Engine {
       vs:
         ((this.stats.garbage.attack + this.stats.garbage.cleared) /
           (this.frame / 60)) *
-        100 || 0
+          100 || 0
     };
   }
 
@@ -1211,6 +1211,7 @@ export class Engine {
 
     res.garbage.forEach((gb) => (this.stats.garbage.sent += gb));
 
+    this.resCache.pieces++;
     this.resCache.garbage.sent.push(...res.garbage);
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
 

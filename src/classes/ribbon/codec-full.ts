@@ -1,7 +1,8 @@
 // @ts-nocheck
-//@ts-ignore
-import * as n from "../../utils/theorypack/msgpackr.js";
+
+import { default as n } from "../../utils/theorypack/msgpackr.js";
 import { Bits as r } from "./codec";
+import { strictShallowEqual } from 'fast-equals';
 
 const e = Buffer;
 
@@ -2412,8 +2413,20 @@ const spinbonuses_rules = {
     ],
     types_mini: ["t"]
   },
+  "all-mini+": {
+        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
+        types_mini: ["t"]
+  },
+  "mini-only": {
+        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
+        types_mini: ["t"]
+  },
   handheld: { types: ["t", "s", "z", "l", "j"], types_mini: ["t"] },
-  "T-spins": { types: ["t"], types_mini: ["t"] }
+  "T-spins": { types: ["t"], types_mini: ["t"] },
+  "T-spins+": {
+        types: ["t"],
+        types_mini: ["t"]
+  }
 };
 const minocolors = ["z", "l", "o", "s", "i", "j", "t", "g", "d", "gb", "gbd"];
 
@@ -2998,19 +3011,19 @@ const DisplayCountersList = Object.keys({
 const OptionsList = {
   version: {
     default: 11,
-    static: !0
+    static: true
   },
   gameid: {
     default: 0,
     min: 0,
     max: 8192,
-    strict: !0
+    strict: true
   },
   seed: {
     default: 0
   },
   seed_random: {
-    default: !1
+    default: false
   },
   score: {
     default: 0
@@ -3031,20 +3044,20 @@ const OptionsList = {
     default: 0
   },
   gravitymay20g: {
-    default: !0
+    default: true
   },
   shielded: {
-    default: !1
+    default: false
   },
   hasgarbage: {
-    default: !1
+    default: false
   },
   usebombs: {
-    default: !1
+    default: false
   },
   garbagespeed: {
     default: 20,
-    integer: !0,
+    integer: true,
     min: 1
   },
   garbagefavor: {
@@ -3054,6 +3067,9 @@ const OptionsList = {
     default: 1
   },
   receivemultiplier: {
+    default: 1
+  },
+  cancelmultiplier: {
     default: 1
   },
   garbagemargin: {
@@ -3069,7 +3085,7 @@ const OptionsList = {
     default: 0
   },
   garbagequeue: {
-    default: !1
+    default: false
   },
   garbageentry: {
     default: "instant",
@@ -3077,7 +3093,7 @@ const OptionsList = {
   },
   garbageare: {
     default: 5,
-    integer: !0,
+    integer: true,
     min: 1
   },
   garbagecap: {
@@ -3118,11 +3134,11 @@ const OptionsList = {
     allowed: ["down", "rng"]
   },
   garbagespecialbonus: {
-    default: !1
+    default: false
   },
   spinbonuses: {
     default: "T-spins",
-    allowed: ["none", "T-spins", "all", "all-mini", "handheld", "stupid"]
+    allowed: ["none", "T-spins", "T-spins+", "all", "all+", "all-mini", "all-mini+", "mini-only", "handheld", "stupid"]
   },
   combotable: {
     default: "multiplier",
@@ -3134,21 +3150,7 @@ const OptionsList = {
   },
   bagtype: {
     default: "7-bag",
-    allowed: [
-      "total mayhem",
-      "classic",
-      "pairs",
-      "14-bag",
-      "7+1-bag",
-      "7+2-bag",
-      "7+x-bag",
-      "7-bag+oo",
-      "7+1-lone-bag",
-      "14+1-lone-bag",
-      "7+2-lone-bag",
-      "14+2-lone-bag",
-      "7-bag"
-    ]
+    allowed: ["total mayhem", "classic", "pairs", "14-bag", "7+1-bag", "7+2-bag", "7+x-bag", "7-bag+oo", "7+1-lone-bag", "14+1-lone-bag", "7+2-lone-bag", "14+2-lone-bag", "7-bag"]
   },
   messiness_change: {
     default: 1
@@ -3157,89 +3159,89 @@ const OptionsList = {
     default: 0
   },
   messiness_nosame: {
-    default: !1
+    default: false
   },
   messiness_timeout: {
     default: 0
   },
   b2bchaining: {
-    default: !1
+    default: false
   },
   b2bcharging: {
-    default: !1
+    default: false
   },
   b2bextras: {
-    default: !1
+    default: false
   },
   b2bcharge_at: {
     default: 4,
-    integer: !0,
+    integer: true,
     min: 0,
     max: 10
   },
   b2bcharge_base: {
     default: 0,
-    integer: !0,
+    integer: true,
     min: 0,
     max: 10
   },
   allclears: {
-    default: !0
+    default: true
   },
   allclear_garbage: {
     default: 10,
-    integer: !0,
+    integer: true,
     min: 0
   },
   allclear_b2b: {
     default: 0,
-    integer: !0,
+    integer: true,
     min: 0
   },
   allclear_b2b_sends: {
-    default: !1
+    default: false
   },
   allclear_b2b_dupes: {
-    default: !0
+    default: true
   },
   allclear_charges: {
-    default: !1
+    default: false
   },
   allow_harddrop: {
-    default: !0
+    default: true
   },
   allow180: {
-    default: !1
+    default: false
   },
   infinite_hold: {
-    default: !1
+    default: false
   },
   infinite_movement: {
-    default: !1
+    default: false
   },
   nextcount: {
     default: 5,
-    integer: !0,
+    integer: true,
     min: 1,
     max: 6
   },
   clutch: {
-    default: !0
+    default: true
   },
   no_szo: {
-    default: !1
+    default: false
   },
   nolockout: {
-    default: !1
+    default: false
   },
   manual_allowed: {
-    default: !0
+    default: true
   },
   new_payback: {
-    default: !1
+    default: false
   },
   can_undo: {
-    default: !1
+    default: false
   },
   boardwidth: {
     default: 10,
@@ -3262,7 +3264,7 @@ const OptionsList = {
     max: 10
   },
   infinite_stock: {
-    default: !1
+    default: false
   },
   locktime: {
     default: 30
@@ -3279,16 +3281,16 @@ const OptionsList = {
     default: 0
   },
   countdown: {
-    default: !1
+    default: false
   },
   countdown_count: {
     default: 3
   },
   countdown_interval: {
-    default: 1e3
+    default: 1000
   },
   inverted: {
-    default: !1
+    default: false
   },
   mission: {
     default: ""
@@ -3298,7 +3300,7 @@ const OptionsList = {
     allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
   },
   no_mission_sound: {
-    default: !1
+    default: false
   },
   objective_type: {
     default: "none",
@@ -3319,22 +3321,22 @@ const OptionsList = {
     allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
   },
   noextrawidth: {
-    default: !1
+    default: false
   },
   stride: {
-    default: !1
+    default: false
   },
   pro: {
-    default: !1
+    default: false
   },
   pro_alert: {
-    default: !1
+    default: false
   },
   pro_retry: {
-    default: !1
+    default: false
   },
   can_retry: {
-    default: !1
+    default: false
   },
   slot_counter1: {
     default: "",
@@ -3365,34 +3367,34 @@ const OptionsList = {
     allowed: ["", "impending", "progress"]
   },
   absolute_lines: {
-    default: !1
+    default: false
   },
   display_zen: {
-    default: !1
+    default: false
   },
   display_username: {
-    default: !1
+    default: false
   },
   display_fire: {
-    default: !1
+    default: false
   },
   display_replay: {
-    default: !1
+    default: false
   },
   display_next: {
-    default: !0
+    default: true
   },
   display_hold: {
-    default: !0
+    default: true
   },
   display_shadow: {
-    default: !0
+    default: true
   },
   levels: {
-    default: !1
+    default: false
   },
   masterlevels: {
-    default: !1
+    default: false
   },
   startinglevel: {
     default: 1
@@ -3401,7 +3403,7 @@ const OptionsList = {
     default: 1
   },
   levelstatic: {
-    default: !1
+    default: false
   },
   levelstaticspeed: {
     default: 10
@@ -3436,7 +3438,7 @@ const OptionsList = {
     default: {}
   },
   room_handling: {
-    default: !1
+    default: false
   },
   room_handling_arr: {
     default: 2
@@ -3448,16 +3450,16 @@ const OptionsList = {
     default: 6
   },
   noreplay: {
-    default: !1
+    default: false
   },
   nosound: {
-    default: !1
+    default: false
   },
   bgmnoreset: {
-    default: !1
+    default: false
   },
   neverstopbgm: {
-    default: !1
+    default: false
   },
   song: {
     default: "RANDOMcalm",
@@ -3474,7 +3476,7 @@ const OptionsList = {
     default: 10
   },
   survival_layer_non: {
-    default: !1
+    default: false
   },
   survival_layer_min: {
     default: 0
@@ -3485,11 +3487,17 @@ const OptionsList = {
   survival_cap: {
     default: 0
   },
+  invisible: {
+    default: false
+  },
+  master_invisible: {
+    default: false
+  },
   usezenconfig: {
-    default: !1
+    default: false
   },
   zenlevels: {
-    default: !1
+    default: false
   },
   zenlevel: {
     default: 1
@@ -3498,10 +3506,10 @@ const OptionsList = {
     default: 0
   },
   nosiren: {
-    default: !1
+    default: false
   },
   anchorseed: {
-    default: !1
+    default: false
   },
   forfeit_time: {
     default: 60
@@ -3520,40 +3528,37 @@ const OptionsList = {
     default: 300
   },
   fromretry: {
-    default: !1
+    default: false
   },
   retryisclear: {
-    default: !1
+    default: false
   },
   topoutisclear: {
-    default: !1
+    default: false
   },
   zenith: {
-    default: !1
+    default: false
   },
   zenith_expert: {
-    default: !1
+    default: false
   },
   zenith_doublehole: {
-    default: !1
+    default: false
   },
   zenith_volatile: {
-    default: !1
+    default: false
   },
   zenith_gravity: {
-    default: !1
+    default: false
   },
   zenith_messy: {
-    default: !1
-  },
-  zenith_invisible: {
-    default: !1
+    default: false
   },
   zenith_allspin: {
-    default: !1
+    default: false
   },
   zenith_duo: {
-    default: !1
+    default: false
   },
   zenith_mods: {
     default: [],
@@ -3574,10 +3579,13 @@ const OptionsList = {
     default: []
   },
   zenith_allyexpert: {
-    default: !1
+    default: false
+  },
+  zenith_tutorial: {
+    default: false
   },
   TEMP_zenith_rng: {
-    default: !1
+    default: false
   },
   TEMP_zenith_grace: {
     default: ""
@@ -3984,8 +3992,8 @@ const EncodingManager = new (class {
       "league.enter": 177,
       "league.leave": 178,
       "league.match": 179,
-      "league.abort": 180,
-      "league.counts": 181,
+      "league.counts": 180,
+      "league.ready": 181,
       "server.maintenance": 208,
       "server.announcement": 209,
       "server.authorize": 210,
@@ -4461,6 +4469,12 @@ class Transcoder {
     readNumber() {
       return Transcoder.Number.decode(this);
     }
+    readHex(e) {
+      const t = this.byteOffset;
+      const n = t + e;
+      this.seek(n * 8);
+      return this.buffer.toString("hex", t, n);
+    }
     readAny(e) {
       switch (this.readTable(Transcoder.SUPPORTED_TYPES_TABLE)) {
         case "boolean":
@@ -4508,7 +4522,7 @@ class Serializable {
   static AddExtension(t, n = {}) {
     this._LIST[t.name] = t;
     if ("ownBuffer" in n) {
-      t.BUFFER = Buffer.alloc(this._MAX_BUFFER);
+      t.BUFFER = e.alloc(this._MAX_BUFFER);
     }
   }
   static AddTable(e: any, t: any, n: any) {
@@ -4544,9 +4558,12 @@ class Structure extends Serializable {
     this._cstFields = new Map();
     this._fixFields = new Map();
     this._optFields = new Map();
-    for (const [t, { mode: n, type: s, size: i, value: o }] of Object.entries(
-      e
-    )) {
+    for (const [t, {
+      mode: n,
+      type: s,
+      size: i,
+      value: o
+    }] of Object.entries(e)) {
       switch (n) {
         case "static":
           this._cstFields.set(t, o);
@@ -4569,10 +4586,16 @@ class Structure extends Serializable {
     super.AddTable("prop", Array.from(this._optFields.keys()));
   }
   static encode(e, t) {
-    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       e.writeByType(s, t[n], i);
     }
-    for (const [n, { type: s, size: i }] of this._optFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._optFields.entries()) {
       if (t[n] != null) {
         e.writeTable(n, this.$$prop);
         e.writeByType(s, t[n], i);
@@ -4583,12 +4606,18 @@ class Structure extends Serializable {
   static decode(e) {
     const t = {};
     const n = this.$$prop.size;
-    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       t[n] = e.readByType(s, i);
     }
     for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
       const n = e.readTable(this.$$prop);
-      const { type: s, size: i } = this._optFields.get(n);
+      const {
+        type: s,
+        size: i
+      } = this._optFields.get(n);
       const o = e.readByType(s, i);
       t[n] = o;
     }
@@ -4596,6 +4625,328 @@ class Structure extends Serializable {
       t[e] = n;
     }
     return t;
+  }
+}
+class IgeInteractionData extends Structure {
+  static init() {
+    const Oa = "1|0|3|2|4".split("|");
+    let Pa = 0;
+    while (true) {
+      switch (Oa[Pa++]) {
+        case "0":
+          super.AddTable("type", ["garbage", "corruption"]);
+          continue;
+        case "1":
+          super.AddProperty("byte", {
+            min: 8,
+            max: 24
+          });
+          continue;
+        case "2":
+          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
+          continue;
+        case "3":
+          super.AddTable("colors", [null, ...minocolors]);
+          continue;
+        case "4":
+          const n = {
+            mode: "fixed",
+            type: Transcoder.TYPES.Table,
+            size: this.$$type
+          };
+          const s = {
+            mode: "optional",
+            type: Transcoder.TYPES.String,
+            size: true
+          };
+          const i = {
+            mode: "fixed",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const o = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: 13
+          };
+          const a = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$position
+          };
+          const r = {
+            mode: "optional",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const c = {
+            mode: "optional",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const p = {
+            mode: "optional",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const d = {
+            mode: "optional",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const h = {
+            mode: "optional",
+            type: Transcoder.TYPES.Int,
+            size: GameBoard.MAX_WIDTH
+          };
+          const u = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: GameBoard.MAX_HEIGHT
+          };
+          const m = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$colors
+          };
+          const g = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$colors
+          };
+          const f = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: 22
+          };
+          const b = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: GameBoard.MAX_WIDTH
+          };
+          const C = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: 16
+          };
+          const y = {
+            mode: "optional",
+            type: Transcoder.TYPES.Boolean
+          };
+          const x = {
+            mode: "optional",
+            type: Transcoder.TYPES.Boolean
+          };
+          const v = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: GameBoard.MAX_WIDTH
+          };
+          const k = {
+            mode: "optional",
+            type: Transcoder.TYPES.Double
+          };
+          const B = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const L = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const z = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const F = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const T = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const M = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const D = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const O = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const P = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const H = {
+            type: n,
+            username: s,
+            amt: i,
+            gameid: o,
+            position: a,
+            frame: r,
+            cid: c,
+            iid: p,
+            ackiid: d,
+            x: h,
+            y: u,
+            pos: m,
+            neg: g,
+            color: f,
+            column: b,
+            delay: C,
+            queued: y,
+            hardened: x,
+            size: v,
+            zthalt: k,
+            actor_neg: B,
+            actor_pos: L,
+            anchor: z,
+            actor_neg_data_type: F,
+            actor_neg_data_amt: T,
+            actor_neg_data_time: M,
+            actor_pos_data_type: D,
+            actor_pos_data_amt: O,
+            actor_pos_data_time: P
+          };
+          super.AddStructure(H);
+          continue;
+      }
+      break;
+    }
+  }
+}
+class SpecialLines extends Structure {
+  static init() {
+    const Vo = "0|3|2|1|4".split("|");
+    let Yo = 0;
+    while (true) {
+      switch (Vo[Yo++]) {
+        case "0":
+          super.AddTable("action", ["add", "remove"]);
+          continue;
+        case "1":
+          super.AddProperty("byte", {
+            min: 8,
+            max: 32
+          });
+          continue;
+        case "2":
+          super.AddTable("colors", [null, ...minocolors]);
+          continue;
+        case "3":
+          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
+          continue;
+        case "4":
+          const t = {
+            mode: "fixed",
+            type: Transcoder.TYPES.Table,
+            size: this.$$action
+          };
+          const n = {
+            mode: "fixed",
+            type: Transcoder.TYPES.DInt,
+            size: this.$byte
+          };
+          const s = {
+            mode: "fixed",
+            type: Transcoder.TYPES.UInt,
+            size: GameBoard.MAX_WIDTH
+          };
+          const i = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$colors
+          };
+          const o = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$colors
+          };
+          const a = {
+            mode: "optional",
+            type: Transcoder.TYPES.Table,
+            size: this.$$position
+          };
+          const r = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: GameBoard.MAX_WIDTH
+          };
+          const l = {
+            mode: "optional",
+            type: Transcoder.TYPES.UInt,
+            size: 16
+          };
+          const c = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const p = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const d = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const h = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const u = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const m = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const g = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const f = {
+            mode: "optional",
+            type: Transcoder.TYPES.String
+          };
+          const b = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const C = {
+            mode: "optional",
+            type: Transcoder.TYPES.Any
+          };
+          const y = {
+            action: t,
+            amt: n,
+            size: s,
+            pos: i,
+            neg: o,
+            position: a,
+            column: r,
+            slow: l,
+            effect: c,
+            actor_neg: p,
+            actor_pos: d,
+            anchor: h,
+            actor_neg_data_type: u,
+            actor_neg_data_amt: m,
+            actor_neg_data_time: g,
+            actor_pos_data_type: f,
+            actor_pos_data_amt: b,
+            actor_pos_data_time: C
+          };
+          super.AddStructure(y);
+          continue;
+      }
+      break;
+    }
   }
 }
 class GameReplay extends Serializable {
@@ -4678,32 +5029,31 @@ class ZenithSpecStats extends Serializable {
   static init() {
     super.AddExtension(this);
   }
-  static decode(e: any) {
+  static decode(e) {
     const t = [];
-    for (let s = 0; s < e.readUInt(13); s++) {
+    const n = e.readUInt(13);
+    for (let s = 0; s < n; s++) {
       const n = {
-        stats: {
-          rank: 0,
-          altitude: 0,
-          btb: 0
-        },
-        allies: [],
-        gameid: 0,
-        specCount: 0,
-        speedrun: false
+        stats: {},
+        allies: []
       };
       t[s] = n;
       n.gameid = e.readUInt(13);
       n.stats.rank = e.readUInt(6);
       n.stats.altitude = e.readFloat(18, 10);
       n.stats.btb = e.readUInt(13);
+      n.stats.revives = e.readUInt(8);
       n.specCount = e.readUInt(8);
       n.speedrun = e.readBoolean();
-      for (let t = 0; t < e.readUInt(3); t++) n.allies.push(e.readUInt(13));
+      n.nearWR = e.readBoolean();
+      const i = e.readUInt(3);
+      for (let t = 0; t < i; t++) {
+        n.allies.push(e.readUInt(13));
+      }
     }
     return new this(t);
   }
-  constructor(e: any) {
+  constructor(e) {
     super();
     this.sb = e;
   }
@@ -4714,16 +5064,25 @@ class ZenithSpecStats extends Serializable {
       stats: n,
       allies: s,
       specCount: i,
-      speedrun: o
+      speedrun: o,
+      nearWR: a
     } of this.sb) {
       e.writeUInt(t, 13);
       e.writeUInt(Math.floor(n.rank), 6);
       e.writeFloat(n.altitude.toFixed(2), 18, 10);
       e.writeUInt(n.btb, 13);
+      e.writeUInt(n.revives, 8);
       e.writeUInt(i, 8);
       e.writeBoolean(o);
-      e.writeUInt(s.length, 3);
-      for (const t of s) e.writeUInt(t, 13);
+      e.writeBoolean(a);
+      if (s) {
+        e.writeUInt(s.length, 3);
+        for (const t of s) {
+          e.writeUInt(t, 13);
+        }
+      } else {
+        e.writeUInt(0, 3);
+      }
     }
     return e.finalize();
   }
@@ -4857,9 +5216,51 @@ class GameReplayFrame extends Serializable {
     }
   }
 }
+class Leaderboard extends Serializable {
+  static init() {
+    super.AddExtension(this);
+  }
+  static decode(e) {
+    const t = [];
+    const n = e.readUInt(13);
+    for (let s = 0; s < n; s++) {
+      const n = {};
+      n.userid = e.readHex(12);
+      n.gameid = e.readUInt(13);
+      n.alive = e.readBoolean();
+      n.naturalorder = e.readUInt(13);
+      n.options = e.readStruct(IgeOptions);
+      t.push(n);
+    }
+    return t;
+  }
+  constructor(e) {
+    super();
+    this.players = e;
+  }
+  encode(e) {
+    e.writeUInt(this.players.length, 13);
+    for (const {
+      gameid: t,
+      userid: n,
+      alive: s,
+      naturalorder: i,
+      options: o
+    } of this.players) {
+      e.writeHex(n, 12);
+      e.writeUInt(t, 13);
+      e.writeBoolean(s);
+      e.writeUInt(i, 13);
+      e.writeStruct(o, IgeOptions);
+    }
+    return e.finalize();
+  }
+}
 class FullFrame extends Serializable {
   static init() {
     super.AddTable("piece", [null, ...Object.keys(tetrominoes)], "flexible");
+    //@ts-ignore
+    super.AddTable("ixs", ["off", "hold", "tap"]);
   }
   static encode(e, t) {
     const n = t.game.board;
@@ -4869,7 +5270,7 @@ class FullFrame extends Serializable {
     const a = t.game.controlling;
     const r = t.game.falling;
     const l = t.game.handling;
-    e.writeUInt(s.length, 12);
+    e.writeUInt(s.length(), 12);
     for (const t of s) {
       // @ts-expect-error
       e.writeTable(t, this.$$piece);
@@ -5031,7 +5432,6 @@ class FallingPiece extends Serializable {
     super.AddTable("piece", [null, ...Object.keys(tetrominoes)], "flexible");
   }
   static encode(e: any, t: any) {
-    // @ts-expect-error
     e.writeTable(t.type, this.$$piece);
     e.writeInt(t.x, GameBoard.MAX_WIDTH);
     e.writeUInt(t.r, 2);
@@ -5039,14 +5439,21 @@ class FallingPiece extends Serializable {
     e.writeUInt(t.irs, 2);
     e.writeUInt(t.kick, 5);
     e.writeUInt(t.keys, 16);
-    e.writeUInt(t.flags, 13);
+    e.writeUInt(t.flags, 15);
     e.writeUInt(t.safelock, 3);
     e.writeUInt(t.lockresets, 5);
     e.writeUInt(t.rotresets, 6);
+    e.writeBoolean(t.skip.length);
+    if (t.skip.length) {
+      for (const n of t.skip) {
+        e.writeUInt(n + 1, 7);
+      }
+      e.writeUInt(0, 7);
+    }
     e.writeDouble(t.y);
     e.writeDouble(t.locking);
   }
-  static decode(e: any) {
+  static decode(e) {
     const t = {
       type: "",
       x: 0,
@@ -5059,26 +5466,34 @@ class FallingPiece extends Serializable {
       safelock: 0,
       lockresets: 0,
       rotresets: 0,
+      skip: [],
       y: 0,
-      locking: 0
+      locking: 0, 
     };
-    return (
-      // @ts-expect-error
-      (t.type = e.readTable(this.$$piece)),
-      (t.x = e.readInt(GameBoard.MAX_WIDTH)),
-      (t.r = e.readUInt(2)),
-      (t.hy = e.readUInt(GameBoard.MAX_HEIGHT)),
-      (t.irs = e.readUInt(2)),
-      (t.kick = e.readUInt(5)),
-      (t.keys = e.readUInt(16)),
-      (t.flags = e.readUInt(13)),
-      (t.safelock = e.readUInt(3)),
-      (t.lockresets = e.readUInt(5)),
-      (t.rotresets = e.readUInt(6)),
-      (t.y = e.readDouble()),
-      (t.locking = e.readDouble()),
-      t
-    );
+    //@ts-ignore
+    t.type = e.readTable(this.$$piece);
+    t.x = e.readInt(GameBoard.MAX_WIDTH);
+    t.r = e.readUInt(2);
+    t.hy = e.readUInt(GameBoard.MAX_HEIGHT);
+    t.irs = e.readUInt(2);
+    t.kick = e.readUInt(5);
+    t.keys = e.readUInt(16);
+    t.flags = e.readUInt(15);
+    t.safelock = e.readUInt(3);
+    t.lockresets = e.readUInt(5);
+    t.rotresets = e.readUInt(6);
+    t.skip = [];
+    if (e.readBoolean()) {
+      const n = 7;
+      for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
+        //@ts-ignore
+        t.skip.push(e.readUInt(n) - 1);
+      }
+      e.seek(n, 2);
+    }
+    t.y = e.readDouble();
+    t.locking = e.readDouble();
+    return t;
   }
 }
 class GameStats extends Serializable {
@@ -5092,29 +5507,12 @@ class GameStats extends Serializable {
       min: 16,
       max: 32
     });
-    this._clears = [
-      "singles",
-      "doubles",
-      "triples",
-      "quads",
-      "pentas",
-      "realtspins",
-      "minitspins",
-      "minitspinsingles",
-      "tspinsingles",
-      "minitspindoubles",
-      "tspindoubles",
-      "minitspintriples",
-      "tspintriples",
-      "minitspinquads",
-      "tspinquads",
-      "tspinpentas",
-      "allclear"
-    ];
+    this._clears = ["singles", "doubles", "triples", "quads", "pentas", "realtspins", "minitspins", "minitspinsingles", "tspinsingles", "minitspindoubles", "tspindoubles", "minitspintriples", "tspintriples", "minitspinquads", "tspinquads", "tspinpentas", "allclear"];
   }
-  static encode(e: any, t: any) {
-    const n = t.garbage,
-      i = t.finesse;
+  static encode(e, t) {
+    const n = t.garbage;
+    const s = t.clears;
+    const i = t.finesse;
     e.writeDInt(t.lines, this.$short);
     e.writeDInt(t.level_lines, this.$short);
     e.writeDInt(t.level_lines_needed, this.$short);
@@ -5130,7 +5528,9 @@ class GameStats extends Serializable {
     e.writeUInt(t.btbpower, 8);
     e.writeDInt(t.tspins, this.$long);
     e.writeDInt(t.piecesplaced, this.$long);
-    for (const t of this._clears) e.writeDInt(t.clears[t], this.$short);
+    for (const t of this._clears) {
+      e.writeDInt(s[t], this.$short);
+    }
     e.writeDInt(n.sent, this.$long);
     e.writeDInt(n.sent_nomult, this.$long);
     e.writeDInt(n.maxspike, this.$long);
@@ -5152,37 +5552,37 @@ class GameStats extends Serializable {
       garbage: {},
       finesse: {}
     };
-    (t.lines = e.readDInt(this.$short)),
-      (t.level_lines = e.readDInt(this.$short)),
-      (t.level_lines_needed = e.readDInt(this.$short)),
-      (t.inputs = e.readDInt(this.$long)),
-      (t.holds = e.readDInt(this.$long)),
-      (t.score = e.readDInt(this.$long)),
-      (t.level = e.readUInt(8)),
-      (t.combo = e.readDInt(this.$long)),
-      (t.topcombo = e.readDInt(this.$long)),
-      (t.combopower = e.readUInt(3)),
-      (t.btb = e.readDInt(this.$short)),
-      (t.topbtb = e.readDInt(this.$short)),
-      (t.btbpower = e.readUInt(8)),
-      (t.tspins = e.readDInt(this.$long)),
-      (t.piecesplaced = e.readDInt(this.$long));
-    for (const n of this._clears) t.clears[n] = e.readDInt(this.$short);
-    return (
-      (t.garbage.sent = e.readDInt(this.$long)),
-      (t.garbage.sent_nomult = e.readDInt(this.$long)),
-      (t.garbage.maxspike = e.readDInt(this.$long)),
-      (t.garbage.maxspike_nomult = e.readDInt(this.$long)),
-      (t.garbage.received = e.readDInt(this.$long)),
-      (t.garbage.attack = e.readDInt(this.$long)),
-      (t.garbage.cleared = e.readDInt(this.$long)),
-      (t.kills = e.readDInt(this.$short)),
-      (t.finesse.combo = e.readDInt(this.$long)),
-      (t.finesse.faults = e.readDInt(this.$long)),
-      (t.finesse.perfectpieces = e.readDInt(this.$long)),
-      (t.zenith = e.readStruct(Zenith)),
-      t
-    );
+    t.lines = e.readDInt(this.$short);
+    t.level_lines = e.readDInt(this.$short);
+    t.level_lines_needed = e.readDInt(this.$short);
+    t.inputs = e.readDInt(this.$long);
+    t.holds = e.readDInt(this.$long);
+    t.score = e.readDInt(this.$long);
+    t.level = e.readUInt(8);
+    t.combo = e.readDInt(this.$long);
+    t.topcombo = e.readDInt(this.$long);
+    t.combopower = e.readUInt(3);
+    t.btb = e.readDInt(this.$short);
+    t.topbtb = e.readDInt(this.$short);
+    t.btbpower = e.readUInt(8);
+    t.tspins = e.readDInt(this.$long);
+    t.piecesplaced = e.readDInt(this.$long);
+    for (const n of this._clears) {
+      t.clears[n] = e.readDInt(this.$short);
+    }
+    t.garbage.sent = e.readDInt(this.$long);
+    t.garbage.sent_nomult = e.readDInt(this.$long);
+    t.garbage.maxspike = e.readDInt(this.$long);
+    t.garbage.maxspike_nomult = e.readDInt(this.$long);
+    t.garbage.received = e.readDInt(this.$long);
+    t.garbage.attack = e.readDInt(this.$long);
+    t.garbage.cleared = e.readDInt(this.$long);
+    t.kills = e.readDInt(this.$short);
+    t.finesse.combo = e.readDInt(this.$long);
+    t.finesse.faults = e.readDInt(this.$long);
+    t.finesse.perfectpieces = e.readDInt(this.$long);
+    t.zenith = e.readStruct(Zenith);
+    return t;
   }
 }
 class Zenith extends Serializable {
@@ -5207,23 +5607,25 @@ class Zenith extends Serializable {
     e.writeBoolean(t.speedrun_seen);
     for (let n = 0; n < 9; n++) e.writeDInt(t.splits[n], this.$long);
   }
-  static decode(e: any) {
+  static decode(e) {
     const t = {};
-    (t.altitude = e.readDouble()),
-      (t.rank = e.readDouble()),
-      (t.peakrank = e.readDouble()),
-      (t.avgrankpts = e.readDouble()),
-      (t.totalbonus = e.readDouble()),
-      (t.targetingfactor = e.readFloat(16, 100)),
-      (t.targetinggrace = e.readFloat(16, 100)),
-      (t.floor = e.readUInt(4)),
-      (t.revives = e.readUInt(8)),
-      (t.revivesTotal = e.readUInt(8)),
-      (t.revivesMaxOfBoth = Math.max(t.revives, t.revivesTotal - t.revives)),
-      (t.speedrun = e.readBoolean()),
-      (t.speedrun_seen = e.readBoolean()),
-      (t.splits = []);
-    for (let n = 0; n < 9; n++) t.splits[n] = e.readDInt(this.$long);
+    t.altitude = e.readDouble();
+    t.rank = e.readDouble();
+    t.peakrank = e.readDouble();
+    t.avgrankpts = e.readDouble();
+    t.totalbonus = e.readDouble();
+    t.targetingfactor = e.readFloat(16, 100);
+    t.targetinggrace = e.readFloat(16, 100);
+    t.floor = e.readUInt(4);
+    t.revives = e.readUInt(8);
+    t.revivesTotal = e.readUInt(8);
+    t.revivesMaxOfBoth = Math.max(t.revives, t.revivesTotal - t.revives);
+    t.speedrun = e.readBoolean();
+    t.speedrun_seen = e.readBoolean();
+    t.splits = [];
+    for (let n = 0; n < 9; n++) {
+      t.splits[n] = e.readDInt(this.$long);
+    }
     return t;
   }
 }
@@ -5377,103 +5779,6 @@ class IgeFrame extends Serializable {
     return t;
   }
 }
-class IgeInteractionData extends Structure {
-  static init() {
-    super.AddProperty("byte", {
-      min: 8,
-      max: 24
-    });
-    const zi = {
-      mode: "fixed",
-      type: Transcoder.TYPES.DInt,
-      size: this.$byte
-    };
-    const Ii = {
-      mode: "optional",
-      type: Transcoder.TYPES.UInt,
-      size: 13
-    };
-    const Mi = {
-      mode: "optional",
-      type: Transcoder.TYPES.DInt,
-      size: this.$byte
-    };
-    const Di = {
-      mode: "optional",
-      type: Transcoder.TYPES.DInt,
-      size: this.$byte
-    };
-    const Ei = {
-      mode: "optional",
-      type: Transcoder.TYPES.DInt,
-      size: this.$byte
-    };
-    const Oi = {
-      mode: "optional",
-      type: Transcoder.TYPES.DInt,
-      size: this.$byte
-    };
-    const Pi = {
-      mode: "optional",
-      type: Transcoder.TYPES.Int,
-      size: GameBoard.MAX_WIDTH
-    };
-    const Wi = {
-      mode: "optional",
-      type: Transcoder.TYPES.UInt,
-      size: GameBoard.MAX_HEIGHT
-    };
-    const Ri = {
-      mode: "optional",
-      type: Transcoder.TYPES.UInt,
-      size: GameBoard.MAX_WIDTH
-    };
-    const $i = {
-      mode: "optional",
-      type: Transcoder.TYPES.String,
-      size: true
-    };
-    const Ni = {
-      mode: "optional",
-      type: Transcoder.TYPES.UInt,
-      size: 16
-    };
-    const Ui = {
-      mode: "optional",
-      type: Transcoder.TYPES.Boolean
-    };
-    const Xi = {
-      mode: "optional",
-      type: Transcoder.TYPES.UInt,
-      size: GameBoard.MAX_WIDTH
-    };
-    const ji = {
-      mode: "optional",
-      type: Transcoder.TYPES.Double
-    };
-    const qi = {
-      type: {
-        mode: "static",
-        value: "garbage"
-      },
-      amt: zi,
-      gameid: Ii,
-      frame: Mi,
-      cid: Di,
-      iid: Ei,
-      ackiid: Oi,
-      x: Pi,
-      y: Wi,
-      column: Ri,
-      username: $i,
-      delay: Ni,
-      queued: Ui,
-      size: Xi,
-      zthalt: ji
-    };
-    super.AddStructure(qi);
-  }
-}
 class IgeLines extends Structure {
   static init() {
     super.AddTable("action", ["add", "remove"]);
@@ -5603,11 +5908,7 @@ class IgeCustomData extends Serializable {
 }
 class GameMap extends Serializable {
   static init() {
-    super.AddTable(
-      "letters",
-      ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"],
-      "flexible"
-    );
+    super.AddTable("letters", ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"], "flexible");
     super.AddProperty("word", {
       min: 16,
       max: 32
@@ -5616,11 +5917,14 @@ class GameMap extends Serializable {
   static encode(e, t) {
     const n = t.split("");
     e.writeDInt(n.length, this.$word);
-    for (const t of n) e.writeTable(t, this.$$letters);
+    for (const t of n) {
+      e.writeTable(t, this.$$letters);
+    }
   }
   static decode(e) {
     let t = "";
-    for (let s = 0; s < e.readDInt(this.$word); s++) {
+    const n = e.readDInt(this.$word);
+    for (let s = 0; s < n; s++) {
       t += e.readTable(this.$$letters);
     }
     return t;
@@ -5628,69 +5932,92 @@ class GameMap extends Serializable {
 }
 class Tetrominoes extends Serializable {
   static init() {
-    super.AddProperty("tiny", {
-      min: 3,
-      max: 7
-    });
-    super.AddTable(
-      "spinbonus",
-      [...Object.keys(spinbonuses_rules)],
-      "flexible"
-    );
-    super.AddTable("colors", [...minocolors]);
-    super.AddTable("kicksets", [...Object.keys(kicksets)], "flexible");
-    super.AddTable("special", ["i", "i2", "i3", "l3", "i5", "oo"]);
+    const Xe = "0|1|2|3|4".split("|");
+    let qe = 0;
+    while (true) {
+      switch (Xe[qe++]) {
+        case "0":
+          super.AddProperty("tiny", {
+            min: 3,
+            max: 7
+          });
+          continue;
+        case "1":
+          super.AddTable("spinbonus", [...Object.keys(spinbonuses_rules)], "flexible");
+          continue;
+        case "2":
+          super.AddTable("colors", [...minocolors]);
+          continue;
+        case "3":
+          super.AddTable("kicksets", [...Object.keys(kicksets)], "flexible");
+          continue;
+        case "4":
+          super.AddTable("special", ["i", "i2", "i3", "l3", "i5", "oo"]);
+          continue;
+      }
+      break;
+    }
   }
   static encode(e, t) {
-    const n = t.tetrominoes,
-      o = Object.keys(n);
+    const n = t.tetrominoes;
+    const s = t.minotypes;
+    const i = t.tetrominoes_color;
+    const o = Object.keys(n);
     e.writeUInt(o.length, 8);
-    for (const t of o) e.writeString(t);
+    for (const t of o) {
+      e.writeString(t);
+    }
     for (const [t, o] of Object.entries(n)) {
-      const { matrix: n, preview: a } = o;
+      const {
+        matrix: n,
+        preview: a
+      } = o;
       e.writeDInt(n.w, this.$tiny);
       e.writeDInt(n.h, this.$tiny);
-      e.writeUInt(n.dx, 3);
-      e.writeUInt(n.dy, 3);
+      e.writeUInt(n.dx, 5);
+      e.writeUInt(n.dy, 5);
       e.writeDInt(n.data[0].length, this.$tiny);
-      for (const t of n.data)
-        for (const [n, s] of t)
-          e.writeUInt(n, [
-            Transcoder.cla32(n.w - 1),
-            Transcoder.cla32(n.h - 1)
-          ]),
-            e.writeUInt(s, [
-              Transcoder.cla32(n.w - 1),
-              Transcoder.cla32(n.h - 1)
-            ]);
+      const [r, l] = [Transcoder.cla32(n.w - 1), Transcoder.cla32(n.h - 1)];
+      for (const t of n.data) {
+        for (const [n, s] of t) {
+          e.writeUInt(n, r);
+          e.writeUInt(s, l);
+        }
+      }
       e.writeDInt(a.w, this.$tiny);
       e.writeDInt(a.h, this.$tiny);
-      for (const [t, n] of a.data)
-        e.writeUInt(t, [Transcoder.cla32(a.w - 1), Transcoder.cla32(a.h - 1)]),
-          e.writeUInt(n, [
-            Transcoder.cla32(a.w - 1),
-            Transcoder.cla32(a.h - 1)
-          ]);
-      e.writeBoolean(undefined !== o.weight);
+      for (const [t, n] of a.data) {
+        e.writeUInt(t, r);
+        e.writeUInt(n, l);
+      }
+      e.writeBoolean(o.weight !== undefined);
       e.writeBoolean(o.spinbonus_override);
       e.writeBoolean(o.kickset_override);
       e.writeBoolean(o.kickset_special);
-      e.writeBoolean(t.minotypes.includes(t));
-      e.writeTable(t.tetrominoes_color[t], this.$$colors);
-      undefined !== o.weight && e.writeDInt(o.weight, this.$tiny);
-      o.spinbonus_override &&
-        (e.writeTable(o.spinbonus_override.rule, this.$$spinbonus),
-        e.writeBoolean(o.spinbonus_override.mini));
-      o.kickset_override && e.writeTable(o.kickset_override, this.$$kicksets);
-      o.kickset_special && e.writeTable(o.kickset_special, this.$$special);
+      e.writeBoolean(s.includes(t));
+      e.writeTable(i[t], this.$$colors);
+      if (o.weight !== undefined) {
+        e.writeDInt(o.weight, this.$tiny);
+      }
+      if (o.spinbonus_override) {
+        e.writeTable(o.spinbonus_override.rule, this.$$spinbonus);
+        e.writeBoolean(o.spinbonus_override.mini);
+      }
+      if (o.kickset_override) {
+        e.writeTable(o.kickset_override, this.$$kicksets);
+      }
+      if (o.kickset_special) {
+        e.writeTable(o.kickset_special, this.$$special);
+      }
     }
   }
   static decode(e) {
-    const t = {},
-      n = [],
-      s = {},
-      o = [];
-    for (let n = 0; n < e.readUInt(8); n++) {
+    const t = {};
+    const n = [];
+    const s = {};
+    const i = e.readUInt(8);
+    const o = [];
+    for (let n = 0; n < i; n++) {
       const n = e.readString();
       t[n] = {
         matrix: {},
@@ -5699,60 +6026,56 @@ class Tetrominoes extends Serializable {
       o.push(n);
     }
     for (const i of o) {
-      const o = t[i],
-        { matrix: a, preview: r } = o;
+      const o = t[i];
+      const {
+        matrix: a,
+        preview: r
+      } = o;
       a.w = e.readDInt(this.$tiny);
       a.h = e.readDInt(this.$tiny);
-      a.dx = e.readUInt(3);
-      a.dy = e.readUInt(3);
+      a.dx = e.readUInt(5);
+      a.dy = e.readUInt(5);
       const l = e.readDInt(this.$tiny);
+      const [c, p] = [Transcoder.cla32(a.w - 1), Transcoder.cla32(a.h - 1)];
       a.data = [];
       for (let t = 0; t < 4; t++) {
         a.data[t] = [];
         for (let n = 0; n < l; n++) {
-          a.data[t][n] = [
-            [
-              e.readUInt([
-                Transcoder.cla32(a.w - 1),
-                Transcoder.cla32(a.h - 1)
-              ]),
-              e.readUInt([Transcoder.cla32(a.w - 1), Transcoder.cla32(a.h - 1)])
-            ],
-            [
-              e.readUInt([
-                Transcoder.cla32(a.w - 1),
-                Transcoder.cla32(a.h - 1)
-              ]),
-              e.readUInt([Transcoder.cla32(a.w - 1), Transcoder.cla32(a.h - 1)])
-            ]
-          ];
+          const [s, i] = [e.readUInt(c), e.readUInt(p)];
+          a.data[t][n] = [s, i];
         }
       }
       r.w = e.readDInt(this.$tiny);
       r.h = e.readDInt(this.$tiny);
       r.data = [];
       for (let t = 0; t < l; t++) {
-        r.data[t] = [
-          [
-            e.readUInt([Transcoder.cla32(r.w - 1), Transcoder.cla32(r.h - 1)]),
-            e.readUInt([Transcoder.cla32(r.w - 1), Transcoder.cla32(r.h - 1)])
-          ],
-          [
-            e.readUInt([Transcoder.cla32(r.w - 1), Transcoder.cla32(r.h - 1)]),
-            e.readUInt([Transcoder.cla32(r.w - 1), Transcoder.cla32(r.h - 1)])
-          ]
-        ];
+        const [n, s] = [e.readUInt(c), e.readUInt(p)];
+        r.data[t] = [n, s];
       }
+      const d = e.readBoolean();
+      const h = e.readBoolean();
+      const u = e.readBoolean();
+      const _ = e.readBoolean();
+      const m = e.readBoolean();
       s[i] = e.readTable(this.$$colors);
-      e.readBoolean() && (o.weight = e.readDInt(this.$tiny));
-      e.readBoolean() &&
-        (o.spinbonus_override = {
+      if (d) {
+        o.weight = e.readDInt(this.$tiny);
+      }
+      if (h) {
+        o.spinbonus_override = {
           rule: e.readTable(this.$$spinbonus),
           mini: e.readBoolean()
-        });
-      e.readBoolean() && (o.kickset_override = e.readTable(this.$$kicksets));
-      e.readBoolean() && (o.kickset_special = e.readTable(this.$$special));
-      e.readBoolean() && n.push(i);
+        };
+      }
+      if (u) {
+        o.kickset_override = e.readTable(this.$$kicksets);
+      }
+      if (_) {
+        o.kickset_special = e.readTable(this.$$special);
+      }
+      if (m) {
+        n.push(i);
+      }
     }
     return {
       minotypes: n,
@@ -5762,23 +6085,13 @@ class Tetrominoes extends Serializable {
   }
 }
 class IgeOptions extends Serializable {
-  static TypeOrders = [
-    "boolean",
-    "number",
-    "table",
-    "object",
-    "array",
-    "string"
-  ];
+  static TypeOrders = ["boolean", "number", "table", "object", "array", "string"];
   static OptsBook = OptionsList;
   static init() {
     super.AddTable("options", Object.keys(this.OptsBook));
-    super.AddTable(
-      "minoskin",
-      ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"],
-      "flexible"
-    );
+    super.AddTable("minoskin", ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"], "flexible");
     super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
+    super.AddTable("ixs", ["off", "hold", "tap"]);
     for (const [e, t] of Object.entries(this.OptsBook)) {
       if (t.allowed) {
         super.AddTable("_" + e, t.allowed);
@@ -5788,14 +6101,20 @@ class IgeOptions extends Serializable {
     }
   }
   static *ParseOptions(e) {
-    const { TypeOrders: t, OptsBook: n } = this;
-    const s = Object.keys(e).sort(
-      (e, s) => t.indexOf(n[e].type) - t.indexOf(n[s].type)
-    );
-    for (const t of s) {
-      const s = e[t];
-      const i = n[t];
-      yield [t, s, i];
+    const {
+      TypeOrders: t,
+      OptsBook: n
+    } = this;
+    const s = Object.keys(e);
+    for (const i of t) {
+      for (const t of s) {
+        const s = n[t];
+        if (s.type !== i) {
+          continue;
+        }
+        const o = e[t];
+        yield [t, o, s];
+      }
     }
   }
   static encode(e, t) {
@@ -5811,6 +6130,8 @@ class IgeOptions extends Serializable {
             e.writeBoolean(s.may20g);
             e.writeFloat(s.das, 8, 10);
             e.writeFloat(s.dcd, 8, 10);
+            e.writeTable(s.irs, this.$$ixs);
+            e.writeTable(s.ihs, this.$$ixs);
           } else if (n === "minoskin") {
             e.writeUInt(Object.keys(s).length, 8);
             for (const [t, n] of Object.entries(s)) {
@@ -5835,9 +6156,7 @@ class IgeOptions extends Serializable {
           e.writeString(s);
           break;
         default:
-          throw new TypeError(
-            `Unknown type for key: ${n} value: ${s} | got -> ${i.type}`
-          );
+          throw new TypeError(`Unknown type for key: ${n} value: ${s} | got -> ${i.type}`);
       }
     }
     e.writeTable(null, this.$$options);
@@ -5846,10 +6165,12 @@ class IgeOptions extends Serializable {
     const t = this.$$options.size;
     const n = this.OptsBook;
     const s = {};
-    for (let i = e.peek(t); i !== 0; i = e.peek(t)) {
+    let i = null;
+    let o = null;
+    for (let a = e.peek(t); a !== 0; a = e.peek(t)) {
       const t = e.readTable(this.$$options);
-      const i = n[t]?.type;
-      switch (i) {
+      const a = n[t]?.type;
+      switch (a) {
         case "object":
           if (t === "handling") {
             const n = {};
@@ -5860,6 +6181,8 @@ class IgeOptions extends Serializable {
             n.may20g = e.readBoolean();
             n.das = e.readFloat(8, 10);
             n.dcd = e.readFloat(8, 10);
+            n.irs = e.readTable(this.$$ixs);
+            n.ihs = e.readTable(this.$$ixs);
             s[t] = n;
           } else if (t === "minoskin") {
             const n = {};
@@ -5888,23 +6211,25 @@ class IgeOptions extends Serializable {
           s[t] = e.readString();
           break;
         default:
-          s[t] = e.readString(); // wtf ok default should just be string i guess (it breaks some things but better than nothing i suppose)
+          console.error("Options dump: ", s);
+          throw new TypeError(`Unknown type for key: ${t} | got -> ${a}\nLast Key: ${i}\nLast Value: ${o}\n`);
       }
+      i = t;
+      o = s[t];
     }
     e.seek(t, 2);
     return s;
   }
 }
-// i think this is correct? i hope so at least (doesn't seem to help though)
-function strictShallowEqual(t: any, e: any) {
-  return t || e ? t === e : t === e || (t != t && e != e);
-}
 class EndFrameOptions extends IgeOptions {
   static *ParseOptions(e: any) {
-    for (const [n, s, i] of super.ParseOptions(e))
-      i.default !== s &&
-        (("object" === i.type && strictShallowEqual(i.default, s)) ||
-          (yield [n, s, i]));
+    for (const [n, s, i] of super.ParseOptions(e)) {
+      if (i.default !== s) {
+        if (i.type !== "object" || !strictShallowEqual(i.default, s)) {
+          yield [n, s, i];
+        }
+      }
+    }
   }
 }
 class EndFrame extends Serializable {
@@ -5912,59 +6237,45 @@ class EndFrame extends Serializable {
     super.AddExtension(this, {
       ownBuffer: true
     });
-    super.AddTable("gor", [
-      null,
-      "topout",
-      "garbagesmash",
-      "zenith",
-      "clear",
-      "topout_clear",
-      "winner",
-      "forfeit",
-      "retry",
-      "drop",
-      "dropnow",
-      "disconnect"
-    ]);
+    super.AddTable("gor", [null, "topout", "garbagesmash", "zenith", "clear", "topout_clear", "winner", "forfeit", "retry", "drop", "dropnow", "disconnect"]);
   }
-  static encode(e: any, t: any) {
-    e.writeBoolean(t.successful);
-    // @ts-expect-error
-    e.writeTable(t.gameoverreason, this.$$gor);
-    e.writeUInt(t.killer.gameid, 13);
-    e.writeBoolean("spark" === t.killer.type, 1);
-    e.writeString(t.killer.username ?? "");
+  static encode(e, t) {
+    const n = t.successful;
+    const s = t.gameoverreason;
+    const i = t.killer.gameid;
+    const o = t.killer.type === "spark";
+    const a = t.killer.username ?? "";
+    const {
+      apm: r,
+      pps: l,
+      vsscore: c
+    } = t.aggregatestats;
+    const {
+      game: p,
+      stats: d,
+      diyusi: h
+    } = t;
+    e.writeBoolean(n);
+    e.writeTable(s, this.$$gor);
+    e.writeUInt(i, 13);
+    e.writeBoolean(o, 1);
+    e.writeString(a);
     e.writeStruct(t.options, EndFrameOptions);
-    e.writeDouble(t.aggregatestats);
-    e.writeDouble(t.aggregatestats);
-    e.writeDouble(t.aggregatestats);
-    e.writeStruct(
-      {
-        game: t,
-        stats: t,
-        diyusi: t
-      },
-      FullFrame
-    );
+    e.writeDouble(r);
+    e.writeDouble(l);
+    e.writeDouble(c);
+    e.writeStruct({
+      game: p,
+      stats: d,
+      diyusi: h
+    }, FullFrame);
   }
-  static decode(e: any) {
+  static decode(e) {
     const t = {
-      killer: {
-        gameid: 0,
-        type: "",
-        username: ""
-      },
-      options: {},
-      gameoverreason: null,
-      successful: false,
-      aggregatestats: {
-        apm: 0,
-        pps: 0,
-        vsscore: 0
-      }
+      killer: {},
+      aggregatestats: {}
     };
     t.successful = e.readBoolean();
-    // @ts-expect-error
     t.gameoverreason = e.readTable(this.$$gor);
     t.killer.gameid = e.readUInt(13);
     t.killer.type = e.readBoolean() ? "spark" : "sizzle";
@@ -5982,20 +6293,23 @@ GameReplay.init();
 GameReplayBoard.init();
 ZenithSpecStats.init();
 GameReplayFrame.init();
+Leaderboard.init();
 FullFrame.init();
 GameBoard.init();
 FallingPiece.init();
-EndFrameOptions.init();
 GameStats.init();
 Zenith.init();
 IgeFrame.init();
 IgeInteractionData.init();
-IgeLines.init();
+SpecialLines.init();
 IgeCustomData.init();
 Tetrominoes.init();
 GameMap.init();
 IgeOptions.init();
+EndFrameOptions.init();
 EndFrame.init();
+
+// IgeLines.init();
 Serializable.LoadExtensions(n);
 EncodingManager.SetMsgpackr(Be, ke);
 

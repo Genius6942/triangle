@@ -8,6 +8,8 @@ import { homedir } from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
+import * as msgpackr from 'msgpackr';
+
 let globalVM: Awaited<ReturnType<typeof vmPack>> | null = null;
 
 export const vmPack = (
@@ -34,7 +36,7 @@ export const vmPack = (
     }
 
     const triangleDir = path.join(homedir(), ".trianglejs");
-    const fileName = `tetrio-${version}-${serverVersion.signature.build.id}.js`;
+    const fileName = `tetrio-vm-${version}-${serverVersion.signature.build.id}.js`;
 
     let tetrioOverride: string;
     try {
@@ -130,6 +132,7 @@ export const vmPack = (
 
     const tetrio: any = {
       console: { log: () => {}, error: () => {}, warn: () => {} },
+			// console,
       performance: performance,
       Response: Response,
 
@@ -144,7 +147,11 @@ export const vmPack = (
           tetrio.localStorage.items.set(key, value)
       },
       addEventListener: () => {},
-      exports: {}
+      exports: {},
+			imports: {
+				Buffer,
+				msgpackr
+			}
     };
 
     tetrio.self = tetrio;

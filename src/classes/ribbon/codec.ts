@@ -2,7 +2,7 @@
 // @ts-nocheck
 import { pack } from "../../utils";
 
-export type CodecType = "vm" | "custom" | "codec-2" | "json";
+export type CodecType = "vm" | "custom" | "codec-2" | "json" | "teto";
 
 export type Command = {
   flags: number;

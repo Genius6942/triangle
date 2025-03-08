@@ -618,9 +618,6 @@ export namespace Game {
       frame: number;
       amount: number;
       size: number;
-      cid: number;
-      gameid: number;
-      confirmed: boolean;
       column: number;
     }
   }

@@ -1,6 +1,7 @@
 import { APIDefaults } from ".";
 import type { Get, Post } from "./basic";
 
+// @ts-expect-error post is unused
 export const channel = (get: Get, post: Post, __: APIDefaults) => {
 	return {
 		replay: async (id: string) => {
