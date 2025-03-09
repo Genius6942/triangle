@@ -1,12 +1,7 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
 import { constants } from "./constants";
-import {
-  GarbageQueue,
-  GarbageQueueInitializeParams,
-  IncomingGarbage,
-  OutgoingGarbage
-} from "./garbage";
+import { GarbageQueue, GarbageQueueInitializeParams, IncomingGarbage, OutgoingGarbage } from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
 import { Mino } from "./queue/types";
@@ -19,7 +14,10 @@ import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
 
+
+
 import chalk from "chalk";
+
 
 export interface GameOptions {
   spinBonuses: Game.SpinBonuses;
@@ -1077,7 +1075,10 @@ export class Engine {
     let brokeB2B: false | number = this.stats.b2b;
     if (lines > 0) {
       this.stats.combo++;
-      if ((this.lastSpin && this.lastSpin.type !== "none") || lines >= 4) {
+      if (
+        (this.lastSpin && this.lastSpin.type !== "none") ||
+        (lines >= 4 && !(pc && this.pc && this.pc.b2b))
+      ) {
         this.stats.b2b++;
         brokeB2B = false;
       }
