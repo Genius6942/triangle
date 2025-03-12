@@ -1,8 +1,8 @@
-import { rng } from ".";
+import { RNG } from "../../utils";
 import { Mino } from "../types";
 
 export const bag7_X = (seed: number): (() => Mino[]) => {
-  const gen = rng(seed);
+  const gen = new RNG(seed);
   const extraPieceCount = [3, 2, 1, 1];
   let bagid = 0;
   let extraBag: Mino[] = [];

@@ -1,8 +1,8 @@
-import { rng } from ".";
+import { RNG } from "../../utils";
 import { Mino } from "../types";
 
 export const bag14 = (seed: number) => {
-  const gen = rng(seed);
+  const gen = new RNG(seed);
   return () =>
     gen.shuffleArray([
       "z",

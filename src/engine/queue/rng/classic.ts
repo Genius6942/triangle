@@ -1,4 +1,4 @@
-import { rng } from ".";
+import { RNG } from "../../utils";
 import { Mino } from "../types";
 
 export const classic = (seed: number) => {
@@ -12,7 +12,7 @@ export const classic = (seed: number) => {
     Mino.T
   ];
   let lastGenerated: number | null = null;
-  const gen = rng(seed);
+  const gen = new RNG(seed);
 
   return () => {
     let index = Math.floor(gen.nextFloat() * (TETROMINOS.length + 1));
