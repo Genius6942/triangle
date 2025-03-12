@@ -273,7 +273,7 @@ export class Game {
       b2b: {
         chaining: options.b2bchaining,
         charging: options.b2bcharging
-          ? { at: options.b2bcharge_at - 1, base: options.b2bcharge_base }
+          ? { at: options.b2bcharge_at, base: options.b2bcharge_base }
           : false
       },
       gravity: {
