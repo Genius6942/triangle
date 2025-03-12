@@ -3,6 +3,8 @@ import { Events, Game as GameTypes } from "../../types";
 import { Client } from "../client";
 import { getFullFrame } from "./utils";
 
+import chalk from "chalk";
+
 const moveElementToFirst = <T>(arr: T[], n: number) => [
   arr[n],
   ...arr.slice(0, n),
@@ -31,6 +33,7 @@ export class Game {
     gameid: number;
     userid: string;
     engine: Engine;
+    queue: GameTypes.Replay.Frame[];
   }[] = [];
   /** The client's `gameid` set by the server */
   public gameid: number;
@@ -85,6 +88,21 @@ export class Game {
     this.init();
   }
 
+  #log(
+    msg: string,
+    { level = "info" }: { level: "info" | "warning" | "error" } = {
+      level: "info"
+    }
+  ) {
+    const func =
+      level === "info"
+        ? chalk.blue
+        : level === "warning"
+          ? chalk.yellow
+          : chalk.red;
+    console.log(`${func("[🎀\u2009Triangle.JS]")}: ${msg}`);
+  }
+
   private listen<T extends keyof Events.in.all>(
     event: T,
     cb: (data: Events.in.all[T]) => void,
@@ -103,7 +121,6 @@ export class Game {
     this.listeners.forEach((l) => this.client.off(l[0], l[1]));
     if (this.timeout)
       this.timeout = (clearTimeout(this.timeout) as any) || null;
-    true;
     delete this.client.game;
   }
 
@@ -135,19 +152,27 @@ export class Game {
       name: o.options.username,
       userid: o.userid,
       gameid: o.gameid,
-      engine: this.createEngine(o.options, o.gameid)
+      engine: this.createEngine(o.options, o.gameid),
+      queue: []
     }));
 
     // this.listen("game.replay.ige", (data) => this.addIGE(data));
     this.listen("game.replay.ige", (data) => this.handleIGE(data));
-    this.listen("game.replay", ({ gameid, frames, provisioned }) => {
+    this.listen("game.replay", ({ gameid, frames }) => {
       const game = this.opponents.find((player) => player.gameid === gameid);
       if (!game || game.engine.toppedOut) return false;
 
-      while (game.engine.frame < provisioned - 1)
-        game.engine.tick(
-          frames.filter((frame) => frame.frame === game.engine.frame + 1) as any
-        );
+      game.queue.push(...frames);
+      while (game.queue.some((f) => f.frame > game.engine.frame)) {
+        const frames: GameTypes.Replay.Frame[] = [];
+        while (
+          game.queue.length > 0 &&
+          game.queue[0].frame <= game.engine.frame
+        ) {
+          frames.push(game.queue.shift()!);
+        }
+        game.engine.tick(frames);
+      }
     });
   }
 
@@ -314,8 +339,61 @@ export class Game {
         engine: this.engine!
       });
 
-      if (res.keys) this.keyQueue.push(...res.keys);
-      if (res.runAfter) runAfter.push(...res.runAfter);
+      const isValidObject = (obj: any) =>
+        typeof obj === "object" && obj !== null;
+      if (res.keys)
+        this.keyQueue.push(
+          ...res.keys.filter((k, idx) => {
+            if (
+              !isValidObject(k) ||
+              !(k.type === "keydown" || k.type === "keyup") ||
+              typeof k.frame !== "number" ||
+              isNaN(k.frame) ||
+              k.frame < this.frame ||
+              !isValidObject(k.data) ||
+              !(
+                [
+                  "moveLeft",
+                  "moveRight",
+                  "hardDrop",
+                  "hold",
+                  "softDrop",
+                  "rotateCW",
+                  "rotate180",
+                  "rotateCCW"
+                ] satisfies GameTypes.Tick.Keypress["data"]["key"][]
+              ).includes(k.data.key) ||
+              typeof k.data.subframe !== "number" ||
+              isNaN(k.data.subframe) ||
+              k.data.subframe < 0 ||
+              k.data.subframe >= 1
+            ) {
+              this.#log(
+                `Invalid key event at index ${idx} passed on frame ${this.frame}:\n${JSON.stringify(k, null, 2)}`,
+                {
+                  level: "error"
+                }
+              );
+              return false;
+            }
+            return true;
+          })
+        );
+      if (res.runAfter)
+        runAfter.push(
+          ...res.runAfter.filter((ra, idx) => {
+            if (typeof ra !== "function") {
+              this.#log(
+                `Invalid runAfter callback at index ${idx} passed on frame ${this.frame}.`,
+                {
+                  level: "warning"
+                }
+              );
+              return false;
+            }
+            return true;
+          })
+        );
     }
     if (this.over) return;
 
