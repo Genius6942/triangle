@@ -122,6 +122,7 @@ console.log("game over");
 ```
 
 View more gameplay documentation [here](https://triangle.haelp.dev/documents/Gameplay.html).
+
 ### Chatting
 
 ```ts

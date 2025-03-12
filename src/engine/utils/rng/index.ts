@@ -5,7 +5,7 @@ export class RNG {
 
   private value: number;
 
-	index = 0;
+  index = 0;
 
   constructor(seed: number) {
     this.value = seed % RNG.MODULUS;
@@ -16,7 +16,7 @@ export class RNG {
   }
 
   next(): number {
-		this.index++;
+    this.index++;
     return (this.value = (RNG.MULTIPLIER * this.value) % RNG.MODULUS);
   }
 
@@ -49,11 +49,11 @@ export class RNG {
     }
   }
 
-	updateFromIndex(index: number) {
-		while (this.index < index) {
-			this.next();
-		}
-	}
+  updateFromIndex(index: number) {
+    while (this.index < index) {
+      this.next();
+    }
+  }
 
   clone() {
     return new RNG(this.value);
