@@ -1131,7 +1131,7 @@ export class Engine {
 
     if (brokeB2B !== false) {
       let btb = brokeB2B;
-      if (this.b2b.charging !== false && btb > this.b2b.charging.at) {
+      if (this.b2b.charging !== false && btb + 1 > this.b2b.charging.at) {
         const value = Math.floor(
           (btb - this.b2b.charging.at + this.b2b.charging.base + 1) *
             this.dynamic.garbageMultiplier.get()
