@@ -410,7 +410,16 @@ export class Engine {
       vs:
         ((this.stats.garbage.attack + this.stats.garbage.cleared) /
           (this.frame / 60)) *
-          100 || 0
+          100 || 0,
+      surgePower: this.b2b.charging
+        ? Math.floor(
+            (this.stats.b2b -
+              this.b2b.charging.at +
+              this.b2b.charging.base +
+              1) *
+              this.dynamic.garbageMultiplier.get()
+          )
+        : 0
     };
   }
 
