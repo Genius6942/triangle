@@ -527,9 +527,7 @@ export class Engine {
 
     return (
       this.falling.locking > this.misc.movement.lockTime ||
-      this.#isForcedToLock() ||
-      (this.falling.lockResets > this.misc.movement.lockResets &&
-        !this.misc.movement.infinite) ||
+      !!this.#isForcedToLock() ||
       this.#shouldLock()
     );
   }
@@ -552,7 +550,7 @@ export class Engine {
     this.falling.location[1] = y1;
     this.state &= ~constants.flags.STATE_FLOOR;
 
-    if (y1 > highestY || this.misc.movement.infinite) {
+    if (y1 < highestY || this.misc.movement.infinite) {
       this.falling.lockResets = 0;
       this.falling.rotResets = 0;
     }
