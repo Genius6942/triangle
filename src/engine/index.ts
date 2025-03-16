@@ -319,7 +319,7 @@ export class Engine {
         keys: this.falling.keys,
         rotation: this.falling.rotation,
         location: this.falling.location,
-        locking: this.falling.lockResets,
+        locking: this.falling.locking,
         lockResets: this.falling.lockResets,
         rotResets: this.falling.rotResets,
         safeLock: this.falling.safeLock,
@@ -528,7 +528,6 @@ export class Engine {
 
   #__internal_lock(subframe = 1 - this.subframe) {
     this.falling.locking += subframe;
-
     return (
       this.falling.locking > this.misc.movement.lockTime ||
       !!this.#isForcedToLock() ||
@@ -636,7 +635,7 @@ export class Engine {
       if (!this.#__internal_fall(Math.min(1, dropFactor))) {
         if (this.#__internal_lock(subframe)) {
           if (this.handling.safelock) this.falling.safeLock = 7;
-          this.#lock();
+          this.#lock(false);
         }
         return;
       }
@@ -1059,10 +1058,10 @@ export class Engine {
   hardDrop() {
     while (this.#__internal_fall(1));
 
-    return this.#lock();
+    return this.#lock(true);
   }
 
-  #lock() {
+  #lock(hard: boolean) {
     this.holdLocked = false;
 
     // TODO: ARE (line clear, garbage)
@@ -1188,7 +1187,8 @@ export class Engine {
       this.lastWasClear = false;
       const garbages = this.garbageQueue.tank(
         this.frame,
-        this.dynamic.garbageCap.get()
+        this.dynamic.garbageCap.get(),
+        hard
       );
       res.garbageAdded = garbages;
       if (res.garbageAdded) {

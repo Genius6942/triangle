@@ -160,7 +160,7 @@ export class GarbageQueue {
     return col;
   }
 
-  tank(frame: number, cap: number): OutgoingGarbage[] {
+  tank(frame: number, cap: number, hard: boolean): OutgoingGarbage[] {
     if (this.queue.length === 0) return [];
 
     const res: OutgoingGarbage[] = [];
@@ -180,7 +180,9 @@ export class GarbageQueue {
     while (total < cap && this.queue.length > 0) {
       const item = deepCopy(this.queue[0]);
 
-      if (item.frame + this.options.garbage.speed > frame) break; // do not spawn garbage that is still traveling
+			// TODO: wtf hacky fix, this is 100% not right idk how to fix this
+      if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
+        break; // do not spawn garbage that is still traveling
       total += item.amount;
 
       let exausted = false;
