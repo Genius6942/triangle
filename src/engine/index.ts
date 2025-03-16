@@ -770,7 +770,7 @@ export class Engine {
   }
 
   initiatePiece(piece: Mino, ignoreBlockout = false, isHold = false) {
-    if (this.handling.ihs === "hold") {
+    if (this.handling.ihs === "hold" && this.falling) {
       let rotationState = 0;
 
       // Calculate rotation based on input
