@@ -90,7 +90,7 @@ export namespace ChannelAPI {
             : {}
       }).then((r) => r.json())) as any;
       if (res.success === false) {
-        throw new Error("Server Error", res.error.msg);
+        throw new Error("Server Error", `${res.error.msg} at ${uri}`);
       } else {
         if (config.caching) {
           cache[uri] = {
@@ -101,7 +101,7 @@ export namespace ChannelAPI {
         return res.data;
       }
     } catch (e: any) {
-      throw new Error("Network Error", e.message);
+      throw new Error("Network Error", `${e.message} at ${uri}`);
     }
   };
 
@@ -812,12 +812,8 @@ export namespace ChannelAPI {
     >("users/history/:leaderboard/:season", "entries");
 
     export namespace PersonalRecords {
-      export interface Response {
-        /**
-         * The requested records.
-         */
-        entries: ChannelAPI.Types.Record[];
-      }
+      export type Response =ChannelAPI.Types.Record[];
+      
       export interface Request {
         /**
          * The lowercase username or user ID to look up.
@@ -890,7 +886,7 @@ export namespace ChannelAPI {
         PersonalRecords.Request["gamemode"],
         PersonalRecords.Request["leaderboard"]
       ]
-    >("users/:user/history/:gamemode/:leaderboard", "entries");
+    >("users/:user/records/:gamemode/:leaderboard", "entries");
     /** Alias of personalRecords */
     export const records = personalRecords;
   }
