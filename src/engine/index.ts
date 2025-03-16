@@ -1438,7 +1438,6 @@ export class Engine {
       this.input[shift].das + delta,
       this.handling.das
     );
-    console.log(this.input[shift].das, delta, this.handling.das);
     if (this.input[shift].das < this.handling.das) return;
     if (this.#isSleep()) return; // TODO: missing: && !this.pause
     this.input[shift].arr += arrDelta;
