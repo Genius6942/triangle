@@ -519,7 +519,7 @@ export class Engine {
   }
 
   #clearFlags(e: number) {
-    this.state &= e;
+    this.state &= ~e;
   }
 
   #__internal_lock(subframe = 1 - this.subframe) {
@@ -634,7 +634,7 @@ export class Engine {
           if (this.handling.safelock) this.falling.safeLock = 7;
           this.#lock();
         }
-        break;
+        return;
       }
 
       if (Math.floor(y) !== Math.floor(this.falling.location[1])) {
@@ -1438,6 +1438,7 @@ export class Engine {
       this.input[shift].das + delta,
       this.handling.das
     );
+    console.log(this.input[shift].das, delta, this.handling.das);
     if (this.input[shift].das < this.handling.das) return;
     if (this.#isSleep()) return; // TODO: missing: && !this.pause
     this.input[shift].arr += arrDelta;
