@@ -88,7 +88,7 @@ export const users = (get: Get, post: Post, __: APIDefaults) => {
       token: undefined,
       uri: `users/${encodeURIComponent(username)}/resolve`
     });
-    if (res.success === false) throw new Error(res.error.msg);
+    if (res.success === false) throw new Error(res.error.msg + ": " + username);
     return res._id;
   };
 
