@@ -87,6 +87,7 @@ export class Engine {
     piece: Mino;
     type: SpinType;
   } | null;
+  lastWasClear!: boolean;
   stats!: {
     garbage: {
       sent: number;
@@ -201,6 +202,7 @@ export class Engine {
     this.held = null;
     this.holdLocked = false;
     this.lastSpin = null;
+    this.lastWasClear = false;
 
     this.stats = {
       combo: -1,
@@ -329,6 +331,7 @@ export class Engine {
       hold: this.held,
       holdLocked: this.holdLocked,
       lastSpin: deepCopy(this.lastSpin),
+      lastWasClear: this.lastWasClear,
       queue: this.queue.index,
       input: deepCopy(this.input),
       subframe: this.subframe,
@@ -342,7 +345,7 @@ export class Engine {
 
   fromSnapshot(snapshot: EngineSnapshot) {
     this.board.state = deepCopy(snapshot.board);
-    this.initiatePiece(snapshot.falling.symbol);
+    this.initiatePiece(snapshot.falling.symbol, true);
     for (const key of Object.keys(snapshot.falling)) {
       // @ts-expect-error
       this.falling[key] = snapshot.falling[key];
@@ -355,6 +358,7 @@ export class Engine {
     this.held = snapshot.hold;
     this.holdLocked = snapshot.holdLocked;
     this.lastSpin = deepCopy(snapshot.lastSpin);
+    this.lastWasClear = snapshot.lastWasClear;
     this.queue = new Queue(this.initializer.queue);
     for (let i = 0; i < snapshot.queue; i++) this.queue.shift();
 
@@ -759,18 +763,13 @@ export class Engine {
       : undefined;
   }
 
-  nextPiece(canClutch = false, ignoreBlockout = false) {
+  nextPiece(ignoreBlockout = false) {
     const newTetromino = this.queue.shift()!;
 
-    this.initiatePiece(newTetromino, canClutch, ignoreBlockout);
+    this.initiatePiece(newTetromino, ignoreBlockout);
   }
 
-  initiatePiece(
-    piece: Mino,
-    canClutch: boolean = false,
-    ignoreBlockout = false,
-    isHold = false
-  ) {
+  initiatePiece(piece: Mino, ignoreBlockout = false, isHold = false) {
     if (this.handling.ihs === "hold") {
       let rotationState = 0;
 
@@ -815,7 +814,7 @@ export class Engine {
       from: this.falling
     });
 
-    if (!ignoreBlockout && this.#considerBlockout(canClutch, isHold)) {
+    if (!ignoreBlockout && this.#considerBlockout(isHold)) {
       // Lose Stock or Game Over
       this.state ^= constants.flags.ACTION_IHS;
       this.falling.irs = 0;
@@ -829,7 +828,7 @@ export class Engine {
           this.falling.irs = 0;
         }
 
-        if (this.#considerBlockout(canClutch, !ignoreBlockout || isHold)) {
+        if (this.#considerBlockout(!ignoreBlockout || isHold)) {
           // lose stock or game over
         } else {
           if (this.#is20G()) {
@@ -840,7 +839,7 @@ export class Engine {
     }
   }
 
-  #considerBlockout(canClutch: boolean, isSilent: boolean = false) {
+  #considerBlockout(isSilent: boolean = false) {
     if (legal(this.falling.absoluteBlocks, this.board.state)) {
       // TODO: clutch count
       // if (!isSilent) {
@@ -851,7 +850,7 @@ export class Engine {
 
     let clutched = false;
 
-    if (canClutch && this.gameOptions.clutch !== false) {
+    if (this.lastWasClear && this.gameOptions.clutch !== false) {
       const originalY = this.falling.location[1];
       const originalHy = this.falling.highestY;
 
@@ -1172,6 +1171,7 @@ export class Engine {
     for (const gb of res.garbage) this.stats.garbage.attack += gb;
 
     if (lines > 0) {
+      this.lastWasClear = true;
       while (res.garbage.length > 0) {
         if (res.garbage[0] === 0) {
           res.garbage.shift();
@@ -1185,6 +1185,7 @@ export class Engine {
         }
       }
     } else {
+      this.lastWasClear = false;
       const garbages = this.garbageQueue.tank(
         this.frame,
         this.dynamic.garbageCap.get()
@@ -1200,7 +1201,7 @@ export class Engine {
       }
     }
 
-    this.nextPiece(lines > 0);
+    this.nextPiece();
 
     this.lastSpin = null;
 
@@ -1537,7 +1538,7 @@ export class Engine {
       this.initiatePiece(save);
     } else {
       this.held = this.falling.symbol;
-      this.nextPiece(false, ignoreBlockout);
+      this.nextPiece(ignoreBlockout);
     }
 
     this.holdLocked = !this.misc.infiniteHold;
