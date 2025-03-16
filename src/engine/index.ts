@@ -551,6 +551,7 @@ export class Engine {
     const { highestY } = this.falling;
     if (highestY > y1) this.falling.highestY = Math.floor(y1);
     this.falling.location[1] = y1;
+    if (this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     this.state &= ~constants.flags.STATE_FLOOR;
 
     if (y1 < highestY || this.misc.movement.infinite) {
