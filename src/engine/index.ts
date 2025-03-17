@@ -60,6 +60,7 @@ export interface MiscellaneousOptions {
   };
   infiniteHold: boolean;
   username?: string;
+  date?: Date;
 }
 
 export interface EngineInitializeParams {
@@ -155,6 +156,10 @@ export class Engine {
   igeHandler!: IGEHandler;
 
   misc!: MiscellaneousOptions;
+
+  legacy!: {
+    openerPhase: boolean;
+  };
 
   state!: number;
 
@@ -265,6 +270,12 @@ export class Engine {
     this.subframe = 0;
 
     this.state = 0;
+
+    this.legacy = {
+      openerPhase:
+        (options.misc.date ?? new Date()) <
+        new Date("2025-02-18T19:00:00-05:00")
+    };
 
     this.flushRes();
 
@@ -1194,7 +1205,9 @@ export class Engine {
           res.garbage.shift();
           continue;
         }
-        const r = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
+        const r = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces, {
+          openerPhase: this.legacy.openerPhase
+        });
         if (r === 0) res.garbage.shift();
         else {
           res.garbage[0] = r;

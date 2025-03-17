@@ -126,10 +126,18 @@ export class GarbageQueue {
     return true;
   }
 
-  cancel(amount: number, pieceCount: number) {
+  cancel(
+    amount: number,
+    pieceCount: number,
+    legacy: { openerPhase?: boolean } = {}
+  ) {
     let send = amount,
       cancel = 0;
-    if (pieceCount + 1 <= this.options.openerPhase && this.size >= this.sent)
+    if (
+      pieceCount + 1 <=
+        this.options.openerPhase - (legacy.openerPhase ? 1 : 0) &&
+      this.size >= this.sent
+    )
       cancel += amount;
     while ((send > 0 || cancel > 0) && this.size > 0) {
       this.queue[0].amount--;
@@ -180,7 +188,7 @@ export class GarbageQueue {
     while (total < cap && this.queue.length > 0) {
       const item = deepCopy(this.queue[0]);
 
-			// TODO: wtf hacky fix, this is 100% not right idk how to fix this
+      // TODO: wtf hacky fix, this is 100% not right idk how to fix this
       if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
         break; // do not spawn garbage that is still traveling
       total += item.amount;
