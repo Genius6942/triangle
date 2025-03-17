@@ -770,7 +770,7 @@ export class Engine {
   }
 
   initiatePiece(piece: Mino, ignoreBlockout = false, isHold = false) {
-    if (this.handling.ihs === "hold" && this.falling) {
+    if (this.handling.irs === "hold" && this.falling) {
       let rotationState = 0;
 
       // Calculate rotation based on input
@@ -805,11 +805,9 @@ export class Engine {
       boardHeight: this.board.height,
       boardWidth: this.board.width,
       initialRotation:
-        piece.toLowerCase() in this.kickTable.spawn_rotation
-          ? this.kickTable.spawn_rotation[
-              piece.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
-            ]
-          : 0,
+        this.kickTable.spawn_rotation[
+          piece.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
+        ] ?? 0,
       symbol: piece,
       from: this.falling
     });
