@@ -763,10 +763,10 @@ export class Engine {
       : undefined;
   }
 
-  nextPiece(ignoreBlockout = false) {
+  nextPiece(ignoreBlockout = false, isHold = false) {
     const newTetromino = this.queue.shift()!;
 
-    this.initiatePiece(newTetromino, ignoreBlockout);
+    this.initiatePiece(newTetromino, ignoreBlockout, isHold);
   }
 
   initiatePiece(piece: Mino, ignoreBlockout = false, isHold = false) {
@@ -875,6 +875,25 @@ export class Engine {
     }
 
     return false;
+  }
+
+  hold(_ihs = false, ignoreBlockout = false) {
+    if (this.#isSleep()) {
+      if (this.handling.ihs === "tap") this.state |= constants.flags.ACTION_IHS;
+      return;
+    }
+    if (this.holdLocked || !this.misc.allowed.hold) return;
+    this.holdLocked = !this.misc.infiniteHold;
+    if (this.held) {
+      const save = this.held;
+      this.held = this.falling.symbol;
+      this.initiatePiece(save, ignoreBlockout, true);
+    } else {
+      this.held = this.falling.symbol;
+      this.nextPiece(ignoreBlockout, true);
+    }
+
+    this.holdLocked = !this.misc.infiniteHold;
   }
 
   #slamToFloor() {
@@ -1281,6 +1300,9 @@ export class Engine {
       case "rotate180":
         this.input.keys.rotate180 = true;
         break;
+      case "hold":
+        this.input.keys.hold = true;
+        break;
     }
 
     // todo: all in if (!this.pause)
@@ -1522,25 +1544,6 @@ export class Engine {
 
   receiveGarbage(...garbage: IncomingGarbage[]) {
     this.garbageQueue.receive(...garbage);
-  }
-
-  hold(_ihs = false, ignoreBlockout = false) {
-    if (this.#isSleep()) {
-      if (this.handling.ihs === "tap") this.state |= constants.flags.ACTION_IHS;
-      return;
-    }
-    if (this.holdLocked || !this.misc.allowed.hold) return;
-    this.holdLocked = !this.misc.infiniteHold;
-    if (this.held) {
-      const save = this.held;
-      this.held = this.falling.symbol;
-      this.initiatePiece(save);
-    } else {
-      this.held = this.falling.symbol;
-      this.nextPiece(ignoreBlockout);
-    }
-
-    this.holdLocked = !this.misc.infiniteHold;
   }
 
   getPreview(piece: Mino) {
