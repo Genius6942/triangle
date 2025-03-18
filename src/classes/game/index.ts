@@ -294,7 +294,8 @@ export class Game {
           hold: options.display_hold
         },
         infiniteHold: options.infinite_hold,
-        username: options.username
+        username: options.username,
+				date: new Date(),
       },
       handling: options.handling
     });
