@@ -28,7 +28,7 @@ export class Queue {
   reset(index = 0) {
     this.genFunction = rngMap[this.type](this.seed);
     this.value = [];
-    this.index = index;
+    this.index = 0;
     this.repopulate();
     for (let i = 0; i < index; i++) {
       this.shift();

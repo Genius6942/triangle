@@ -50,7 +50,7 @@ export interface OutgoingGarbage extends Garbage {
 }
 
 export interface GarbageQueueSnapshot {
-  index: number;
+  seed: number;
   lastTankTime: number;
   lastColumn: number | null;
   sent: number;
@@ -80,7 +80,7 @@ export class GarbageQueue {
 
   snapshot(): GarbageQueueSnapshot {
     return {
-      index: this.rng.index,
+      seed: this.rng.seed,
       lastTankTime: this.lastTankTime,
       lastColumn: this.lastColumn,
       sent: this.sent,
@@ -92,8 +92,7 @@ export class GarbageQueue {
     this.queue = deepCopy(snapshot.queue);
     this.lastTankTime = snapshot.lastTankTime;
     this.lastColumn = snapshot.lastColumn;
-    this.rng = new RNG(this.options.seed);
-    this.rng.updateFromIndex(snapshot.index);
+    this.rng = new RNG(snapshot.seed);
     this.sent = snapshot.sent;
   }
 
