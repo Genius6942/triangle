@@ -812,8 +812,8 @@ export namespace ChannelAPI {
     >("users/history/:leaderboard/:season", "entries");
 
     export namespace PersonalRecords {
-      export type Response =ChannelAPI.Types.Record[];
-      
+      export type Response = ChannelAPI.Types.Record[];
+
       export interface Request {
         /**
          * The lowercase username or user ID to look up.

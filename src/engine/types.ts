@@ -35,7 +35,7 @@ export interface EngineSnapshot {
     keys: number;
   };
   lastSpin: Engine["lastSpin"];
-	lastWasClear: boolean;
+  lastWasClear: boolean;
   garbage: GarbageQueueSnapshot;
   board: Board["state"];
   targets?: number[];

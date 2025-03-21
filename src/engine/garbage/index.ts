@@ -149,43 +149,87 @@ export class GarbageQueue {
     return send;
   }
 
-  private reroll_column() {
+  /**
+   * This function does NOT take into account messiness on timeout.
+   * The first garbage hole will be correct,
+   * but subsequent holes depend on whether or not garbage is cancelled.
+   */
+  predict() {
+    const rngex = this.rng.clone().nextFloat;
+
+    let lastColumn = this.lastColumn;
+
+    const reroll = () => {
+      lastColumn = this.#__internal_rerollColumn(lastColumn, rngex);
+      return lastColumn;
+    };
+
+    const result = this.#__internal_tank(
+      deepCopy(this.queue),
+      lastColumn,
+      rngex,
+      reroll,
+      -Infinity,
+      Infinity,
+      false
+    );
+
+    return result.res;
+  }
+
+  #__internal_rerollColumn(current: number | null, rngex: RNG["nextFloat"]) {
     let col: number;
     const cols = columnWidth(
       this.options.boardWidth,
       this.options.garbage.holeSize
     );
 
-    if (this.options.messiness.nosame && this.lastColumn !== null) {
-      col = Math.floor(this.rngex() * (cols - 1));
-      if (col >= this.lastColumn) col++;
+    if (this.options.messiness.nosame && current !== null) {
+      col = Math.floor(rngex() * (cols - 1));
+      if (col >= current) col++;
     } else {
-      col = Math.floor(this.rngex() * cols);
+      col = Math.floor(rngex() * cols);
     }
 
+    return col;
+  }
+
+  #rerollColumn() {
+    const col = this.#__internal_rerollColumn(
+      this.lastColumn,
+      this.rngex.bind(this)
+    );
     this.lastColumn = col;
     return col;
   }
 
-  tank(frame: number, cap: number, hard: boolean): OutgoingGarbage[] {
-    if (this.queue.length === 0) return [];
+  #__internal_tank(
+    queue: IncomingGarbage[],
+    lastColumn: number | null,
+    rngex: () => number,
+    reroll: () => number,
+    frame: number,
+    cap: number,
+    hard: boolean
+  ) {
+    if (queue.length === 0) return { res: [], lastColumn, queue };
 
     const res: OutgoingGarbage[] = [];
 
-    this.queue = this.queue.sort((a, b) => a.frame - b.frame);
+    queue = queue.sort((a, b) => a.frame - b.frame);
 
     if (
       this.options.messiness.timeout &&
       frame >= this.lastTankTime + this.options.messiness.timeout
     ) {
-      this.reroll_column();
+      reroll();
       this.lastTankTime = frame;
     }
 
     let total = 0;
 
-    while (total < cap && this.queue.length > 0) {
-      const item = deepCopy(this.queue[0]);
+    while (total < cap && queue.length > 0) {
+      const item = deepCopy(queue[0]);
 
       // TODO: wtf hacky fix, this is 100% not right idk how to fix this
       if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
@@ -196,28 +240,48 @@ export class GarbageQueue {
 
       if (total > cap) {
         const excess = total - cap;
-        this.queue[0].amount = excess;
+        queue[0].amount = excess;
         item.amount -= excess;
       } else {
-        this.queue.shift();
+        queue.shift();
         exausted = true;
       }
 
       for (let i = 0; i < item.amount; i++) {
-        const reroll =
-          this.lastColumn === null ||
-          this.rngex() < this.options.messiness.within;
+        const r =
+          lastColumn === null || rngex() < this.options.messiness.within;
         res.push({
           ...item,
           amount: 1,
-          column: reroll ? this.reroll_column() : this.lastColumn!
+          column: r ? reroll() : lastColumn!
         });
       }
 
-      if (exausted && this.rngex() < this.options.messiness.change) {
-        this.reroll_column();
+      if (exausted && rngex() < this.options.messiness.change) {
+        reroll();
       }
     }
+
+    return {
+      res,
+      lastColumn,
+      queue
+    };
+  }
+
+  tank(frame: number, cap: number, hard: boolean) {
+    const { res, lastColumn, queue } = this.#__internal_tank(
+      this.queue,
+      this.lastColumn,
+      this.rngex.bind(this),
+      this.#rerollColumn.bind(this),
+      frame,
+      cap,
+      hard
+    );
+
+    this.lastColumn = lastColumn;
+    this.queue = queue;
 
     return res;
   }
