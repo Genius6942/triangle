@@ -13,6 +13,12 @@ export class RNG {
     if (this.value <= 0) {
       this.value += RNG.MAX_FLOAT;
     }
+
+    this.next = this.next.bind(this);
+    this.nextFloat = this.nextFloat.bind(this);
+    this.shuffleArray = this.shuffleArray.bind(this);
+    this.updateFromIndex = this.updateFromIndex.bind(this);
+    this.clone = this.clone.bind(this);
   }
 
   next(): number {

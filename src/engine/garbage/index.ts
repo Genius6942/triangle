@@ -71,7 +71,7 @@ export class GarbageQueue {
 
   constructor(options: GarbageQueueInitializeParams) {
     this.options = options;
-    if (!this.options.cap.absolute) this.options.cap.absolute = Infinity;
+    if (!this.options.cap.absolute) this.options.cap.absolute = Number.MAX_SAFE_INTEGER;
 
     this.queue = [];
 
@@ -155,7 +155,8 @@ export class GarbageQueue {
    * but subsequent holes depend on whether or not garbage is cancelled.
    */
   predict() {
-    const rngex = this.rng.clone().nextFloat;
+    const rng = this.rng.clone();
+    const rngex = rng.nextFloat.bind(rng);
 
     let lastColumn = this.lastColumn;
 
@@ -166,15 +167,22 @@ export class GarbageQueue {
 
     const result = this.#__internal_tank(
       deepCopy(this.queue),
-      lastColumn,
+      () => lastColumn,
       rngex,
       reroll,
-      -Infinity,
-      Infinity,
+      -Number.MIN_SAFE_INTEGER,
+      Number.MAX_SAFE_INTEGER,
       false
     );
 
     return result.res;
+  }
+
+  get nextColumn() {
+    const rng = this.rng.clone();
+    if (this.lastColumn === null)
+      return this.#__internal_rerollColumn(null, rng.nextFloat.bind(rng));
+    return this.lastColumn;
   }
 
   #__internal_rerollColumn(current: number | null, rngex: RNG["nextFloat"]) {
@@ -205,7 +213,7 @@ export class GarbageQueue {
 
   #__internal_tank(
     queue: IncomingGarbage[],
-    lastColumn: number | null,
+    lastColumn: () => number | null,
     rngex: () => number,
     reroll: () => number,
     frame: number,
@@ -249,11 +257,11 @@ export class GarbageQueue {
 
       for (let i = 0; i < item.amount; i++) {
         const r =
-          lastColumn === null || rngex() < this.options.messiness.within;
+          lastColumn() === null || rngex() < this.options.messiness.within;
         res.push({
           ...item,
           amount: 1,
-          column: r ? reroll() : lastColumn!
+          column: r ? reroll() : lastColumn()!
         });
       }
 
@@ -264,15 +272,15 @@ export class GarbageQueue {
 
     return {
       res,
-      lastColumn,
       queue
     };
   }
 
   tank(frame: number, cap: number, hard: boolean) {
-    const { res, lastColumn, queue } = this.#__internal_tank(
+    console.log(deepCopy(this.queue));
+    const { res, queue } = this.#__internal_tank(
       this.queue,
-      this.lastColumn,
+      () => this.lastColumn,
       this.rngex.bind(this),
       this.#rerollColumn.bind(this),
       frame,
@@ -280,8 +288,9 @@ export class GarbageQueue {
       hard
     );
 
-    this.lastColumn = lastColumn;
+    this.lastColumn;
     this.queue = queue;
+    console.log(this.queue);
 
     return res;
   }
