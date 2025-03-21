@@ -290,7 +290,6 @@ export class GarbageQueue {
 
     this.lastColumn;
     this.queue = queue;
-    console.log(this.queue);
 
     return res;
   }
