@@ -60,6 +60,7 @@ export interface MiscellaneousOptions {
   };
   infiniteHold: boolean;
   username?: string;
+	date?: Date;
 }
 
 export interface EngineInitializeParams {
