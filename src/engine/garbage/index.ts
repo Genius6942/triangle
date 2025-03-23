@@ -277,7 +277,6 @@ export class GarbageQueue {
   }
 
   tank(frame: number, cap: number, hard: boolean) {
-    console.log(deepCopy(this.queue));
     const { res, queue } = this.#__internal_tank(
       this.queue,
       () => this.lastColumn,
@@ -288,7 +287,6 @@ export class GarbageQueue {
       hard
     );
 
-    this.lastColumn;
     this.queue = queue;
 
     return res;
