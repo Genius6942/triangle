@@ -159,8 +159,6 @@ export class Engine {
 
   state!: number;
 
-  onGarbageSpawn?: (column: number, size: number) => void;
-
   private resCache!: {
     pieces: number;
     garbage: {
@@ -1213,9 +1211,6 @@ export class Engine {
       if (res.garbageAdded) {
         garbages.forEach((garbage) => {
           this.board.insertGarbage(garbage);
-          if (this.onGarbageSpawn) {
-            this.onGarbageSpawn(garbage.column, garbage.size);
-          }
         });
       }
     }
@@ -1557,11 +1552,6 @@ export class Engine {
     this.queue.onRepopulate(listener);
   }
 
-  spawnGarbage(column: number, size: number) {
-    if (this.onGarbageSpawn) {
-      this.onGarbageSpawn(column, size);
-    }
-  }
 
   private static colorMap = {
     i: chalk.bgCyan,

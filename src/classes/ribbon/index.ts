@@ -1,6 +1,7 @@
 import { Emitter, Events, Game } from "../../types";
 import { API, APITypes } from "../../utils";
-import { Bits, Codec, CodecType } from "./codec";
+import { Codec, CodecType } from "./codec";
+import { Bits } from "./bits";
 import { FullCodec } from "./codec-full";
 import { tetoPack } from "./teto-pack";
 import { RibbonEvents } from "./types";

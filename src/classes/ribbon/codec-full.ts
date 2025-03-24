@@ -1,8 +1,7 @@
-// @ts-nocheck
+//@ts-ignore
+import { Bits as r } from "./bits";
 import { default as n } from "../../utils/theorypack/msgpackr.js";
-import { Bits as r } from "./codec";
-
-import { strictShallowEqual } from "fast-equals";
+import { strictShallowEqual } from 'fast-equals';
 
 const e = Buffer;
 
@@ -2414,46 +2413,18 @@ const spinbonuses_rules = {
     types_mini: ["t"]
   },
   "all-mini+": {
-    types: [
-      "i1",
-      "i2",
-      "i3",
-      "l3",
-      "i5",
-      "z",
-      "l",
-      "o",
-      "s",
-      "i",
-      "j",
-      "t",
-      "oo"
-    ],
-    types_mini: ["t"]
+        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
+        types_mini: ["t"]
   },
   "mini-only": {
-    types: [
-      "i1",
-      "i2",
-      "i3",
-      "l3",
-      "i5",
-      "z",
-      "l",
-      "o",
-      "s",
-      "i",
-      "j",
-      "t",
-      "oo"
-    ],
-    types_mini: ["t"]
+        types: ["i1", "i2", "i3", "l3", "i5", "z", "l", "o", "s", "i", "j", "t", "oo"],
+        types_mini: ["t"]
   },
   handheld: { types: ["t", "s", "z", "l", "j"], types_mini: ["t"] },
   "T-spins": { types: ["t"], types_mini: ["t"] },
   "T-spins+": {
-    types: ["t"],
-    types_mini: ["t"]
+        types: ["t"],
+        types_mini: ["t"]
   }
 };
 const minocolors = ["z", "l", "o", "s", "i", "j", "t", "g", "d", "gb", "gbd"];
@@ -3039,223 +3010,254 @@ const DisplayCountersList = Object.keys({
 const OptionsList = {
   version: {
     default: 11,
-    static: true
+    static: true,
+    type: "number"
   },
   gameid: {
     default: 0,
     min: 0,
     max: 8192,
-    strict: true
+    strict: true,
+    type: "number"
   },
   seed: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   seed_random: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   score: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   are: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   lineclear_are: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   g: {
-    default: 0.02
+    default: 0.02,
+    type: "number",
   },
   gincrease: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   gmargin: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   gravitymay20g: {
-    default: true
+    default: true,
+    type: "boolean"
   },
   shielded: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   hasgarbage: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   usebombs: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   garbagespeed: {
     default: 20,
     integer: true,
-    min: 1
+    min: 1,
+    type: "number",
   },
   garbagefavor: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbagemultiplier: {
-    default: 1
+    default: 1,
+    type: "number",
   },
   receivemultiplier: {
-    default: 1
+    default: 1,
+    type: "number",
   },
   cancelmultiplier: {
-    default: 1
+    default: 1,
+    type: "number",
   },
   garbagemargin: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   garbageincrease: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   garbageholesize: {
-    default: 1
+    default: 1,
+    type: "number",
   },
   garbagephase: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbagequeue: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   garbageentry: {
     default: "instant",
-    allowed: ["instant", "continuous", "delayed"]
+    allowed: ["instant", "continuous", "delayed"],
+    type: "string"
   },
   garbageare: {
     default: 5,
     integer: true,
-    min: 1
+    min: 1,
+    type: "number"
   },
   garbagecap: {
-    default: 8
+    default: 8,
+    type: "number"
   },
   garbagecapincrease: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbagecapmargin: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbagecapmax: {
-    default: 40
+    default: 40,
+    type: "number"
   },
   garbageabsolutecap: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbageattackcap: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   garbagetargetbonus: {
     default: "none",
-    allowed: ["none", "defensive", "offensive"]
+    allowed: ["none", "defensive", "offensive"],
+    type: "string"
   },
   garbageblocking: {
     default: "combo blocking",
-    allowed: ["none", "combo blocking", "limited blocking"]
+    allowed: ["none", "combo blocking", "limited blocking"],
+    type: "string"
   },
   passthrough: {
     default: "zero",
-    allowed: ["zero", "limited", "consistent", "full"]
+    allowed: ["zero", "limited", "consistent", "full"],
+    type: "string"
   },
   openerphase: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   roundmode: {
     default: "down",
-    allowed: ["down", "rng"]
+    allowed: ["down", "rng"],
+    type: "string"
   },
   garbagespecialbonus: {
-    default: false
+    default: false,
+    type: "boolean",
   },
   spinbonuses: {
     default: "T-spins",
-    allowed: [
-      "none",
-      "T-spins",
-      "T-spins+",
-      "all",
-      "all+",
-      "all-mini",
-      "all-mini+",
-      "mini-only",
-      "handheld",
-      "stupid"
-    ]
+    allowed: ["none", "T-spins", "T-spins+", "all", "all+", "all-mini", "all-mini+", "mini-only", "handheld", "stupid"],
+    type: "table"
   },
   combotable: {
     default: "multiplier",
-    allowed: ["none", "multiplier", "classic guideline", "modern guideline"]
+    allowed: ["none", "multiplier", "classic guideline", "modern guideline"],
+    type: "table"
   },
   kickset: {
     default: "SRS+",
-    possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"]
+    possibles: ["none", "SRS", "SRS+", "TETRA-X", "NRS", "ARS", "ASC"],
+    type: "string"
   },
   bagtype: {
     default: "7-bag",
-    allowed: [
-      "total mayhem",
-      "classic",
-      "pairs",
-      "14-bag",
-      "7+1-bag",
-      "7+2-bag",
-      "7+x-bag",
-      "7-bag+oo",
-      "7+1-lone-bag",
-      "14+1-lone-bag",
-      "7+2-lone-bag",
-      "14+2-lone-bag",
-      "7-bag"
-    ]
+    allowed: ["total mayhem", "classic", "pairs", "14-bag", "7+1-bag", "7+2-bag", "7+x-bag", "7-bag+oo", "7+1-lone-bag", "14+1-lone-bag", "7+2-lone-bag", "14+2-lone-bag", "7-bag"],
+    type: "string"
   },
   messiness_change: {
-    default: 1
+    default: 1,
+    type: "number",
   },
   messiness_inner: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   messiness_nosame: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   messiness_timeout: {
-    default: 0
+    default: 0,
+    type: "number",
   },
   b2bchaining: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   b2bcharging: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   b2bextras: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   b2bcharge_at: {
     default: 4,
     integer: true,
     min: 0,
-    max: 10
+    max: 10,
+    type: "number",
   },
   b2bcharge_base: {
     default: 0,
     integer: true,
     min: 0,
-    max: 10
+    max: 10,
+    type: "number",
   },
   allclears: {
-    default: true
+    default: true,
+    type: "boolean"
   },
   allclear_garbage: {
     default: 10,
     integer: true,
-    min: 0
+    min: 0,
+    type: "number",
   },
   allclear_b2b: {
     default: 0,
     integer: true,
-    min: 0
+    min: 0,
+    type: "number",
   },
   allclear_b2b_sends: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   allclear_b2b_dupes: {
-    default: true
+    default: true,
+    type: "boolean"
   },
   allclear_charges: {
     default: false
@@ -3264,7 +3266,8 @@ const OptionsList = {
     default: true
   },
   allow180: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   infinite_hold: {
     default: false
@@ -3285,13 +3288,16 @@ const OptionsList = {
     default: false
   },
   nolockout: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   manual_allowed: {
-    default: true
+    default: true,
+    type: "boolean"
   },
   new_payback: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   can_undo: {
     default: false
@@ -3317,7 +3323,8 @@ const OptionsList = {
     max: 10
   },
   infinite_stock: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   locktime: {
     default: 30
@@ -3325,16 +3332,20 @@ const OptionsList = {
   lockresets: {
     default: 15,
     min: 0,
-    max: 30
+    max: 30,
+    type: "number"
   },
   prestart: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   precountdown: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   countdown: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   countdown_count: {
     default: 3
@@ -3346,11 +3357,13 @@ const OptionsList = {
     default: false
   },
   mission: {
-    default: ""
+    default: "",
+    type: "object"
   },
   mission_type: {
     default: "mission",
-    allowed: ["mission", "mission_free", "mission_versus", "mission_league"]
+    allowed: ["mission", "mission_free", "mission_versus", "mission_league"],
+    type: "table"
   },
   no_mission_sound: {
     default: false
@@ -3371,10 +3384,12 @@ const OptionsList = {
   },
   zoominto: {
     default: "none",
-    allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"]
+    allowed: ["none", "slow", "fast", "cinematic", "fade", "zenithduoleft"],
+    type: "table"
   },
   noextrawidth: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   stride: {
     default: false
@@ -3393,27 +3408,33 @@ const OptionsList = {
   },
   slot_counter1: {
     default: "",
-    allowed: ["", ...DisplayCountersList]
+    allowed: ["", ...DisplayCountersList],
+    type: "table"
   },
   slot_counter2: {
     default: "",
-    allowed: ["", ...DisplayCountersList]
+    allowed: ["", ...DisplayCountersList],
+    type: "table"
   },
   slot_counter3: {
     default: "",
-    allowed: ["", ...DisplayCountersList]
+    allowed: ["", ...DisplayCountersList],
+    type: "table"
   },
   slot_counter4: {
     default: "",
-    allowed: ["", ...DisplayCountersList]
+    allowed: ["", ...DisplayCountersList],
+    type: "table"
   },
   slot_counter5: {
     default: "",
-    allowed: ["", ...DisplayCountersList]
+    allowed: ["", ...DisplayCountersList],
+    type: "table"
   },
   slot_bar1: {
     default: "",
-    allowed: ["", "impending", "progress"]
+    allowed: ["", "impending", "progress"],
+    type: "table"
   },
   slot_bar2: {
     default: "",
@@ -3426,7 +3447,8 @@ const OptionsList = {
     default: false
   },
   display_username: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   display_fire: {
     default: false
@@ -3478,7 +3500,8 @@ const OptionsList = {
       t: "tetrio",
       other: "tetrio",
       ghost: "tetrio"
-    }
+    },
+    type: "object"
   },
   boardskin: {
     default: "generic",
@@ -3488,7 +3511,8 @@ const OptionsList = {
     default: ""
   },
   handling: {
-    default: {}
+    default: {},
+    type: "object"
   },
   room_handling: {
     default: false
@@ -3509,17 +3533,21 @@ const OptionsList = {
     default: false
   },
   bgmnoreset: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   neverstopbgm: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   song: {
     default: "RANDOMcalm",
-    possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"]
+    possibles: ["none", "RANDOM", "RANDOMcalm", "RANDOMbattle"],
+    type: "table"
   },
   survivalmode: {
     default: "none",
+    type: "table",
     allowed: ["none", "layer", "timer"]
   },
   survival_messiness: {
@@ -3532,19 +3560,38 @@ const OptionsList = {
     default: false
   },
   survival_layer_min: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   survival_timer_itv: {
     default: 1
   },
   survival_cap: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   invisible: {
     default: false
   },
   master_invisible: {
     default: false
+  },
+  void_holes: {
+    default: 0,
+    integer: true,
+    min: 0,
+    max: 15,
+    type: "number"
+  },
+  void_holes_hungryness: {
+    default: 12, 
+    integer: true,
+    min: 1,
+    type: "number"
+  },
+  tutorial: {
+    default: false,
+    type: "boolean"
   },
   usezenconfig: {
     default: false
@@ -3556,7 +3603,8 @@ const OptionsList = {
     default: 1
   },
   zenprogress: {
-    default: 0
+    default: 0,
+    type: "number"
   },
   nosiren: {
     default: false
@@ -3565,26 +3613,33 @@ const OptionsList = {
     default: false
   },
   forfeit_time: {
-    default: 60
+    default: 60,
+    type: "number"
   },
   username: {
-    default: ""
+    default: "",
+    type: "string"
   },
   latencymode: {
     default: "medium",
-    allowed: ["zero", "low", "medium", "high", "xhigh"]
+    allowed: ["zero", "low", "medium", "high", "xhigh"],
+    type: "table"
   },
   fulloffset: {
-    default: 300
+    default: 300,
+    type: "number"
   },
   fullinterval: {
-    default: 300
+    default: 300,
+    type: "number"
   },
   fromretry: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   retryisclear: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   topoutisclear: {
     default: false
@@ -3596,7 +3651,8 @@ const OptionsList = {
     default: false
   },
   zenith_doublehole: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   zenith_volatile: {
     default: false
@@ -3605,7 +3661,8 @@ const OptionsList = {
     default: false
   },
   zenith_messy: {
-    default: false
+    default: false,
+    type: "boolean"
   },
   zenith_allspin: {
     default: false
@@ -3626,10 +3683,12 @@ const OptionsList = {
       "expert",
       "duo",
       "snowman"
-    ]
+    ],
+    type: "array"
   },
   zenith_ally: {
-    default: []
+    default: [],
+    type: "array"
   },
   zenith_allyexpert: {
     default: false
@@ -3679,6 +3738,35 @@ const ke = new n.Unpackr(ye);
 //         }
 // });
 // end of theorypack
+b.cached = {} as { [key: string]: string };
+function b(e: any) {
+    const t = Object.prototype.toString.call(e);
+    if (b.cached[t]) {
+      return b.cached[t];
+    } else {
+      return (b.cached[t] = t.substring(8, t.length - 1).toLowerCase());
+    }
+  }
+function initOptions() {
+  let OptionsTemplate: { [key: string]: any } = {};
+  for (const [e, t] of Object.entries(OptionsList)) {
+    OptionsTemplate[e] = t.default;
+    const n = b(t.default);
+    switch (n) {
+      case "boolean":
+      case "number":
+      case "array":
+      case "object":
+        t.type = n;
+        break;
+      case "string":
+        t.type = t.allowed || t.possibles ? "table" : "string";
+        break;
+      default:
+        throw new TypeError(`Error while templating ${e}: typeof ${n} is not supported as default values`);
+    }
+  }
+}
 
 const EncodingManager = new (class {
   _commands = new Map();
@@ -4071,500 +4159,593 @@ const EncodingManager = new (class {
     }
   });
 }
-class Transcoder {
-  static TYPES = {
-    Table: 0,
-    Array: 1,
-    Struct: 2,
-    String: 3,
-    Buffer: 4,
-    Boolean: 5,
-    Int: 6,
-    UInt: 7,
-    DInt: 8,
-    Float: 9,
-    UFloat: 10,
-    Double: 11,
-    Number: 12,
-    Any: 13
-  };
-  static TYPES_INDEX = Array.from(Object.keys(this.TYPES));
-  static SUPPORTED_TYPES = new Set([
-    "undefined",
-    "null",
-    "boolean",
-    "number",
-    "string",
-    "array"
-  ]);
-  static cla32(e) {
-    return e >>> 0 === e
-      ? Math.max(32 - Math.clz32(e), 1)
-      : Math.max(32 - Math.clz32(~e) + 1, 2);
-  }
-  static GetIntSize(e) {
-    return Math.ceil(this.cla32(e) / 4);
-  }
-  static DInt = class {
-    constructor({ min: e, max: t }) {
-      this._minBits = e;
-      this._maxBits = t;
-      this._minSize = Math.pow(2, e);
-      this._maxSize = Math.pow(2, t);
-    }
-    get minSize() {
-      return this._minSize;
-    }
-    get maxSize() {
-      return this._maxSize;
-    }
-    readSize(e) {
-      return e ? this._maxBits : this._minBits;
-    }
-    writeSize(e) {
-      let t;
-      switch (e) {
-        case e >>> 0:
-          t = this._minSize <= e;
-          break;
-        case e | 0:
-          t = -this._minSize / 2 > e;
-          break;
-        default:
-          throw new RangeError(
-            `Float/Double is not supported for DInt: got ${e}`
-          );
-      }
-      return {
-        bit: t,
-        size: t ? this._maxBits : this._minBits
-      };
-    }
-  };
-  static Number = new (class {
-    TYPES = {
-      NaN: 0,
-      Infinity: 1,
-      UInt: 2,
-      Int: 3,
-      Double: 4
+  class Transcoder {
+    static TYPES = {
+      Table: 0,
+      Array: 1,
+      Struct: 2,
+      String: 3,
+      Buffer: 4,
+      Boolean: 5,
+      Int: 6,
+      UInt: 7,
+      DInt: 8,
+      Float: 9,
+      UFloat: 10,
+      Double: 11,
+      Number: 12,
+      Any: 13
     };
-    encode(e: any, t: any) {
-      const { TYPES: n } = this;
-      if ("number" != typeof t)
-        throw new TypeError(`Attempted to encode ${typeof t} as a number`);
-      if (Number.isNaN(t)) return e.writeUInt(n.NaN, 3);
-      if (!Number.isFinite(t))
-        return (
-          e.writeUInt(n.Infinity, 3),
-          e.writeBoolean(t === Number.POSITIVE_INFINITY)
-        );
-      switch (t) {
-        case t >>> 0: {
-          const s = Transcoder.GetIntSize(t);
-          e.writeUInt(n.UInt, 3);
-          e.writeUInt(s - 1, 3);
-          e.writeUInt(t, 4 * s);
-          break;
-        }
-        case t | 0: {
-          const s = Transcoder.GetIntSize(t);
-          e.writeUInt(n.Int, 3);
-          e.writeUInt(s - 1, 3);
-          e.writeInt(t, 4 * s);
-          break;
-        }
-        default:
-          e.writeUInt(n.Double, 3), e.writeDouble(t);
+    static TYPES_INDEX = Array.from(Object.keys(this.TYPES));
+    static SUPPORTED_TYPES = new Set(["undefined", "null", "boolean", "number", "string", "array"]);
+    static cla32(e) {
+      if (e >>> 0 === e) {
+        return Math.max(32 - Math.clz32(e), 1);
+      } else {
+        return Math.max(32 - Math.clz32(~e) + 1, 2);
       }
     }
-    decode(e: any) {
-      switch (e.readUInt(3)) {
-        case 0:
-          return NaN;
-        case 1:
-          return e.readBoolean()
-            ? Number.POSITIVE_INFINITY
-            : Number.NEGATIVE_INFINITY;
-        case 2: {
-          return e.readUInt(4 * (e.readUInt(3) + 1));
+    static GetIntSize(e) {
+      return Math.ceil(this.cla32(e) / 4);
+    }
+    static DInt = class {
+      constructor({
+        min: e,
+        max: t
+      }) {
+        this._minBits = e;
+        this._maxBits = t;
+        this._minSize = Math.pow(2, e);
+        this._maxSize = Math.pow(2, t);
+      }
+      get minSize() {
+        return this._minSize;
+      }
+      get maxSize() {
+        return this._maxSize;
+      }
+      readSize(e) {
+        if (e) {
+          return this._maxBits;
+        } else {
+          return this._minBits;
         }
-        case 3: {
-          return e.readInt(4 * (e.readUInt(3) + 1));
+      }
+      writeSize(e) {
+        let t;
+        switch (e) {
+          case e >>> 0:
+            t = this._minSize <= e;
+            break;
+          case e | 0:
+            t = -this._minSize / 2 > e;
+            break;
+          default:
+            throw new RangeError(`Float/Double is not supported for DInt: got ${e}`);
         }
-        case 4:
-          return e.readDouble();
+        return {
+          bit: t,
+          size: t ? this._maxBits : this._minBits
+        };
       }
-    }
-  })();
-  static Table = class {
-    constructor(e, t = "strict") {
-      this._kv = new Map();
-      this._vk = new Map();
-      for (const [t, n] of e.entries()) {
-        this._kv.set(n, t + 1);
-        this._vk.set(t + 1, n);
+    };
+    static Number = new class {
+      TYPES = {
+        NaN: 0,
+        Infinity: 1,
+        UInt: 2,
+        Int: 3,
+        Double: 4
+      };
+      encode(e, t) {
+        const {
+          TYPES: n
+        } = this;
+        if (typeof t != "number") {
+          throw new TypeError(`Attempted to encode ${typeof t} as a number`);
+        }
+        if (Number.isNaN(t)) {
+          return e.writeUInt(n.NaN, 3);
+        }
+        if (!Number.isFinite(t)) {
+          e.writeUInt(n.Infinity, 3);
+          return e.writeBoolean(t === Number.POSITIVE_INFINITY);
+        }
+        switch (t) {
+          case t >>> 0:
+            {
+              const s = Transcoder.GetIntSize(t);
+              e.writeUInt(n.UInt, 3);
+              e.writeUInt(s - 1, 3);
+              e.writeUInt(t, s * 4);
+              break;
+            }
+          case t | 0:
+            {
+              const s = Transcoder.GetIntSize(t);
+              e.writeUInt(n.Int, 3);
+              e.writeUInt(s - 1, 3);
+              e.writeInt(t, s * 4);
+              break;
+            }
+          default:
+            e.writeUInt(n.Double, 3);
+            e.writeDouble(t);
+        }
       }
-      this._mode = t;
-      this._size = Math.floor(Math.log2(this._kv.size)) + 1;
-      this.has = this._kv.has.bind(this._kv);
-    }
-    get mode() {
-      return this._mode;
-    }
-    get size() {
-      return this._size;
-    }
-    get struct() {
-      const S = {};
-      for (const [e, t] of this._kv.entries())
-        S[e] = "0x" + t.toString(16).padStart(2, "0");
-      return S;
-    }
-    getkv(e) {
-      return this._kv.get(e);
-    }
-    getvk(e) {
-      return this._vk.get(e);
-    }
-  };
-  static Array = class {
-    constructor(e = "default", { list: t, min: n, max: s } = {}) {
-      switch (((this._mode = e), e)) {
-        case "strict":
-          this._table = new Transcoder.Table(t);
-          break;
-        case "flexible":
-          throw new Error("Flexible mode is not implemented yet");
-        case "default":
+      decode(e) {
+        switch (e.readUInt(3)) {
+          case 0:
+            return NaN;
+          case 1:
+            if (e.readBoolean()) {
+              return Number.POSITIVE_INFINITY;
+            } else {
+              return Number.NEGATIVE_INFINITY;
+            }
+          case 2:
+            {
+              const t = e.readUInt(3) + 1;
+              return e.readUInt(t * 4);
+            }
+          case 3:
+            {
+              const t = e.readUInt(3) + 1;
+              return e.readInt(t * 4);
+            }
+          case 4:
+            return e.readDouble();
+        }
       }
-      n = n ?? 7;
-      s = s ?? 15;
-      this._prop = new Transcoder.DInt({
+    }();
+    static Table = class {
+      constructor(e, t = "strict") {
+        this._kv = new Map();
+        this._vk = new Map();
+        for (const [t, n] of e.entries()) {
+          this._kv.set(n, t + 1);
+          this._vk.set(t + 1, n);
+        }
+        this._mode = t;
+        this._size = Math.floor(Math.log2(this._kv.size)) + 1;
+        this.has = this._kv.has.bind(this._kv);
+      }
+      get mode() {
+        return this._mode;
+      }
+      get size() {
+        return this._size;
+      }
+      get struct() {
+        const E = {};
+        for (const [e, t] of this._kv.entries()) {
+          E[e] = "0x" + t.toString(16).padStart(2, "0");
+        }
+        return E;
+      }
+      getkv(e) {
+        return this._kv.get(e);
+      }
+      getvk(e) {
+        return this._vk.get(e);
+      }
+    };
+    static Array = class {
+      constructor(e = "default", {
+        list: t,
         min: n,
         max: s
-      });
-    }
-    get mode() {
-      return this._mode;
-    }
-    encode(e, t) {
-      switch ((e.writeDInt(t.length, this._prop), this._mode)) {
-        case "strict":
-          for (const n of t) e.writeTable(n, this._table);
-          break;
-        case "flexible":
-          throw new Error("Hybrid mode is not implemented yet");
-        default:
-          for (const n of t) e.writeAny(n, this);
-      }
-    }
-    decode(e) {
-      const t = e.readDInt(this._prop),
-        n = [];
-      if ("strict" === this._mode)
-        for (let s = 0; s < t; s++) n.push(e.readTable(this._table));
-      else for (let s = 0; s < t; s++) n.push(e.readAny(this));
-      return n;
-    }
-  };
-  static init() {
-    this.SUPPORTED_TYPES_TABLE = new this.Table(
-      Array.from(this.SUPPORTED_TYPES.keys())
-    );
-    this.DEFAULT_ARRAY = new this.Array();
-    this.DEFAULT_PROP = new this.DInt({
-      min: 8,
-      max: 32
-    });
-  }
-  constructor() {
-    this.ref = new Map();
-    this.refid = 0;
-  }
-  static Encoder = class extends this {
-    constructor(e = null, t = null) {
-      super();
-      this._buffer = [];
-      this._size = 0;
-      this._packr = e;
-      this._packBuffer = t;
-    }
-    get buffer() {
-      return this._buffer;
-    }
-    get size() {
-      return this._size;
-    }
-    get byteLength() {
-      return Math.ceil(this._size / 8);
-    }
-    realign() {
-      return (this._size += (8 - (this._size % 8)) % 8);
-    }
-    _insert(e, t, n = false) {
-      n && this.realign();
-      this._size += t;
-      return this._buffer.push({
-        val: e,
-        size: t,
-        isBuffer: n
-      });
-    }
-    writeTable(e, t) {
-      if ("strict" === t.mode) return this._insert(t.getkv(e), t.size);
-      const n = t.getkv(e);
-      return undefined === n
-        ? (this._insert(null, t.size), this.writeAny(e))
-        : this._insert(n, t.size);
-    }
-    writeArray(e, t = Transcoder.DEFAULT_ARRAY) {
-      return "strict" === t.mode
-        ? t.encode(this, e)
-        : this.ref.has(e)
-          ? (this._insert(true, 1),
-            this.writeDInt(this.ref.get(e), Transcoder.DEFAULT_PROP))
-          : (this._insert(false, 1),
-            this.ref.set(e, this.refid++),
-            t.encode(this, e));
-    }
-    writeStruct(e, t) {
-      return t.encode(this, e);
-    }
-    writeString(t, n = true) {
-      t = e.from(n ? `${t}\0` : t);
-      return this._insert(t, 8 * t.byteLength, true);
-    }
-    writeBuffer(e) {
-      return this._insert(e, 8 * e.byteLength, true);
-    }
-    writeBoolean(e) {
-      return this._insert(!!e, 1);
-    }
-    writeInt(e, t) {
-      return this._insert(e, t);
-    }
-    writeUInt(e, t) {
-      return this._insert(e, t);
-    }
-    writeDInt(e, t) {
-      const n = t.writeSize(e);
-      this._insert(n.bit, 1);
-      return this._insert(e, n.size);
-    }
-    writeFloat(e, t, n) {
-      this._insert(e < 0, 1);
-      return this._insert(Math.round(e * n), t);
-    }
-    writeUFloat(e, t, n) {
-      return this._insert(Math.round(e * n), t);
-    }
-    writeDouble(e) {
-      this.realign();
-      return this._insert(e, 64);
-    }
-    writeNumber(e) {
-      return Transcoder.Number.encode(this, e);
-    }
-    writeAny(e, t) {
-      const n = C(e);
-      if (!Transcoder.SUPPORTED_TYPES.has(n))
-        throw new TypeError(
-          `Type ${n} is not implemented for NetCodec.TYPES.Any`
-        );
-      switch ((this.writeTable(n, Transcoder.SUPPORTED_TYPES_TABLE), n)) {
-        case "boolean":
-          this.writeBoolean(e);
-          break;
-        case "null":
-        case "undefined":
-          break;
-        case "number":
-          Transcoder.Number.encode(this, e);
-          break;
-        case "string":
-          this.writeString(e);
-          break;
-        case "array":
-          this.writeArray(e, t);
-      }
-    }
-    writeByType(e, t, ...n) {
-      return this[`write${Transcoder.TYPES_INDEX[e]}`](t, ...n);
-    }
-    pack(e) {
-      this._packr.useBuffer(this._packBuffer);
-      const t = this._packr.pack(e);
-      return this._insert(t, 8 * t.byteLength, true);
-    }
-    finalize(t = null) {
-      const n = t ?? e.allocUnsafe(this.byteLength),
-        s = new r(n);
-      for (const { val: e, size: t, isBuffer: i } of this._buffer)
-        if (i)
-          (s.offset += (8 - (s.offset % 8)) % 8),
-            n.set(e, s.offset / 8),
-            s.seek(8 * e.byteLength, 2);
-        else {
-          if (64 === t) {
-            s.offset += (8 - (s.offset % 8)) % 8;
-            n.writeDoubleBE(e, s.offset / 8);
-            s.seek(64, 2);
-            continue;
-          }
-          s.write(e, t);
+      } = {}) {
+        this._mode = e;
+        switch (e) {
+          case "strict":
+            this._table = new Transcoder.Table(t);
+            break;
+          case "flexible":
+            throw new Error("Flexible mode is not implemented yet");
+          case "default":
         }
-      return n;
+        n = n ?? 7;
+        s = s ?? 15;
+        const $e = {
+          min: n,
+          max: s
+        };
+        this._prop = new Transcoder.DInt($e);
+      }
+      get mode() {
+        return this._mode;
+      }
+      encode(e, t) {
+        e.writeDInt(t.length, this._prop);
+        switch (this._mode) {
+          case "strict":
+            for (const n of t) {
+              e.writeTable(n, this._table);
+            }
+            break;
+          case "flexible":
+            throw new Error("Flexible mode is not implemented yet");
+          default:
+            for (const n of t) {
+              e.writeAny(n, this);
+            }
+        }
+      }
+      decode(e) {
+        const t = e.readDInt(this._prop);
+        const n = [];
+        if (this._mode === "strict") {
+          for (let s = 0; s < t; s++) {
+            n.push(e.readTable(this._table));
+          }
+        } else {
+          for (let s = 0; s < t; s++) {
+            n.push(e.readAny(this));
+          }
+        }
+        return n;
+      }
+    };
+    static init() {
+      this.SUPPORTED_TYPES_TABLE = new this.Table(Array.from(this.SUPPORTED_TYPES.keys()));
+      this.DEFAULT_ARRAY = new this.Array();
+      this.DEFAULT_PROP = new this.DInt({
+        min: 8,
+        max: 32
+      });
     }
-  };
-  static Decoder = class e extends this {
-    static _MAX_BITS = Math.log2(Number.MAX_SAFE_INTEGER);
-    static _MAX_BITS_SIGNED = 32;
-    constructor(e, t = null) {
-      super();
-      this._bits = new r(e);
-      this._unpack = t;
+    constructor() {
+      this.ref = new Map();
+      this.refid = 0;
     }
-    get length() {
-      return this._bits.length;
-    }
-    get offset() {
-      return this._bits.offset;
-    }
-    set offset(e) {
-      this._bits.offset = e;
-    }
-    get buffer() {
-      return this._bits.buffer;
-    }
-    get byteOffset() {
-      return Math.ceil(this.offset / 8);
-    }
-    realign() {
-      this.offset = 8 * this.byteOffset;
-    }
-    _read_signed(t) {
-      const n = e._MAX_BITS_SIGNED - t;
-      return (this._read(t) << n) >> n;
-    }
-    _read(e) {
-      return this._bits.read(e);
-    }
-    readTable(e) {
-      const t = e.size;
-      return 0 !== this.peek(t)
-        ? e.getvk(this._read(t))
-        : (this.seek(t, 2), this.readAny());
-    }
-    readArray(e = Transcoder.DEFAULT_ARRAY) {
-      if (e.mode === "strict") {
+    static Encoder = class t extends this {
+      static TYPES = {
+        BUFFER: 1,
+        DOUBLE: 2,
+        QWORD: 3,
+        HEX: 4
+      };
+      constructor(e = null, t = null) {
+        super();
+        this._buffer = [];
+        this._size = 0;
+        this._packr = e;
+        this._packBuffer = t;
+      }
+      get buffer() {
+        return this._buffer;
+      }
+      get size() {
+        return this._size;
+      }
+      get byteLength() {
+        return Math.ceil(this._size / 8);
+      }
+      realign() {
+        return this._size += (8 - this._size % 8) % 8;
+      }
+      _insert(e, t, n = null) {
+        if (n) {
+          this.realign();
+        }
+        this._size += t;
+        return this._buffer.push({
+          val: e,
+          size: t,
+          type: n
+        });
+      }
+      writeTable(e, t) {
+        if (t.mode === "strict") {
+          return this._insert(t.getkv(e), t.size);
+        }
+        const n = t.getkv(e);
+        if (n === undefined) {
+          this._insert(null, t.size);
+          return this.writeAny(e);
+        } else {
+          return this._insert(n, t.size);
+        }
+      }
+      writeArray(e, t = Transcoder.DEFAULT_ARRAY) {
+        if (t.mode === "strict") {
+          return t.encode(this, e);
+        } else if (this.ref.has(e)) {
+          this._insert(true, 1);
+          return this.writeDInt(this.ref.get(e), Transcoder.DEFAULT_PROP);
+        } else {
+          this._insert(false, 1);
+          this.ref.set(e, this.refid++);
+          return t.encode(this, e);
+        }
+      }
+      writeStruct(e, t) {
+        return t.encode(this, e);
+      }
+      writeString(n, s = true) {
+        n = e.from(s ? `${n}\0` : n);
+        return this._insert(n, n.byteLength * 8, t.TYPES.BUFFER);
+      }
+      writeBuffer(e) {
+        return this._insert(e, e.byteLength * 8, t.TYPES.BUFFER);
+      }
+      writeBoolean(e) {
+        return this._insert(!!e, 1);
+      }
+      writeInt(e, t) {
+        return this._insert(e, t);
+      }
+      writeUInt(e, t) {
+        return this._insert(e, t);
+      }
+      writeUInt64(e) {
+        const s = 2539;
+        const i = 2568;
+        return this._insert(e, 64, t.TYPES[r = 3120, 2562, c = i, "JE4w", "QWORD"]);
+        var r;
+        var c;
+      }
+      writeDInt(e, t) {
+        const n = t.writeSize(e);
+        this._insert(n.bit, 1);
+        return this._insert(e, n.size);
+      }
+      writeFloat(e, t, n) {
+        this._insert(e < 0, 1);
+        return this._insert(Math.round(e * n), t);
+      }
+      writeUFloat(e, t, n) {
+        return this._insert(Math.round(e * n), t);
+      }
+      writeDouble(e) {
+        return this._insert(e, 64, t.TYPES.DOUBLE);
+      }
+      writeNumber(e) {
+        return Transcoder.Number.encode(this, e);
+      }
+      writeHex(e, n) {
+        const s = 1059;
+        const i = 706;
+        const a = 44;
+        const r = 495;
+        const c = 471;
+        const d = 90;
+        return this._insert(e, n * 8, t["w4zl", f = i, 316, "TYPES"].HEX);
+        var f;
+      }
+      writeAny(e, t) {
+        const n = b(e);
+        if (!Transcoder.SUPPORTED_TYPES.has(n)) {
+          throw new TypeError(`Type ${n} is not implemented for NetCodec.TYPES.Any`);
+        }
+        this.writeTable(n, Transcoder.SUPPORTED_TYPES_TABLE);
+        switch (n) {
+          case "boolean":
+            this.writeBoolean(e);
+            break;
+          case "null":
+          case "undefined":
+            break;
+          case "number":
+            Transcoder.Number.encode(this, e);
+            break;
+          case "string":
+            this.writeString(e);
+            break;
+          case "array":
+            this.writeArray(e, t);
+        }
+      }
+      writeByType(e, t, ...n) {
+        return this[`write${Transcoder.TYPES_INDEX[e]}`](t, ...n);
+      }
+      pack(e) {
+        this._packr.useBuffer(this._packBuffer);
+        const n = this._packr.pack(e);
+        return this._insert(n, n.byteLength * 8, t.TYPES.BUFFER);
+      }
+      finalize(s = null) {
+        const i = s ?? e.allocUnsafe(this.byteLength);
+        const o = new n(i);
+        for (const {
+          val: e,
+          size: n,
+          type: s
+        } of this._buffer) {
+          switch (s) {
+            case t.TYPES.BUFFER:
+              o.offset += (8 - o.offset % 8) % 8;
+              i.set(e, o.offset / 8);
+              o.seek(e.byteLength * 8, 2);
+              break;
+            case t.TYPES.DOUBLE:
+              o.offset += (8 - o.offset % 8) % 8;
+              i.writeDoubleBE(e, o.offset / 8);
+              o.seek(64, 2);
+              break;
+            case t.TYPES.QWORD:
+              o.offset += (8 - o.offset % 8) % 8;
+              i.writeBigUInt64BE(e, o.offset / 8);
+              o.seek(64, 2);
+              break;
+            case t.TYPES.HEX:
+              o.offset += (8 - o.offset % 8) % 8;
+              i.write(e, o.offset / 8, "hex");
+              o.seek(n, 2);
+              break;
+            default:
+              o.write(e, n);
+          }
+        }
+        return i;
+      }
+    };
+    static Decoder = class e extends this {
+      static _MAX_BITS = Math.log2(Number.MAX_SAFE_INTEGER);
+      static _MAX_BITS_SIGNED = 32;
+      constructor(e, t = null) {
+        super();
+        this._bits = new r(e);
+        this._unpack = t;
+      }
+      get length() {
+        return this._bits.length;
+      }
+      get offset() {
+        return this._bits.offset;
+      }
+      set offset(e) {
+        this._bits.offset = e;
+      }
+      get buffer() {
+        return this._bits.buffer;
+      }
+      get byteOffset() {
+        return Math.ceil(this.offset / 8);
+      }
+      realign() {
+        this.offset = this.byteOffset * 8;
+      }
+      _read_signed(t) {
+        const n = e._MAX_BITS_SIGNED - t;
+        return this._read(t) << n >> n;
+      }
+      _read(e) {
+        return this._bits.read(e);
+      }
+      readTable(e) {
+        const t = e.size;
+        if (this.peek(t) !== 0) {
+          return e.getvk(this._read(t));
+        } else {
+          this.seek(t, 2);
+          return this.readAny();
+        }
+      }
+      readArray(e = Transcoder.DEFAULT_ARRAY) {
+        if (e.mode === "strict") {
+          return e.decode(this);
+        }
+        if (this._read(1)) {
+          return this.ref.get(this.readDInt(Transcoder.DEFAULT_PROP));
+        }
+        const t = [];
+        this.ref.set(this.refid++, t);
+        t.push.apply(t, e.decode(this));
+        return t;
+      }
+      readStruct(e) {
         return e.decode(this);
       }
-      if (this._read(1)) {
-        return this.ref.get(this.readDInt(Transcoder.DEFAULT_PROP));
+      readString(e) {
+        const t = this.byteOffset;
+        let n;
+        if (typeof e == "number") {
+          n = t + e;
+          this.seek(n * 8);
+        } else {
+          n = this.buffer.indexOf(0, t);
+          this.seek((n + 1) * 8);
+        }
+        return this.buffer.toString("utf8", t, n);
       }
-      const t = [];
-      this.ref.set(this.refid++, t);
-      t.push.apply(t, e.decode(this));
-      return t;
-    }
-    readStruct(e: any) {
-      return e.decode(this);
-    }
-    readString(e) {
-      const t = this.byteOffset;
-      let n;
-      e
-        ? ((n = t + e), this.seek(8 * n))
-        : ((n = this.buffer.indexOf(0, t)), this.seek(8 * (n + 1)));
-      return this.buffer.toString("utf8", t, n);
-    }
-    readBuffer(e) {
-      const t = this.byteOffset,
-        n = t + e;
-      this.seek(8 * n);
-      return this.buffer.subarray(t, n);
-    }
-    readBoolean() {
-      return !!this._read(1);
-    }
-    readInt(t) {
-      if (t > e._MAX_BITS_SIGNED)
-        throw new RangeError(
-          `${t} of bits is not supported for signed values, max is ${e._MAX_BITS_SIGNED}`
-        );
-      return this._read_signed(t);
-    }
-    readUInt(t) {
-      if (t > e._MAX_BITS)
-        throw new RangeError(
-          `${t} of bits is not supported, max is ${e._MAX_BITS}`
-        );
-      return this._read(t);
-    }
-    readDInt(e, t = false) {
-      const n = e.readSize(this._read(1));
-      return t ? this._read_signed(n) : this._read(n);
-    }
-    readFloat(e, t) {
-      return this.peek(1)
-        ? this._read_signed(e + 1) / t
-        : (this.seek(1, 2), this._read(e) / t);
-    }
-    readUFloat(e, t) {
-      return this._read(e) / t;
-    }
-    readDouble() {
-      const e = this.byteOffset;
-      this.seek(8 * e + 64);
-      return this.buffer.readDoubleBE(e);
-    }
-    readNumber() {
-      return Transcoder.Number.decode(this);
-    }
-    readHex(e) {
-      const t = this.byteOffset;
-      const n = t + e;
-      this.seek(n * 8);
-      return this.buffer.toString("hex", t, n);
-    }
-    readAny(e) {
-      switch (this.readTable(Transcoder.SUPPORTED_TYPES_TABLE)) {
-        case "boolean":
-          return this.readBoolean();
-        case "null":
-          return null;
-        case "undefined":
-          return;
-        case "number":
-          return Transcoder.Number.decode(this);
-        case "string":
-          return this.readString();
-        case "array":
-          return this.readArray(e);
+      readBuffer(e) {
+        const t = this.byteOffset;
+        const n = t + e;
+        this.seek(n * 8);
+        return this.buffer.subarray(t, n);
       }
-    }
-    readByType(e, ...t) {
-      return this[`read${Transcoder.TYPES_INDEX[e]}`](...t);
-    }
-    peek(e, t) {
-      return this._bits.peek(e, t);
-    }
-    peekTable(e, t = this.offset) {
-      return e.getvk(this.peek(e.size, t));
-    }
-    peekDInt(e, t = this.offset) {
-      return this.peek(e.readSize(this.peek(1, t)), t + 1);
-    }
-    seek(e, t) {
-      this._bits.seek(e, t);
-    }
-    unpack() {
-      this.realign();
-      return this._unpack(this.byteOffset);
-    }
-  };
-}
+      readBoolean() {
+        return !!this._read(1);
+      }
+      readInt(t) {
+        if (t > e._MAX_BITS_SIGNED) {
+          throw new RangeError(`${t} of bits is not supported for signed values, max is ${e._MAX_BITS_SIGNED}`);
+        }
+        return this._read_signed(t);
+      }
+      readUInt(t) {
+        if (t > e._MAX_BITS) {
+          throw new RangeError(`${t} of bits is not supported, max is ${e._MAX_BITS}`);
+        }
+        return this._read(t);
+      }
+      readUInt64() {
+        const e = this.byteOffset;
+        this.seek(e * 8 + 64);
+        return this.buffer.readBigUInt64BE(e);
+      }
+      readDInt(e, t = false) {
+        const n = e.readSize(this._read(1));
+        if (t) {
+          return this._read_signed(n);
+        } else {
+          return this._read(n);
+        }
+      }
+      readFloat(e, t) {
+        if (this.peek(1)) {
+          return this._read_signed(e + 1) / t;
+        } else {
+          this.seek(1, 2);
+          return this._read(e) / t;
+        }
+      }
+      readUFloat(e, t) {
+        return this._read(e) / t;
+      }
+      readDouble() {
+        const e = this.byteOffset;
+        this.seek(e * 8 + 64);
+        return this.buffer.readDoubleBE(e);
+      }
+      readNumber() {
+        return Transcoder.Number.decode(this);
+      }
+      readHex(e) {
+        const t = this.byteOffset;
+        const n = t + e;
+        this.seek(n * 8);
+        return this.buffer.toString("hex", t, n);
+      }
+      readAny(e) {
+        switch (this.readTable(Transcoder.SUPPORTED_TYPES_TABLE)) {
+          case "boolean":
+            return this.readBoolean();
+          case "null":
+            return null;
+          case "undefined":
+            return;
+          case "number":
+            return Transcoder.Number.decode(this);
+          case "string":
+            return this.readString();
+          case "array":
+            return this.readArray(e);
+        }
+      }
+      readByType(e, ...t) {
+        return this[`read${Transcoder.TYPES_INDEX[e]}`](...t);
+      }
+      peek(e, t) {
+        return this._bits.peek(e, t);
+      }
+      peekTable(e, t = this.offset) {
+        return e.getvk(this.peek(e.size, t));
+      }
+      peekDInt(e, t = this.offset) {
+        return this.peek(e.readSize(this.peek(1, t)), t + 1);
+      }
+      seek(e, t) {
+        this._bits.seek(e, t);
+      }
+      unpack() {
+        this.realign();
+        return this._unpack(this.byteOffset);
+      }
+    };
+  }
 class Serializable {
   static _MAX_BUFFER = 65536;
   static BUFFER = e.alloc(this._MAX_BUFFER);
@@ -4611,9 +4792,12 @@ class Structure extends Serializable {
     this._cstFields = new Map();
     this._fixFields = new Map();
     this._optFields = new Map();
-    for (const [t, { mode: n, type: s, size: i, value: o }] of Object.entries(
-      e
-    )) {
+    for (const [t, {
+      mode: n,
+      type: s,
+      size: i,
+      value: o
+    }] of Object.entries(e)) {
       switch (n) {
         case "static":
           this._cstFields.set(t, o);
@@ -4636,10 +4820,16 @@ class Structure extends Serializable {
     super.AddTable("prop", Array.from(this._optFields.keys()));
   }
   static encode(e, t) {
-    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       e.writeByType(s, t[n], i);
     }
-    for (const [n, { type: s, size: i }] of this._optFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._optFields.entries()) {
       if (t[n] != null) {
         e.writeTable(n, this.$$prop);
         e.writeByType(s, t[n], i);
@@ -4650,12 +4840,18 @@ class Structure extends Serializable {
   static decode(e) {
     const t = {};
     const n = this.$$prop.size;
-    for (const [n, { type: s, size: i }] of this._fixFields.entries()) {
+    for (const [n, {
+      type: s,
+      size: i
+    }] of this._fixFields.entries()) {
       t[n] = e.readByType(s, i);
     }
     for (let s = e.peek(n); s !== 0; s = e.peek(n)) {
       const n = e.readTable(this.$$prop);
-      const { type: s, size: i } = this._optFields.get(n);
+      const {
+        type: s,
+        size: i
+      } = this._optFields.get(n);
       const o = e.readByType(s, i);
       t[n] = o;
     }
@@ -4681,12 +4877,7 @@ class IgeInteractionData extends Structure {
           });
           continue;
         case "2":
-          super.AddTable("position", [
-            "aboveStack",
-            "aboveUnclearable",
-            "abovePerma",
-            "bottom"
-          ]);
+          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
           continue;
         case "3":
           super.AddTable("colors", [null, ...minocolors]);
@@ -4882,12 +5073,7 @@ class SpecialLines extends Structure {
           super.AddTable("colors", [null, ...minocolors]);
           continue;
         case "3":
-          super.AddTable("position", [
-            "aboveStack",
-            "aboveUnclearable",
-            "abovePerma",
-            "bottom"
-          ]);
+          super.AddTable("position", ["aboveStack", "aboveUnclearable", "abovePerma", "bottom"]);
           continue;
         case "4":
           const t = {
@@ -5516,7 +5702,7 @@ class FallingPiece extends Serializable {
       rotresets: 0,
       skip: [],
       y: 0,
-      locking: 0
+      locking: 0, 
     };
     //@ts-ignore
     t.type = e.readTable(this.$$piece);
@@ -5555,25 +5741,7 @@ class GameStats extends Serializable {
       min: 16,
       max: 32
     });
-    this._clears = [
-      "singles",
-      "doubles",
-      "triples",
-      "quads",
-      "pentas",
-      "realtspins",
-      "minitspins",
-      "minitspinsingles",
-      "tspinsingles",
-      "minitspindoubles",
-      "tspindoubles",
-      "minitspintriples",
-      "tspintriples",
-      "minitspinquads",
-      "tspinquads",
-      "tspinpentas",
-      "allclear"
-    ];
+    this._clears = ["singles", "doubles", "triples", "quads", "pentas", "realtspins", "minitspins", "minitspinsingles", "tspinsingles", "minitspindoubles", "tspindoubles", "minitspintriples", "tspintriples", "minitspinquads", "tspinquads", "tspinpentas", "allclear"];
   }
   static encode(e, t) {
     const n = t.garbage;
@@ -5974,11 +6142,7 @@ class IgeCustomData extends Serializable {
 }
 class GameMap extends Serializable {
   static init() {
-    super.AddTable(
-      "letters",
-      ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"],
-      "flexible"
-    );
+    super.AddTable("letters", ["?", ",", "_", "#", "@", "z", "l", "o", "s", "i", "j", "t", "g", "d"], "flexible");
     super.AddProperty("word", {
       min: 16,
       max: 32
@@ -6013,11 +6177,7 @@ class Tetrominoes extends Serializable {
           });
           continue;
         case "1":
-          super.AddTable(
-            "spinbonus",
-            [...Object.keys(spinbonuses_rules)],
-            "flexible"
-          );
+          super.AddTable("spinbonus", [...Object.keys(spinbonuses_rules)], "flexible");
           continue;
         case "2":
           super.AddTable("colors", [...minocolors]);
@@ -6042,7 +6202,10 @@ class Tetrominoes extends Serializable {
       e.writeString(t);
     }
     for (const [t, o] of Object.entries(n)) {
-      const { matrix: n, preview: a } = o;
+      const {
+        matrix: n,
+        preview: a
+      } = o;
       e.writeDInt(n.w, this.$tiny);
       e.writeDInt(n.h, this.$tiny);
       e.writeUInt(n.dx, 5);
@@ -6098,7 +6261,10 @@ class Tetrominoes extends Serializable {
     }
     for (const i of o) {
       const o = t[i];
-      const { matrix: a, preview: r } = o;
+      const {
+        matrix: a,
+        preview: r
+      } = o;
       a.w = e.readDInt(this.$tiny);
       a.h = e.readDInt(this.$tiny);
       a.dx = e.readUInt(5);
@@ -6152,155 +6318,143 @@ class Tetrominoes extends Serializable {
     };
   }
 }
-class IgeOptions extends Serializable {
-  static TypeOrders = [
-    "boolean",
-    "number",
-    "table",
-    "object",
-    "array",
-    "string"
-  ];
-  static OptsBook = OptionsList;
-  static init() {
-    super.AddTable("options", Object.keys(this.OptsBook));
-    super.AddTable(
-      "minoskin",
-      ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"],
-      "flexible"
-    );
-    super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
-    super.AddTable("ixs", ["off", "hold", "tap"]);
-    for (const [e, t] of Object.entries(this.OptsBook)) {
-      if (t.allowed) {
-        super.AddTable("_" + e, t.allowed);
-      } else if (t.possibles) {
-        super.AddTable("_" + e, t.possibles, "flexible");
-      }
-    }
-  }
-  static *ParseOptions(e) {
-    const { TypeOrders: t, OptsBook: n } = this;
-    const s = Object.keys(e);
-    for (const i of t) {
-      for (const t of s) {
-        const s = n[t];
-        if (s.type !== i) {
-          continue;
+  class IgeOptions extends Serializable {
+    static TypeOrders = ["boolean", "number", "table", "object", "array", "string"];
+    static OptsBook = OptionsList;
+    static init() {
+      super.AddTable("options", Object.keys(this.OptsBook));
+      super.AddTable("minoskin", ["i", "j", "l", "o", "s", "t", "z", "ghost", "other"], "flexible");
+      super.AddTable("skins", ["tetrio", "_bombs", "connected_test"], "flexible");
+      super.AddTable("ixs", ["off", "hold", "tap"]);
+      for (const [e, t] of Object.entries(this.OptsBook)) {
+        if (t.allowed) {
+          super.AddTable("_" + e, t.allowed);
+        } else if (t.possibles) {
+          super.AddTable("_" + e, t.possibles, "flexible");
         }
-        const o = e[t];
-        yield [t, o, s];
       }
     }
-  }
-  static encode(e, t) {
-    for (const [n, s, i] of this.ParseOptions(t)) {
-      e.writeTable(n, this.$$options);
-      switch (i.type) {
-        case "object":
-          if (n === "handling") {
-            e.writeFloat(s.arr, 6, 10);
-            e.writeUInt(s.sdf, 6);
-            e.writeBoolean(s.safelock);
-            e.writeBoolean(s.cancel);
-            e.writeBoolean(s.may20g);
-            e.writeFloat(s.das, 8, 10);
-            e.writeFloat(s.dcd, 8, 10);
-            e.writeTable(s.irs, this.$$ixs);
-            e.writeTable(s.ihs, this.$$ixs);
-          } else if (n === "minoskin") {
-            e.writeUInt(Object.keys(s).length, 8);
-            for (const [t, n] of Object.entries(s)) {
-              e.writeTable(t, this.$$minoskin);
-              e.writeTable(n, this.$$skins);
-            }
+    static *ParseOptions(e) {
+      const {
+        TypeOrders: t,
+        OptsBook: n
+      } = this;
+      const s = Object.keys(e);
+      for (const i of t) {
+        for (const t of s) {
+          const s = n[t];
+          if (s.type !== i) {
+            continue;
           }
-          break;
-        case "array":
-          e.writeArray(s);
-          break;
-        case "boolean":
-          e.writeBoolean(s);
-          break;
-        case "table":
-          e.writeTable(s, this[`$$_${n}`], i.mode);
-          break;
-        case "number":
-          e.writeNumber(s);
-          break;
-        case "string":
-          e.writeString(s);
-          break;
-        default:
-          throw new TypeError(
-            `Unknown type for key: ${n} value: ${s} | got -> ${i.type}`
-          );
+          const o = e[t];
+          yield [t, o, s];
+        }
       }
     }
-    e.writeTable(null, this.$$options);
-  }
-  static decode(e) {
-    const t = this.$$options.size;
-    const n = this.OptsBook;
-    const s = {};
-    let i = null;
-    let o = null;
-    for (let a = e.peek(t); a !== 0; a = e.peek(t)) {
-      const t = e.readTable(this.$$options);
-      const a = n[t]?.type;
-      switch (a) {
-        case "object":
-          if (t === "handling") {
-            const n = {};
-            n.arr = e.readFloat(6, 10);
-            n.sdf = e.readUInt(6);
-            n.safelock = e.readBoolean();
-            n.cancel = e.readBoolean();
-            n.may20g = e.readBoolean();
-            n.das = e.readFloat(8, 10);
-            n.dcd = e.readFloat(8, 10);
-            n.irs = e.readTable(this.$$ixs);
-            n.ihs = e.readTable(this.$$ixs);
-            s[t] = n;
-          } else if (t === "minoskin") {
-            const n = {};
-            const i = e.readUInt(8);
-            s[t] = n;
-            for (let t = 0; t < i; t++) {
-              const t = e.readTable(this.$$minoskin);
-              const s = e.readTable(this.$$skins);
-              n[t] = s;
+    static encode(e, t) {
+      for (const [n, s, i] of this.ParseOptions(t)) {
+        e.writeTable(n, this.$$options);
+        switch (i.type) {
+          case "object":
+            if (n === "handling") {
+              e.writeFloat(s.arr, 6, 10);
+              e.writeUInt(s.sdf, 6);
+              e.writeBoolean(s.safelock);
+              e.writeBoolean(s.cancel);
+              e.writeBoolean(s.may20g);
+              e.writeFloat(s.das, 8, 10);
+              e.writeFloat(s.dcd, 8, 10);
+              e.writeTable(s.irs, this.$$ixs);
+              e.writeTable(s.ihs, this.$$ixs);
+            } else if (n === "minoskin") {
+              e.writeUInt(Object.keys(s).length, 8);
+              for (const [t, n] of Object.entries(s)) {
+                e.writeTable(t, this.$$minoskin);
+                e.writeTable(n, this.$$skins);
+              }
             }
-          }
-          break;
-        case "array":
-          s[t] = e.readArray();
-          break;
-        case "boolean":
-          s[t] = e.readBoolean();
-          break;
-        case "table":
-          s[t] = e.readTable(this[`$$_${t}`]);
-          break;
-        case "number":
-          s[t] = e.readNumber();
-          break;
-        case "string":
-          s[t] = e.readString();
-          break;
-        default:
-          console.error("Options dump: ", s);
-          throw new TypeError(
-            `Unknown type for key: ${t} | got -> ${a}\nLast Key: ${i}\nLast Value: ${o}\n`
-          );
+            break;
+          case "array":
+            e.writeArray(s);
+            break;
+          case "boolean":
+            e.writeBoolean(s);
+            break;
+          case "table":
+            e.writeTable(s, this[`$$_${n}`], i.mode);
+            break;
+          case "number":
+            e.writeNumber(s);
+            break;
+          case "string":
+            e.writeString(s);
+            break;
+          default:
+            throw new TypeError(`Unknown type for key: ${n} value: ${s} | got -> ${i.type}`);
+        }
       }
-      i = t;
-      o = s[t];
+      e.writeTable(null, this.$$options);
     }
-    e.seek(t, 2);
-    return s;
+    static decode(e) {
+      const t = this.$$options.size;
+      const n = this.OptsBook;
+      const s = {};
+      let i = null;
+      let o = null;
+      for (let a = e.peek(t); a !== 0; a = e.peek(t)) {
+        const t = e.readTable(this.$$options);
+        const a = n[t]?.type;
+        switch (a) {
+          case "object":
+            if (t === "handling") {
+              const n = {};
+              n.arr = e.readFloat(6, 10);
+              n.sdf = e.readUInt(6);
+              n.safelock = e.readBoolean();
+              n.cancel = e.readBoolean();
+              n.may20g = e.readBoolean();
+              n.das = e.readFloat(8, 10);
+              n.dcd = e.readFloat(8, 10);
+              n.irs = e.readTable(this.$$ixs);
+              n.ihs = e.readTable(this.$$ixs);
+              s[t] = n;
+            } else if (t === "minoskin") {
+              const n = {};
+              const i = e.readUInt(8);
+              s[t] = n;
+              for (let t = 0; t < i; t++) {
+                const t = e.readTable(this.$$minoskin);
+                const s = e.readTable(this.$$skins);
+                n[t] = s;
+              }
+            }
+            break;
+          case "array":
+            s[t] = e.readArray();
+            break;
+          case "boolean":
+            s[t] = e.readBoolean();
+            break;
+          case "table":
+            s[t] = e.readTable(this[`$$_${t}`]);
+            break;
+          case "number":
+            s[t] = e.readNumber();
+            break;
+          case "string":
+            s[t] = e.readString();
+            break;
+          default:
+            console.error("Options dump: ", s);
+            throw new TypeError(`Unknown type for key: ${t} | got -> ${a}\nLast Key: ${i}\nLast Value: ${o}\n`);
+        }
+        i = t;
+        o = s[t];
+      }
+      e.seek(t, 2);
+      return s;
+    }
   }
-}
 class EndFrameOptions extends IgeOptions {
   static *ParseOptions(e: any) {
     for (const [n, s, i] of super.ParseOptions(e)) {
@@ -6317,20 +6471,7 @@ class EndFrame extends Serializable {
     super.AddExtension(this, {
       ownBuffer: true
     });
-    super.AddTable("gor", [
-      null,
-      "topout",
-      "garbagesmash",
-      "zenith",
-      "clear",
-      "topout_clear",
-      "winner",
-      "forfeit",
-      "retry",
-      "drop",
-      "dropnow",
-      "disconnect"
-    ]);
+    super.AddTable("gor", [null, "topout", "garbagesmash", "zenith", "clear", "topout_clear", "winner", "forfeit", "retry", "drop", "dropnow", "disconnect"]);
   }
   static encode(e, t) {
     const n = t.successful;
@@ -6338,8 +6479,16 @@ class EndFrame extends Serializable {
     const i = t.killer.gameid;
     const o = t.killer.type === "spark";
     const a = t.killer.username ?? "";
-    const { apm: r, pps: l, vsscore: c } = t.aggregatestats;
-    const { game: p, stats: d, diyusi: h } = t;
+    const {
+      apm: r,
+      pps: l,
+      vsscore: c
+    } = t.aggregatestats;
+    const {
+      game: p,
+      stats: d,
+      diyusi: h
+    } = t;
     e.writeBoolean(n);
     e.writeTable(s, this.$$gor);
     e.writeUInt(i, 13);
@@ -6349,14 +6498,11 @@ class EndFrame extends Serializable {
     e.writeDouble(r);
     e.writeDouble(l);
     e.writeDouble(c);
-    e.writeStruct(
-      {
-        game: p,
-        stats: d,
-        diyusi: h
-      },
-      FullFrame
-    );
+    e.writeStruct({
+      game: p,
+      stats: d,
+      diyusi: h
+    }, FullFrame);
   }
   static decode(e) {
     const t = {
@@ -6376,6 +6522,7 @@ class EndFrame extends Serializable {
     return t;
   }
 }
+// initOptions();
 Transcoder.init();
 GameReplay.init();
 GameReplayBoard.init();
