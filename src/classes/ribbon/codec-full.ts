@@ -1,4 +1,4 @@
-//@ts-ignore
+//@ts-nocheck
 import { Bits as r } from "./bits";
 import { default as n } from "../../utils/theorypack/msgpackr.js";
 import { strictShallowEqual } from 'fast-equals';
