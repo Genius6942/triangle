@@ -265,8 +265,8 @@ export class Client {
         reject(error);
       };
 
-      this.once(listen, rs);
-      this.once("client.error", rj);
+      this.on(listen, rs);
+      this.on("client.error", rj);
 
       // @ts-expect-error
       this.emit(event, data);
