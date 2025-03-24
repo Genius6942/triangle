@@ -107,8 +107,13 @@ export namespace ChannelAPI {
 
   export namespace generator {
     export const empty =
-      <Res>(route: string, res?: keyof Res) =>
-      async (): Promise<Res> => {
+      <Res extends object, ResKey extends keyof Res | undefined = undefined>(
+        route: string,
+        res?: ResKey
+      ) =>
+      async (): Promise<
+        ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
+      > => {
         const r = await get({ route });
         if (res) return r[res];
         return r;
@@ -116,17 +121,22 @@ export namespace ChannelAPI {
     export const args = <
       Req extends object,
       Res extends object,
-      ArgValues extends any[]
+      ArgValues extends any[],
+      ResKey extends keyof Res | undefined = undefined
     >(
       route: string,
-      res?: keyof Res
+      res?: ResKey
     ) => {
       const base = route
         .split("/")
         .filter((v) => v.startsWith(":"))
         .map((v) => v.slice(1));
       type ArgsObject = { [k in keyof Req]: Req[k] };
-      async function getArgs(...args: ArgValues | [ArgsObject]): Promise<Res> {
+      async function getArgs(
+        ...args: ArgValues | [ArgsObject]
+      ): Promise<
+        ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
+      > {
         const argData: { [k: string]: string } = {};
         if (typeof args[0] === "string") {
           if (args.length !== base.length)
@@ -157,8 +167,19 @@ export namespace ChannelAPI {
     };
 
     export const query =
-      <Res, QueryParams>(route: string, res?: keyof Res) =>
-      async (query: QueryParams = {} as any): Promise<Res> => {
+      <
+        Res extends object,
+        QueryParams extends object,
+        ResKey extends keyof Res | undefined = undefined
+      >(
+        route: string,
+        res?: ResKey
+      ) =>
+      async (
+        query: QueryParams = {} as any
+      ): Promise<
+        ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
+      > => {
         const r = await get({ route, query: query as any });
         if (res) return r[res];
         return r;
@@ -168,10 +189,11 @@ export namespace ChannelAPI {
       Req extends object,
       Res extends object,
       QueryParams extends object,
-      ArgValues extends any[]
+      ArgValues extends any[],
+      ResKey extends keyof Res | undefined = undefined
     >(
       route: string,
-      res?: keyof Res
+      res?: ResKey
     ) => {
       const base = route
         .split("/")
@@ -184,7 +206,9 @@ export namespace ChannelAPI {
           | ArgValues
           | [ArgsObject, QueryParams]
           | [ArgsObject]
-      ): Promise<Res> {
+      ): Promise<
+        ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
+      > {
         const argData: { [k: string]: string } = {};
         let query: QueryParams = {} as QueryParams;
         if (typeof args[0] === "string") {
@@ -302,7 +326,7 @@ export namespace ChannelAPI {
     /**
      * Gets a graph of user activity over the last 2 days. A user is seen as active if they logged in or received XP within the last 30 minutes.
      */
-    export const activity = generator.empty<Activity.Response>(
+    export const activity = generator.empty<Activity.Response, "activity">(
       "general/activity",
       "activity"
     );
@@ -595,12 +619,18 @@ export namespace ChannelAPI {
         }
       }
       export const achievements: {
-        (user: string): Promise<Achievements.Response>;
-        ({ user }: { user: string }): Promise<Achievements.Response>;
-      } = generator.args<Achievements.Request, Achievements.Response, [string]>(
-        "users/:user/summaries/achievements",
+        (user: string): Promise<Achievements.Response["achievements"]>;
+        ({
+          user
+        }: {
+          user: string;
+        }): Promise<Achievements.Response["achievements"]>;
+      } = generator.args<
+        Achievements.Request,
+        Achievements.Response,
+        [string],
         "achievements"
-      );
+      >("users/:user/summaries/achievements", "achievements");
 
       export namespace All {
         /**
@@ -679,9 +709,9 @@ export namespace ChannelAPI {
       }
     }
     export const search: {
-      (query: string): Promise<Search.Response>;
-      ({ query }: { query: string }): Promise<Search.Response>;
-    } = generator.args<Search.Request, Search.Response, [string]>(
+      (query: string): Promise<Search.Response["user"]>;
+      ({ query }: { query: string }): Promise<Search.Response["user"]>;
+    } = generator.args<Search.Request, Search.Response, [string], "user">(
       "users/search/:query",
       "user"
     );
@@ -724,25 +754,26 @@ export namespace ChannelAPI {
     export const leaderboard: {
       (
         leaderboard: Leaderboard.Request["leaderboard"]
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
       ({
         leaderboard
       }: {
         leaderboard: Leaderboard.Request["leaderboard"];
-      }): Promise<Leaderboard.Response>;
+      }): Promise<Leaderboard.Response["entries"]>;
       (
         leaderboard: Leaderboard.Request["leaderboard"],
         query: Leaderboard.QueryParams
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
       (
         { leaderboard }: { leaderboard: Leaderboard.Request["leaderboard"] },
         query: Leaderboard.QueryParams
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
     } = generator.argsAndQuery<
       Leaderboard.Request,
       Leaderboard.Response,
       Leaderboard.QueryParams,
-      [Leaderboard.Request["leaderboard"]]
+      [Leaderboard.Request["leaderboard"]],
+      "entries"
     >("users/by/:leaderboard", "entries");
     /** Alias of leaderboard */
     export const lb = leaderboard;
@@ -793,22 +824,26 @@ export namespace ChannelAPI {
       (
         leaderboard: History.Request["leaderboard"],
         season: History.Request["season"]
-      ): Promise<History.Response>;
-      ({ leaderboard, season }: History.Request): Promise<History.Response>;
+      ): Promise<History.Response["entries"]>;
+      ({
+        leaderboard,
+        season
+      }: History.Request): Promise<History.Response["entries"]>;
       (
         leaderboard: History.Request["leaderboard"],
         season: History.Request["season"],
         query: History.QueryParams
-      ): Promise<History.Response>;
+      ): Promise<History.Response["entries"]>;
       (
         { leaderboard, season }: History.Request,
         query: History.QueryParams
-      ): Promise<History.Response>;
+      ): Promise<History.Response["entries"]>;
     } = generator.argsAndQuery<
       History.Request,
       History.Response,
       History.QueryParams,
-      [History.Request["leaderboard"], History.Request["season"]]
+      [History.Request["leaderboard"], History.Request["season"]],
+      "entries"
     >("users/history/:leaderboard/:season", "entries");
 
     export namespace PersonalRecords {
@@ -861,22 +896,22 @@ export namespace ChannelAPI {
         user: PersonalRecords.Request["user"],
         gamemode: PersonalRecords.Request["gamemode"],
         leaderboard: PersonalRecords.Request["leaderboard"]
-      ): Promise<PersonalRecords.Response>;
+      ): Promise<PersonalRecords.Response["entries"]>;
       ({
         user,
         gamemode,
         leaderboard
-      }: PersonalRecords.Request): Promise<PersonalRecords.Response>;
+      }: PersonalRecords.Request): Promise<PersonalRecords.Response["entries"]>;
       (
         user: PersonalRecords.Request["user"],
         gamemode: PersonalRecords.Request["gamemode"],
         leaderboard: PersonalRecords.Request["leaderboard"],
         query: PersonalRecords.QueryParams
-      ): Promise<PersonalRecords.Response>;
+      ): Promise<PersonalRecords.Response["entries"]>;
       (
         { user, gamemode, leaderboard }: PersonalRecords.Request,
         query: PersonalRecords.QueryParams
-      ): Promise<PersonalRecords.Response>;
+      ): Promise<PersonalRecords.Response["entries"]>;
     } = generator.argsAndQuery<
       PersonalRecords.Request,
       PersonalRecords.Response,
@@ -885,7 +920,8 @@ export namespace ChannelAPI {
         PersonalRecords.Request["user"],
         PersonalRecords.Request["gamemode"],
         PersonalRecords.Request["leaderboard"]
-      ]
+      ],
+      "entries"
     >("users/:user/records/:gamemode/:leaderboard", "entries");
     /** Alias of personalRecords */
     export const records = personalRecords;
@@ -954,25 +990,26 @@ export namespace ChannelAPI {
     export const leaderboard: {
       (
         leaderboard: Leaderboard.Request["leaderboard"]
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
       ({
         leaderboard
       }: {
         leaderboard: Leaderboard.Request["leaderboard"];
-      }): Promise<Leaderboard.Response>;
+      }): Promise<Leaderboard.Response["entries"]>;
       (
         leaderboard: Leaderboard.Request["leaderboard"],
         query: Leaderboard.QueryParams
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
       (
         { leaderboard }: { leaderboard: Leaderboard.Request["leaderboard"] },
         query: Leaderboard.QueryParams
-      ): Promise<Leaderboard.Response>;
+      ): Promise<Leaderboard.Response["entries"]>;
     } = generator.argsAndQuery<
       Leaderboard.Request,
       Leaderboard.Response,
       Leaderboard.QueryParams,
-      [Leaderboard.Request["leaderboard"]]
+      [Leaderboard.Request["leaderboard"]],
+      "entries"
     >("/records/:leaderboard", "entries");
     /** Alias of leaderboard */
     export const lb = leaderboard;
@@ -1048,28 +1085,29 @@ export namespace ChannelAPI {
       }
     }
     export const latest: {
-      (stream: Latest.Request["stream"]): Promise<Latest.Response>;
+      (stream: Latest.Request["stream"]): Promise<Latest.Response["news"]>;
       ({
         stream
       }: {
         stream: Latest.Request["stream"];
-      }): Promise<Latest.Response>;
+      }): Promise<Latest.Response["news"]>;
       (
         stream: Latest.Request["stream"],
         query: Latest.QueryParams
-      ): Promise<Latest.Response>;
+      ): Promise<Latest.Response["news"]>;
       ({
         stream,
         query
       }: {
         stream: Latest.Request["stream"];
         query: Latest.QueryParams;
-      }): Promise<Latest.Response>;
+      }): Promise<Latest.Response["news"]>;
     } = generator.argsAndQuery<
       Latest.Request,
       Latest.Response,
       Latest.QueryParams,
-      [Latest.Request["stream"]]
+      [Latest.Request["stream"]],
+      "news"
     >("news/:stream", "news");
     /** Alias of latest */
     export const stream = latest;
