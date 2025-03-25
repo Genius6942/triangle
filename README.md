@@ -50,14 +50,8 @@ The following usage examples assume you are using Typescript. They also assume y
 
 ### Import
 
-Bun:
-
-```ts
-import { Client } from "@haelp/teto/bun";
-```
-
 > Warning:
-> Bun currently segfaults when running the codec vm required for ribbon. This will not be fixed, the issue will only be resovled if a new bun version fixes this bug. For now, we recommend using 'esbuild' to compile/run your code if you use typescript.
+> Bun currently does not open the websocket correctly and Clients can not connect. This will not be fixed, the issue will only be resovled if a new bun version fixes this bug. For now, we recommend using `esbuild` or `tsx` to compile/run your code if you use typescript.
 
 Node:
 
@@ -172,8 +166,6 @@ Client events are not sent by TETR.IO. They are events sent by the triangle.js c
 For example the `client.room.players` event fires every time a player moves their bracket, joins, or leaves. Rather than listening to several events and managing a players list yourself (with `room.player.add`, `room.player.remove`, `room.update`, `room.update.bracket`, etc) you can use the single `client.room.players`. See src/types/events/in/client for more events you can use.
 
 ## Other notes
-
-To run and debug your code, it is best to use [bun](https://bun.sh)
 
 You should store credentials in a `.env` file. Bun will automatically load this file and make the variables available in your code. You can also use the `dotenv` package to load the file manually.
 

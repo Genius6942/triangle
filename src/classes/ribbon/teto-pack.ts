@@ -292,7 +292,7 @@ export const tetoPack = (
       );
     }
 
-    const tetrio = eval(tetrioOverride);
+    const tetrio = (0, eval)(tetrioOverride);
 
     Amadeus = {
       encode: (msg: string, data?: any) => {
