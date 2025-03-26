@@ -99,6 +99,7 @@ export class Engine {
     combo: number;
     b2b: number;
     pieces: number;
+		lines: number;
   };
   gameOptions!: GameOptions;
   garbageQueue!: GarbageQueue;
@@ -207,6 +208,7 @@ export class Engine {
       combo: -1,
       b2b: -1,
       pieces: 0,
+			lines: 0,
       garbage: {
         sent: 0,
         attack: 0,
@@ -1241,6 +1243,7 @@ export class Engine {
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
 
     this.stats.pieces++;
+		this.stats.lines += lines;
 
     return res;
   }

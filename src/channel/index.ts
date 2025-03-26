@@ -1105,7 +1105,7 @@ export namespace ChannelAPI {
     } = generator.argsAndQuery<
       Latest.Request,
       Latest.Response,
-      Latest.QueryParams,
+      Latest.QueryParams, 
       [Latest.Request["stream"]],
       "news"
     >("news/:stream", "news");
