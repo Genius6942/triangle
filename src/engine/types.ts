@@ -1,4 +1,10 @@
-import type { Board, Engine, GarbageQueueSnapshot, Mino } from ".";
+import type {
+  Board,
+  Engine,
+  GarbageQueueSnapshot,
+  Mino,
+  OutgoingGarbage
+} from ".";
 import { IGEHandlerSnapshot } from "./multiplayer";
 import type { Rotation } from "./utils/tetromino/types";
 
@@ -43,4 +49,32 @@ export interface EngineSnapshot {
   glock: number;
   state: number;
   ige: IGEHandlerSnapshot;
+}
+
+export interface LockRes {
+  lines: number;
+  spin: SpinType;
+  garbage: number[];
+  stats: {
+    garbage: {
+      sent: number;
+      attack: number;
+      receive: number;
+      cleared: number;
+    };
+    combo: number;
+    b2b: number;
+    pieces: number;
+    lines: number;
+  };
+  garbageAdded: false | OutgoingGarbage[];
+  topout: boolean;
+}
+
+export interface Events {
+  "garbage.receive": {
+    amount: number;
+  };
+
+  "falling.lock": LockRes;
 }

@@ -10,7 +10,7 @@ import {
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
 import { Mino } from "./queue/types";
-import { EngineSnapshot, IncreasableValue } from "./types";
+import { EngineSnapshot, Events, IncreasableValue, LockRes } from "./types";
 import { SpinType } from "./types";
 import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
@@ -18,6 +18,7 @@ import { KickTable, legal, performKick } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
+import { EventEmitter } from "./utils/events";
 
 import chalk from "chalk";
 
@@ -60,7 +61,7 @@ export interface MiscellaneousOptions {
   };
   infiniteHold: boolean;
   username?: string;
-	date?: Date;
+  date?: Date;
 }
 
 export interface EngineInitializeParams {
@@ -93,13 +94,13 @@ export class Engine {
     garbage: {
       sent: number;
       attack: number;
-      recieved: number;
+      receive: number;
       cleared: number;
     };
     combo: number;
     b2b: number;
     pieces: number;
-		lines: number;
+    lines: number;
   };
   gameOptions!: GameOptions;
   garbageQueue!: GarbageQueue;
@@ -160,6 +161,8 @@ export class Engine {
 
   state!: number;
 
+  events: EventEmitter<Events> = new EventEmitter();
+
   private resCache!: {
     pieces: number;
     garbage: {
@@ -208,11 +211,11 @@ export class Engine {
       combo: -1,
       b2b: -1,
       pieces: 0,
-			lines: 0,
+      lines: 0,
       garbage: {
         sent: 0,
         attack: 0,
-        recieved: 0,
+        receive: 0,
         cleared: 0
       }
     };
@@ -688,7 +691,7 @@ export class Engine {
     if (this.falling.rotResets < 63) this.falling.rotResets++;
 
     // Check for T-Spin
-    const spin = this.detectSpin(this.isTSpinKick(kick));
+    const spin = this.#detectSpin(this.#isTSpinKick(kick));
 
     this.lastSpin = {
       piece: this.falling.symbol,
@@ -878,6 +881,7 @@ export class Engine {
     return false;
   }
 
+  /** @deprecated */
   hold(_ihs = false, ignoreBlockout = false) {
     if (this.#isSleep()) {
       if (this.handling.ihs === "tap") this.state |= constants.flags.ACTION_IHS;
@@ -918,7 +922,7 @@ export class Engine {
     }
   }
 
-  isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate>) {
+  #isTSpinKick(kick: ReturnType<typeof Tetromino.prototype.rotate>) {
     if (typeof kick === "object") {
       return (
         // fin cw and tst ccw
@@ -935,56 +939,64 @@ export class Engine {
     return false;
   }
 
+  /** @deprecated */
   rotateCW() {
     return this.#processRotate(1);
   }
 
+  /** @deprecated */
   rotateCCW() {
     return this.#processRotate(-1);
   }
 
+  /** @deprecated */
   rotate180() {
     return this.#processRotate(2);
   }
 
+  /** @deprecated */
   moveRight() {
     const res = this.falling.moveRight(this.board.state);
     if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     return res;
   }
 
+  /** @deprecated */
   moveLeft() {
     const res = this.falling.moveLeft(this.board.state);
     if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     return res;
   }
 
+  /** @deprecated */
   dasRight() {
     const res = this.falling.dasRight(this.board.state);
     if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     return res;
   }
 
+  /** @deprecated */
   dasLeft() {
     const res = this.falling.dasLeft(this.board.state);
     if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     return res;
   }
 
+  /** @deprecated */
   softDrop() {
     const res = this.falling.softDrop(this.board.state);
     if (res && this.gameOptions.spinBonuses !== "stupid") this.lastSpin = null;
     return res;
   }
 
-  maxSpin(...spins: SpinType[]) {
+  #maxSpin(...spins: SpinType[]) {
     const score = (spin: SpinType) => ["none", "mini", "normal"].indexOf(spin);
     return spins.reduce((a, b) => {
       return score(a) > score(b) ? a : b;
     });
   }
 
-  detectSpin(finOrTst: boolean): SpinType {
+  #detectSpin(finOrTst: boolean): SpinType {
     if (this.gameOptions.spinBonuses === "none") return "none";
     const tSpin =
       (
@@ -996,7 +1008,7 @@ export class Engine {
           "T-spins"
         ] as Game.SpinBonuses[]
       ).includes(this.gameOptions.spinBonuses) && this.falling.symbol === "t"
-        ? this.detectTSpin(finOrTst)
+        ? this.#detectTSpin(finOrTst)
         : false;
     const allSpin = this.falling.isAllSpinPosition(this.board.state);
 
@@ -1012,25 +1024,25 @@ export class Engine {
       case "all-mini":
         return tSpin || (allSpin ? "mini" : "none");
       case "all+":
-        return this.maxSpin(tSpin || "none", allSpin ? "normal" : "none");
+        return this.#maxSpin(tSpin || "none", allSpin ? "normal" : "none");
       case "all-mini+":
-        return this.maxSpin(tSpin || "none", allSpin ? "mini" : "none");
+        return this.#maxSpin(tSpin || "none", allSpin ? "mini" : "none");
       case "mini-only":
         return tSpin === "normal"
           ? "mini"
-          : this.maxSpin(tSpin || "none", allSpin ? "mini" : "none");
+          : this.#maxSpin(tSpin || "none", allSpin ? "mini" : "none");
       case "handheld":
         // TODO: How does this work?
         return "none";
     }
   }
 
-  detectTSpin(finOrTst: boolean): SpinType {
+  #detectTSpin(finOrTst: boolean): SpinType {
     if (this.falling.symbol !== "t") return "none";
 
     if (finOrTst) return "normal";
 
-    const corners = this.getTCorners();
+    const corners = this.#getTCorners();
 
     if (corners.filter((item) => item).length < 3) return "none";
 
@@ -1053,7 +1065,7 @@ export class Engine {
    *  🟦🟦🟦
    *  3 🟦 2
    */
-  getTCorners() {
+  #getTCorners() {
     const [x, y] = [this.falling.location[0] + 1, this.falling.y - 1];
     const getLocation = (x: number, y: number) =>
       x < 0
@@ -1080,7 +1092,7 @@ export class Engine {
     return this.#lock(true);
   }
 
-  #lock(hard: boolean) {
+  #lock(hard: boolean): LockRes {
     this.holdLocked = false;
 
     // TODO: ARE (line clear, garbage)
@@ -1177,7 +1189,7 @@ export class Engine {
       );
     }
 
-    const res = {
+    const res: LockRes = {
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
@@ -1243,7 +1255,9 @@ export class Engine {
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
 
     this.stats.pieces++;
-		this.stats.lines += lines;
+    this.stats.lines += lines;
+
+    this.events.emit("falling.lock", deepCopy(res));
 
     return res;
   }
@@ -1506,7 +1520,10 @@ export class Engine {
                 gameid: frame.data.data.gameid,
                 confirmed: false
               });
-              this.stats.garbage.recieved += amount;
+              this.stats.garbage.receive += amount;
+              this.events.emit("garbage.receive", {
+                amount
+              });
             }
           } else if (frame.data.type === "interaction_confirm") {
             if (frame.data.data.type === "garbage") {
@@ -1554,7 +1571,6 @@ export class Engine {
   ) {
     this.queue.onRepopulate(listener);
   }
-
 
   private static colorMap = {
     i: chalk.bgCyan,
