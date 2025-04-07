@@ -61,7 +61,6 @@ export const garbageCalcV2 = (
     rawSpin === "none" ? null : rawSpin;
 
   switch (lines) {
-    // might be the issue here for z spin mini single being counted as 1 line?
     case 0:
       garbage =
         spin === "mini"
@@ -144,16 +143,6 @@ export const garbageCalcV2 = (
           Math.max(0, Math.min(combo - 1, comboTableData.length - 1))
         ];
     }
-  }
-
-  if (
-    b2bOptions.charging &&
-    b2b > 0 &&
-    spin === "mini" &&
-    garbage === 0 &&
-    lines >= 1
-  ) {
-    garbage++;
   }
 
   let garbageBonus = 0;

@@ -1024,7 +1024,10 @@ export class Engine {
       case "all-mini":
         return tSpin || (allSpin ? "mini" : "none");
       case "all+":
-        return this.#maxSpin(tSpin || "none", allSpin ? "normal" : "none");
+        return this.#maxSpin(
+          tSpin || "none",
+          allSpin ? (this.falling.symbol === "t" ? "mini" : "normal") : "none"
+        );
       case "all-mini+":
         return this.#maxSpin(tSpin || "none", allSpin ? "mini" : "none");
       case "mini-only":
