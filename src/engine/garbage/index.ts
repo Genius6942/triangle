@@ -71,7 +71,8 @@ export class GarbageQueue {
 
   constructor(options: GarbageQueueInitializeParams) {
     this.options = options;
-    if (!this.options.cap.absolute) this.options.cap.absolute = Number.MAX_SAFE_INTEGER;
+    if (!this.options.cap.absolute)
+      this.options.cap.absolute = Number.MAX_SAFE_INTEGER;
 
     this.queue = [];
 

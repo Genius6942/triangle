@@ -4,7 +4,7 @@ export class EventEmitter<T extends Record<string, any>> {
   on<K extends keyof T>(event: K, listener: (arg: T[K]) => void) {
     this.#listeners.push([event as string, listener, false]);
   }
-	
+
   once<K extends keyof T>(event: K, listener: (arg: T[K]) => void) {
     this.#listeners.push([event as string, listener, true]);
   }

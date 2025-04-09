@@ -77,4 +77,6 @@ export interface Events {
   };
 
   "falling.lock": LockRes;
+
+	"queue.add": Mino[];
 }

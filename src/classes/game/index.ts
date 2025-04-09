@@ -122,7 +122,7 @@ export class Game {
     if (this.timeout)
       this.timeout = (clearTimeout(this.timeout) as any) || null;
     delete this.client.game;
-		this.engine.events.removeAllListeners();
+    this.engine.events.removeAllListeners();
   }
 
   // private addIGE(data: Events.in.Game["game.replay.ige"]) {

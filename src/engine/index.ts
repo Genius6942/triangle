@@ -14,11 +14,11 @@ import { EngineSnapshot, Events, IncreasableValue, LockRes } from "./types";
 import { SpinType } from "./types";
 import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
+import { EventEmitter } from "./utils/events";
 import { KickTable, legal, performKick } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
-import { EventEmitter } from "./utils/events";
 
 import chalk from "chalk";
 
@@ -181,6 +181,8 @@ export class Engine {
 
     this.queue = new Queue(options.queue);
 
+    this.queue.onRepopulate(this.#onQueueRepopulate.bind(this));
+
     this._kickTable = options.kickTable;
 
     this.board = new Board(options.board);
@@ -310,6 +312,10 @@ export class Engine {
     this.nextPiece = this.nextPiece.bind(this);
   }
 
+  #onQueueRepopulate(pieces: Mino[]) {
+    this.events.emit("queue.add", pieces);
+  }
+
   snapshot(): EngineSnapshot {
     return {
       board: deepCopy(this.board.state),
@@ -365,6 +371,8 @@ export class Engine {
     this.lastWasClear = snapshot.lastWasClear;
     this.queue = new Queue(this.initializer.queue);
     for (let i = 0; i < snapshot.queue; i++) this.queue.shift();
+
+    this.queue.onRepopulate(this.#onQueueRepopulate.bind(this));
 
     this.dynamic = {
       gravity: new IncreaseTracker(
@@ -1569,10 +1577,11 @@ export class Engine {
     return tetrominoes[piece.toLowerCase()].preview;
   }
 
-  onQueuePieces(
-    listener: NonNullable<(typeof Queue)["prototype"]["repopulateListener"]>
-  ) {
-    this.queue.onRepopulate(listener);
+  /** @deprecated */
+  onQueuePieces(_listener: (pieces: Mino[]) => void) {
+    console.log(
+      `${chalk.redBright("[Triangle.js]")} Engine.onQueuePieces is deprecated and no longer functional. Switch to Engine.events.on("queue.add", (pieces) => {}) instead.`
+    );
   }
 
   private static colorMap = {
