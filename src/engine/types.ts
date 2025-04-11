@@ -75,8 +75,13 @@ export interface Events {
   "garbage.receive": {
     amount: number;
   };
+  "garbage.confirm": {
+    iid: number;
+    gameid: number;
+    frame: number;
+  };
 
   "falling.lock": LockRes;
 
-	"queue.add": Mino[];
+  "queue.add": Mino[];
 }

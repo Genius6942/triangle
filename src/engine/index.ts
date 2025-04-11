@@ -1543,6 +1543,12 @@ export class Engine {
                 frame.data.data.gameid,
                 frame.frame
               );
+
+              this.events.emit("garbage.confirm", {
+                iid: frame.data.data.iid,
+                gameid: frame.data.data.gameid,
+                frame: frame.frame
+              });
             }
           } else if (frame.data.type === "target" && this.multiplayer) {
             this.multiplayer.targets = frame.data.data.targets;
