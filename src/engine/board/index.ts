@@ -63,7 +63,7 @@ export class Board {
     let garbageCleared = 0;
     const lines: number[] = [];
     this.state.forEach((row, idx) => {
-      if (row.every((block) => block !== null)) {
+      if (row.every((block) => block !== null && block !== Mino.BOMB)) {
         lines.push(idx);
         if (row.some((block) => block === Mino.GARBAGE)) garbageCleared++;
       }
@@ -86,7 +86,7 @@ export class Board {
     const lowestBlocks = placedBlocks.filter(([_, y]) => y === lowestY);
 
     const bombColumns = lowestBlocks
-      .filter(([x, y]) => this.state[y][x] === Mino.BOMB)
+      .filter(([x, y]) => this.state[y - 1][x] === Mino.BOMB)
       .map(([x, _]) => x);
     if (bombColumns.length === 0) return { lines: 0, garbageCleared: 0 };
 
@@ -96,13 +96,12 @@ export class Board {
       lowestY > 0 &&
       bombColumns.some((col) => this.state[lowestY - 1][col] === Mino.BOMB)
     ) {
-      lowestY--;
-      lines.push(lowestY);
+      lines.push(--lowestY);
     }
 
     if (lines.length === 0) return { lines: 0, garbageCleared: 0 };
 
-    [...lines].reverse().forEach((line) => {
+    lines.forEach((line) => {
       this.state.splice(line, 1);
       this.state.push(new Array(this.width).fill(null));
     });
@@ -140,10 +139,10 @@ export class Board {
       ...Array.from({ length: amount }, () =>
         Array.from({ length: this.width }, (_, idx) =>
           idx >= column && idx < column + size
-            ? null
-            : bombs
+            ? bombs
               ? Mino.BOMB
-              : Mino.GARBAGE
+              : null
+            : Mino.GARBAGE
         )
       )
     );
