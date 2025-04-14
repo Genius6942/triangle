@@ -252,7 +252,7 @@ export class Social {
 
   /** Get a users' information based on their userid or username
    * @example
-   * const user = await client.social.who(client.social.resolve('halp'));
+   * const user = await client.social.who(await client.social.resolve('halp'));
    */
   who(id: string): Promise<APITypes.Users.User>;
   async who(id: string): Promise<APITypes.Users.User> {
@@ -262,7 +262,7 @@ export class Social {
   /**
    * Send a message to a specified user (based on id)
    * @example
-   * await client.social.dm(client.social.resolve('halp'), 'what\'s up?');
+   * await client.social.dm(await client.social.resolve('halp'), 'what\'s up?');
    */
   async dm(userID: string, message: string) {
     return await this.client.wrap(
@@ -278,7 +278,7 @@ export class Social {
   /**
    * Send a user a friend request
    * @example
-   * await client.social.friend(client.social.resolve('halp'));
+   * await client.social.friend(await client.social.resolve('halp'));
    * @returns false if the user is already friended, true otherwise
    * @throws {Error} If an error occurs (such as the user has blocked the client, etc)
    */
@@ -305,7 +305,7 @@ export class Social {
   /**
    * Unfriend a user. Note: unfriending a user will unblock them if they are blocked.
    * @example
-   * await client.social.unfriend(client.social.resolve('halp'));
+   * await client.social.unfriend(await client.social.resolve('halp'));
    * @returns false if the user is not unfriended, true otherwise
    */
   async unfriend(userID: string) {
@@ -319,7 +319,7 @@ export class Social {
   /**
    * Block a user
    * @example
-   * await client.social.block(client.social.resolve('halp'));
+   * await client.social.block(await client.social.resolve('halp'));
    * @returns false if the user is already blocked, true otherwise
    */
   async block(userID: string) {
@@ -330,7 +330,7 @@ export class Social {
   /**
    * Unblock a user. Note: unblocking a user will unfriend them if they are friended.
    * @example
-   * await client.social.unblock(client.social.resolve('halp'));
+   * await client.social.unblock(await client.social.resolve('halp'));
    * @returns false if the user is not unblocked, true otherwise
    */
   async unblock(userID: string) {
@@ -340,7 +340,7 @@ export class Social {
   /**
    * Invite a user to your room
    * @example
-   * await client.social.invite(client.social.resolve('halp'));
+   * await client.social.invite(await client.social.resolve('halp'));
    */
   invite(userID: string) {
     return new Promise<void>(async (resolve, reject) => {

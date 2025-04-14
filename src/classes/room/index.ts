@@ -333,7 +333,7 @@ export class Room {
   /**
    * Give the host to someone else
    * @example
-   * await client.room!.transferHost('halp');
+   * await client.room!.transferHost(await client.social.resolve('halp'));
    */
   async transferHost(player: string) {
     return await this.client.wrap(
