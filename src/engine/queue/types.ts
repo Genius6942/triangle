@@ -6,5 +6,6 @@ export enum Mino {
   S = "s",
   T = "t",
   Z = "z",
-  GARBAGE = "gb"
+  GARBAGE = "gb",
+  BOMB = "bomb"
 }

@@ -27,6 +27,8 @@ export interface GarbageQueueInitializeParams {
     marginTime: number;
   };
 
+  bombs: boolean;
+
   seed: number;
   boardWidth: number;
   rounding: "down" | "rng";
@@ -290,7 +292,7 @@ export class GarbageQueue {
 
     this.queue = queue;
 
-    return res;
+    return res.map((v) => ({ ...v, bombs: this.options.bombs }));
   }
 
   round(amount: number): number {

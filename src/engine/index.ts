@@ -1108,15 +1108,20 @@ export class Engine {
 
     // TODO: ARE (line clear, garbage)
 
-    this.board.add(
-      ...(this.falling.blocks.map((block) => [
-        this.falling.symbol,
-        this.falling.location[0] + block[0],
-        this.falling.y - block[1]
-      ]) as any)
+    const placed = this.falling.blocks.map(
+      (block) =>
+        [
+          this.falling.symbol,
+          this.falling.location[0] + block[0],
+          this.falling.y - block[1]
+        ] as [Mino, number, number]
     );
 
-    const { lines, garbageCleared } = this.board.clearLines();
+    this.board.add(...placed);
+
+    const { lines, garbageCleared } = this.board.clearBombsAndLines(
+      placed.map((b) => [b[1], b[2]])
+    );
     const pc = this.board.perfectClear;
 
     this.stats.garbage.cleared += garbageCleared;
@@ -1598,7 +1603,8 @@ export class Engine {
     s: chalk.bgGreenBright,
     t: chalk.bgMagentaBright,
     z: chalk.bgRedBright,
-    gb: chalk.bgBlack
+    gb: chalk.bgBlack,
+    bomb: chalk.bgHex("#FFA500")
   };
 
   get text() {

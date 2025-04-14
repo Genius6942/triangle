@@ -6,7 +6,7 @@ export interface BoardInitializeParams {
   buffer: number;
 }
 
-export type BoardSquare = Mino | "gb" | null;
+export type BoardSquare = Mino | null;
 
 export class Board {
   state: BoardSquare[][];
@@ -65,7 +65,7 @@ export class Board {
     this.state.forEach((row, idx) => {
       if (row.every((block) => block !== null)) {
         lines.push(idx);
-        if (row.some((block) => block === "gb")) garbageCleared++;
+        if (row.some((block) => block === Mino.GARBAGE)) garbageCleared++;
       }
     });
 
@@ -76,6 +76,49 @@ export class Board {
     return { lines: lines.length, garbageCleared };
   }
 
+  clearBombs(placedBlocks: [number, number][]) {
+    let lowestY = placedBlocks.reduce(
+      (acc, [_, y]) => Math.min(acc, y),
+      this.fullHeight
+    );
+    if (lowestY === 0) return { lines: 0, garbageCleared: 0 };
+
+    const lowestBlocks = placedBlocks.filter(([_, y]) => y === lowestY);
+
+    const bombColumns = lowestBlocks
+      .filter(([x, y]) => this.state[y][x] === Mino.BOMB)
+      .map(([x, _]) => x);
+    if (bombColumns.length === 0) return { lines: 0, garbageCleared: 0 };
+
+    const lines: number[] = [];
+
+    while (
+      lowestY > 0 &&
+      bombColumns.some((col) => this.state[lowestY - 1][col] === Mino.BOMB)
+    ) {
+      lowestY--;
+      lines.push(lowestY);
+    }
+
+    if (lines.length === 0) return { lines: 0, garbageCleared: 0 };
+
+    [...lines].reverse().forEach((line) => {
+      this.state.splice(line, 1);
+      this.state.push(new Array(this.width).fill(null));
+    });
+
+    return { lines: lines.length, garbageCleared: lines.length };
+  }
+
+  clearBombsAndLines(placedBlocks: [number, number][]) {
+    const bombs = this.clearBombs(placedBlocks);
+    const lines = this.clearLines();
+    return {
+      lines: lines.lines + bombs.lines,
+      garbageCleared: bombs.garbageCleared + lines.garbageCleared
+    };
+  }
+
   get perfectClear() {
     return this.state.every((row) => row.every((block) => block === null));
   }
@@ -83,18 +126,24 @@ export class Board {
   insertGarbage({
     amount,
     size,
-    column
+    column,
+    bombs
   }: {
     amount: number;
     size: number;
     column: number;
+    bombs: boolean;
   }) {
     this.state.splice(
       0,
       0,
       ...Array.from({ length: amount }, () =>
         Array.from({ length: this.width }, (_, idx) =>
-          idx >= column && idx < column + size ? null : ("gb" as const)
+          idx >= column && idx < column + size
+            ? null
+            : bombs
+              ? Mino.BOMB
+              : Mino.GARBAGE
         )
       )
     );

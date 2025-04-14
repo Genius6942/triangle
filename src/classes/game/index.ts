@@ -260,6 +260,9 @@ export class Game {
           timeout: options.messiness_timeout,
           within: options.messiness_inner
         },
+
+        bombs: options.usebombs,
+
         seed: options.seed,
         rounding: options.roundmode,
         openerPhase: options.openerphase,
