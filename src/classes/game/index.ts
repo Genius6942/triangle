@@ -337,68 +337,73 @@ export class Game {
     if (this.over) return;
     let runAfter: GameTypes.Tick.Out["runAfter"] = [];
     if (this.tick) {
-      const res = await this.tick({
-        gameid: this.gameid,
-        frame: this.frame,
-        events: this.messageQueue.splice(0, this.messageQueue.length),
-        engine: this.engine!
-      });
+      try {
+        const res = await this.tick({
+          gameid: this.gameid,
+          frame: this.frame,
+          events: this.messageQueue.splice(0, this.messageQueue.length),
+          engine: this.engine!
+        });
 
-      const isValidObject = (obj: any) =>
-        typeof obj === "object" && obj !== null;
-      if (res.keys)
-        this.keyQueue.push(
-          ...res.keys.filter((k, idx) => {
-            if (
-              !isValidObject(k) ||
-              !(k.type === "keydown" || k.type === "keyup") ||
-              typeof k.frame !== "number" ||
-              isNaN(k.frame) ||
-              k.frame < this.frame ||
-              !isValidObject(k.data) ||
-              !(
-                [
-                  "moveLeft",
-                  "moveRight",
-                  "hardDrop",
-                  "hold",
-                  "softDrop",
-                  "rotateCW",
-                  "rotate180",
-                  "rotateCCW"
-                ] satisfies GameTypes.Tick.Keypress["data"]["key"][]
-              ).includes(k.data.key) ||
-              typeof k.data.subframe !== "number" ||
-              isNaN(k.data.subframe) ||
-              k.data.subframe < 0 ||
-              k.data.subframe >= 1
-            ) {
-              this.#log(
-                `Invalid key event at index ${idx} passed on frame ${this.frame}:\n${JSON.stringify(k, null, 2)}`,
-                {
-                  level: "error"
-                }
-              );
-              return false;
-            }
-            return true;
-          })
-        );
-      if (res.runAfter)
-        runAfter.push(
-          ...res.runAfter.filter((ra, idx) => {
-            if (typeof ra !== "function") {
-              this.#log(
-                `Invalid runAfter callback at index ${idx} passed on frame ${this.frame}.`,
-                {
-                  level: "warning"
-                }
-              );
-              return false;
-            }
-            return true;
-          })
-        );
+        const isValidObject = (obj: any) =>
+          typeof obj === "object" && obj !== null;
+        if (res.keys)
+          this.keyQueue.push(
+            ...res.keys.filter((k, idx) => {
+              if (
+                !isValidObject(k) ||
+                !(k.type === "keydown" || k.type === "keyup") ||
+                typeof k.frame !== "number" ||
+                isNaN(k.frame) ||
+                k.frame < this.frame ||
+                !isValidObject(k.data) ||
+                !(
+                  [
+                    "moveLeft",
+                    "moveRight",
+                    "hardDrop",
+                    "hold",
+                    "softDrop",
+                    "rotateCW",
+                    "rotate180",
+                    "rotateCCW"
+                  ] satisfies GameTypes.Tick.Keypress["data"]["key"][]
+                ).includes(k.data.key) ||
+                typeof k.data.subframe !== "number" ||
+                isNaN(k.data.subframe) ||
+                k.data.subframe < 0 ||
+                k.data.subframe >= 1
+              ) {
+                this.#log(
+                  `Invalid key event at index ${idx} passed on frame ${this.frame}:\n${JSON.stringify(k, null, 2)}`,
+                  {
+                    level: "error"
+                  }
+                );
+                return false;
+              }
+              return true;
+            })
+          );
+        if (res.runAfter)
+          runAfter.push(
+            ...res.runAfter.filter((ra, idx) => {
+              if (typeof ra !== "function") {
+                this.#log(
+                  `Invalid runAfter callback at index ${idx} passed on frame ${this.frame}.`,
+                  {
+                    level: "warning"
+                  }
+                );
+                return false;
+              }
+              return true;
+            })
+          );
+      } catch (e) {
+        if (this.over) return;
+        throw e;
+      }
     }
     if (this.over) return;
 
