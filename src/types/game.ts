@@ -38,6 +38,7 @@ export namespace Game {
   /** Only `T-spins` supported */
   export type SpinBonuses =
     | "T-spins"
+		| "T-spins+"
     | "all"
     | "all+"
     | "all-mini"

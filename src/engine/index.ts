@@ -1013,7 +1013,8 @@ export class Engine {
           "all-mini",
           "all-mini+",
           "all+",
-          "T-spins"
+          "T-spins",
+					"T-spins+"
         ] as Game.SpinBonuses[]
       ).includes(this.gameOptions.spinBonuses) && this.falling.symbol === "t"
         ? this.#detectTSpin(finOrTst)
@@ -1027,6 +1028,8 @@ export class Engine {
           : "none";
       case "T-spins":
         return tSpin || "none";
+      case "T-spins+":
+        return this.#maxSpin(tSpin || "none", allSpin ? (this.falling.symbol === "t" ? "mini" : "none") : "none");
       case "all":
         return tSpin || (allSpin ? "normal" : "none");
       case "all-mini":
