@@ -2,13 +2,18 @@ import { version } from "../../utils";
 import { basic } from "../../utils/api/basic";
 import { Server } from "../../utils/api/server";
 
+
+
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
+
+
 import * as msgpackr from "msgpackr";
+
 
 let globalVM: Awaited<ReturnType<typeof vmPack>> | null = null;
 
@@ -36,7 +41,7 @@ export const vmPack = (
     }
 
     const triangleDir = path.join(homedir(), ".trianglejs");
-    const fileName = `tetrio-vm-${version}-${serverVersion.signature.build.id}.js`;
+    const fileName = `tetrio-vm-${version}-${serverVersion.signature.client.build.id}.js`;
 
     let tetrioOverride: string;
     try {
