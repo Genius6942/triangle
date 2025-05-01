@@ -254,8 +254,10 @@ export const tetoPack = (
       throw new Error(serverVersion.error.msg);
     }
 
+		console.log(JSON.stringify(serverVersion, null, 2));
+
     const triangleDir = path.join(homedir(), ".trianglejs");
-    const fileName = `tetrio-${version}-${serverVersion.signature.build.id}.js`;
+    const fileName = `tetrio-${version}-${serverVersion.signature.client.build.id}.js`;
 
     let tetrioOverride: string;
     try {
@@ -288,7 +290,7 @@ export const tetoPack = (
       await fs.writeFile(path.join(triangleDir, fileName), tetrioOverride);
 
       log(
-        `tetrio.js @${serverVersion.signature.version}-${serverVersion.signature.commit.id} patched`
+        `tetrio.js @${serverVersion.signature.version}-${serverVersion.signature.client.build.id} patched`
       );
     }
 

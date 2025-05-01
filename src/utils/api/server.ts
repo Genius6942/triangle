@@ -1,34 +1,70 @@
 import { APIDefaults } from ".";
 import type { Get, Post } from "./basic";
 
+
 export namespace Server {
   export interface Signature {
     version: string;
     countdown: boolean;
     novault: boolean;
+    noceriad: boolean;
+    norichpresence: boolean;
+    noreplaydispute: boolean;
     supporter_specialthanks_goal: number;
     xp_multiplier: number;
     catalog: {
-      supporter: object; // You might want to define a more specific type for the supporter object
+      supporter: {
+        price: number;
+        price_bulk: number;
+        price_gift: number;
+        price_gift_bulk: number;
+        bulk_after: number;
+        normal_price: number;
+        normal_price_bulk: number;
+        normal_price_gift: number;
+        normal_price_gift_bulk: number;
+        normal_bulk_after: number;
+      };
+      "zenith-tower-ost": {
+        price: number;
+        normal_price: number;
+      };
     };
     league_mm_roundtime_min: number;
     league_mm_roundtime_max: number;
-    league_additional_settings: object; // You might want to define a more specific type for additional settings
+    league_additional_settings: Record<string, any>;
+    league_season: {
+      current: string;
+      prev: string;
+      next: string | null;
+      next_at: string | null;
+      ranked: boolean;
+    };
+    zenith_duoisfree: boolean;
+    zenith_freemod: boolean;
+    zenith_cpu_count: number;
+    zenith_additional_settings: {
+      TEMP_zenith_grace: string;
+      messiness_timeout: number;
+    };
     domain: string;
-    domain_hash: string;
     ch_domain: string;
     mode: string;
-    commit: {
-      id: string;
-      time: number;
-    };
-    branch: string;
+    sentry_enabled: boolean;
     serverCycle: string;
-    build: {
-      id: string;
-      time: number;
+    domain_hash: string;
+    client: {
+      commit: {
+        id: string;
+        time: number;
+      };
+      branch: string;
+      build: {
+        id: string;
+        time: number;
+      };
     };
-  }
+  };
 
   export interface Environment {
     stats: {
