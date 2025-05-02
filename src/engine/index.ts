@@ -1606,7 +1606,7 @@ export class Engine {
     s: chalk.bgGreenBright,
     t: chalk.bgMagentaBright,
     z: chalk.bgRedBright,
-    gb: chalk.bgBlack,
+    gb: chalk.bgBlackBright,
     bomb: chalk.bgHex("#FFA500")
   };
 

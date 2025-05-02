@@ -254,8 +254,6 @@ export const tetoPack = (
       throw new Error(serverVersion.error.msg);
     }
 
-		console.log(JSON.stringify(serverVersion, null, 2));
-
     const triangleDir = path.join(homedir(), ".trianglejs");
     const fileName = `tetrio-${version}-${serverVersion.signature.client.build.id}.js`;
 
