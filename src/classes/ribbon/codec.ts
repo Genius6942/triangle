@@ -2,7 +2,7 @@
 import { pack } from "../../utils";
 import { Bits } from "./bits";
 
-export type CodecType = "vm" | "custom" | "codec-2" | "json" | "teto";
+export type CodecType = "vm" | "custom" | "codec-2" | "json" | "teto" | "candor";
 
 export type Command = {
   flags: number;
@@ -257,6 +257,7 @@ export class Codec {
         let n = Buffer.allocUnsafe(1);
         const s = Codec.TABLES.kick.getValue(t);
         return (
+          // @ts-ignore
           n.writeUInt8(s, 0), s || (n = Buffer.concat([n, Buffer.from(t)])), n
         );
       },
@@ -300,6 +301,7 @@ export class Codec {
             return (
               n.writeUInt16BE(t.timeout),
               n.write(t.msg, 2),
+              // @ts-ignore
               Buffer.concat([i, n])
             );
           }
@@ -307,8 +309,10 @@ export class Codec {
           case 3:
           case 4:
           case 5:
+            // @ts-ignore
             return Buffer.concat([i, Buffer.from(t.msg)]);
           default:
+            // @ts-ignore
             return Buffer.concat([i, pack.pack(t)]);
         }
       },

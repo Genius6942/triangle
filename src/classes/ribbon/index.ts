@@ -3,6 +3,7 @@ import { API, APITypes } from "../../utils";
 import { Bits } from "./bits";
 import { Codec, CodecType } from "./codec";
 import { FullCodec } from "./codec-full";
+import { CandorCodec } from "./codec-candor";
 import { tetoPack } from "./teto-pack";
 import { RibbonEvents } from "./types";
 import { vmPack } from "./vm-pack";
@@ -37,6 +38,7 @@ export class Ribbon {
   private api: API;
   private codec = new Codec();
   private codec2 = FullCodec;
+  private codecCandor = CandorCodec;
   private codecMethod: CodecType;
   private codecVM?: Awaited<ReturnType<typeof vmPack>>;
   private codecWrapper?: Awaited<ReturnType<typeof tetoPack>>;
@@ -175,11 +177,22 @@ export class Ribbon {
 
     const wsClient = new WebSocket();
 
-    wsClient.on("connectFailed", (error: { toString: () => string }) => {
-      this.log("Connect error: " + error.toString(), {
-        force: true,
-        level: "error"
-      });
+    wsClient.on("connectFailed", (error: { toString: () => string, errors?: any[] }) => {
+      if (error instanceof AggregateError && Array.isArray((error as any).errors)) {
+        this.log("Aggregated Connect Errors:", {
+          force: true,
+          level: "error"
+        });
+        (error as any).errors.forEach((err: any, idx: number) => {
+          this.log(`  [${idx + 1}] ${err?.stack || err?.message || err?.toString?.() || err}`,
+            { force: true, level: "error" });
+        });
+      } else {
+        this.log("Connect error: " + error.toString(), {
+          force: true,
+          level: "error"
+        });
+      }
       setTimeout(() => this.connect(), 1000);
     });
 
@@ -230,6 +243,9 @@ export class Ribbon {
       case "codec-2":
         res = this.codec2.encode(msg, data);
         break;
+      case "candor":
+        res = this.codecCandor.Encode(msg, data);
+        break;
       case "json":
         res = JSON.stringify({ command: msg, data });
         break;
@@ -274,6 +290,8 @@ export class Ribbon {
               return this.codecVM!.decode(data);
             case "teto":
               return this.codecWrapper!.decode(data);
+            case "candor":
+              return this.codecCandor.Decode(data);
             case "json":
               return JSON.parse(data.toString());
             default:
