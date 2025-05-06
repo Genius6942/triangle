@@ -222,6 +222,8 @@ export class GarbageQueue {
     for (let i = 0; i < lines && this.queue.length !== 0; i++) {
       const item = this.queue[0];
 
+			// TODO: Fix this
+			// The real game uses an "active" system where garbages have a proptery, may be an issue later
       if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
         break;
 
@@ -246,7 +248,7 @@ export class GarbageQueue {
 
       this.hasChangedColumn = false;
 
-      if (item.amount < 0) {
+      if (item.amount <= 0) {
         this.queue.shift();
 
         if (this.rngex() < this.options.messiness.change) {
