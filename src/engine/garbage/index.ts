@@ -14,6 +14,7 @@ export interface GarbageQueueInitializeParams {
     within: number;
     nosame: boolean;
     timeout: number;
+    center: boolean;
   };
 
   garbage: {
@@ -56,6 +57,8 @@ export interface GarbageQueueSnapshot {
   lastTankTime: number;
   lastColumn: number | null;
   sent: number;
+  hasChangedColumn: boolean;
+  lastReceivedCount: number;
   queue: IncomingGarbage[];
 }
 
@@ -66,6 +69,8 @@ export class GarbageQueue {
 
   lastTankTime: number = 0;
   lastColumn: number | null = null;
+  hasChangedColumn: boolean = false;
+  lastReceivedCount: number = 0;
   rng: RNG;
 
   // for opener phase calculations
@@ -87,6 +92,8 @@ export class GarbageQueue {
       lastTankTime: this.lastTankTime,
       lastColumn: this.lastColumn,
       sent: this.sent,
+      hasChangedColumn: this.hasChangedColumn,
+      lastReceivedCount: this.lastReceivedCount,
       queue: deepCopy(this.queue)
     };
   }
@@ -97,6 +104,8 @@ export class GarbageQueue {
     this.lastColumn = snapshot.lastColumn;
     this.rng = new RNG(snapshot.seed);
     this.sent = snapshot.sent;
+    this.hasChangedColumn = snapshot.hasChangedColumn;
+    this.lastReceivedCount = snapshot.lastReceivedCount;
   }
 
   rngex() {
@@ -105,6 +114,10 @@ export class GarbageQueue {
 
   get size() {
     return this.queue.reduce((a, b) => a + b.amount, 0);
+  }
+
+  resetReceivedCount() {
+    this.lastReceivedCount = 0;
   }
 
   receive(...args: IncomingGarbage[]) {
@@ -143,7 +156,13 @@ export class GarbageQueue {
       cancel += amount;
     while ((send > 0 || cancel > 0) && this.size > 0) {
       this.queue[0].amount--;
-      if (this.queue[0].amount <= 0) this.queue.shift();
+      if (this.queue[0].amount <= 0) {
+        this.queue.shift();
+        if (this.rngex() < this.options.messiness.change) {
+          this.#reroll_column();
+          this.hasChangedColumn = true;
+        }
+      }
       if (send > 0) send--;
       else cancel--;
     }
@@ -152,147 +171,92 @@ export class GarbageQueue {
     return send;
   }
 
-  /**
-   * This function does NOT take into account messiness on timeout.
-   * The first garbage hole will be correct,
-   * but subsequent holes depend on whether or not garbage is cancelled.
-   */
-  predict() {
-    const rng = this.rng.clone();
-    const rngex = rng.nextFloat.bind(rng);
-
-    let lastColumn = this.lastColumn;
-
-    const reroll = () => {
-      lastColumn = this.#__internal_rerollColumn(lastColumn, rngex);
-      return lastColumn;
-    };
-
-    const result = this.#__internal_tank(
-      deepCopy(this.queue),
-      () => lastColumn,
-      rngex,
-      reroll,
-      -Number.MIN_SAFE_INTEGER,
-      Number.MAX_SAFE_INTEGER,
-      false
+  get #columnWidth() {
+    return Math.max(
+      0,
+      this.options.boardWidth - (this.options.garbage.holeSize - 1)
     );
-
-    return result.res;
   }
 
-  get nextColumn() {
-    const rng = this.rng.clone();
-    if (this.lastColumn === null)
-      return this.#__internal_rerollColumn(null, rng.nextFloat.bind(rng));
-    return this.lastColumn;
-  }
+  #reroll_column() {
+    const centerBuffer = this.options.messiness.center
+      ? Math.round(this.options.boardWidth / 5)
+      : 0;
 
-  #__internal_rerollColumn(current: number | null, rngex: RNG["nextFloat"]) {
     let col: number;
-    const cols = columnWidth(
-      this.options.boardWidth,
-      this.options.garbage.holeSize
-    );
-
-    if (this.options.messiness.nosame && current !== null) {
-      col = Math.floor(rngex() * (cols - 1));
-      if (col >= current) col++;
+    if (this.options.messiness.nosame && this.lastColumn !== null) {
+      col =
+        centerBuffer +
+        Math.floor(this.rngex() * (this.#columnWidth - 1 - 2 * centerBuffer));
+      if (col >= this.lastColumn) col++;
     } else {
-      col = Math.floor(rngex() * cols);
+      col =
+        centerBuffer +
+        Math.floor(this.rngex() * (this.#columnWidth - 2 * centerBuffer));
     }
 
-    return col;
-  }
-
-  #rerollColumn() {
-    const col = this.#__internal_rerollColumn(
-      this.lastColumn,
-      this.rngex.bind(this)
-    );
     this.lastColumn = col;
     return col;
   }
 
-  #__internal_tank(
-    queue: IncomingGarbage[],
-    lastColumn: () => number | null,
-    rngex: () => number,
-    reroll: () => number,
-    frame: number,
-    cap: number,
-    hard: boolean
-  ) {
-    if (queue.length === 0) return { res: [], lastColumn, queue };
+  tank(frame: number, cap: number, hard: boolean): OutgoingGarbage[] {
+    if (this.queue.length === 0) return [];
 
     const res: OutgoingGarbage[] = [];
 
-    queue = queue.sort((a, b) => a.frame - b.frame);
+    this.queue = this.queue.sort((a, b) => a.frame - b.frame);
 
     if (
       this.options.messiness.timeout &&
       frame >= this.lastTankTime + this.options.messiness.timeout
     ) {
-      reroll();
-      this.lastTankTime = frame;
+      this.#reroll_column();
+      this.hasChangedColumn = true;
     }
 
-    let total = 0;
+    const tankAll = false;
+    const lines = tankAll
+      ? 400
+      : Math.floor(Math.min(cap, this.options.cap.max));
 
-    while (total < cap && queue.length > 0) {
-      const item = deepCopy(queue[0]);
+    for (let i = 0; i < lines && this.queue.length !== 0; i++) {
+      const item = this.queue[0];
 
-      // TODO: wtf hacky fix, this is 100% not right idk how to fix this
       if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
-        break; // do not spawn garbage that is still traveling
-      total += item.amount;
+        break;
 
-      let exausted = false;
+      item.amount--;
+      this.lastReceivedCount++;
 
-      if (total > cap) {
-        const excess = total - cap;
-        queue[0].amount = excess;
-        item.amount -= excess;
-      } else {
-        queue.shift();
-        exausted = true;
+      let col: number = this.lastColumn!;
+      if (
+        (col === null || this.rngex() < this.options.messiness.within) &&
+        !this.hasChangedColumn &&
+        i !== 0
+      ) {
+        col = this.#reroll_column();
+        this.hasChangedColumn = true;
       }
 
-      for (let i = 0; i < item.amount; i++) {
-        const r =
-          lastColumn() === null || rngex() < this.options.messiness.within;
-        res.push({
-          ...item,
-          amount: 1,
-          column: r ? reroll() : lastColumn()!
-        });
-      }
+      res.push({
+        ...item,
+        amount: 1,
+        column: col
+      });
 
-      if (exausted && rngex() < this.options.messiness.change) {
-        reroll();
+      this.hasChangedColumn = false;
+
+      if (item.amount < 0) {
+        this.queue.shift();
+
+        if (this.rngex() < this.options.messiness.change) {
+          this.#reroll_column();
+          this.hasChangedColumn = true;
+        }
       }
     }
 
-    return {
-      res,
-      queue
-    };
-  }
-
-  tank(frame: number, cap: number, hard: boolean) {
-    const { res, queue } = this.#__internal_tank(
-      this.queue,
-      () => this.lastColumn,
-      this.rngex.bind(this),
-      this.#rerollColumn.bind(this),
-      frame,
-      cap,
-      hard
-    );
-
-    this.queue = queue;
-
-    return res.map((v) => ({ ...v, bombs: this.options.bombs }));
+    return res;
   }
 
   round(amount: number): number {
