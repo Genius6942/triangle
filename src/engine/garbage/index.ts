@@ -1,5 +1,4 @@
 import { deepCopy, RNG } from "../utils";
-import { columnWidth } from "./utils";
 
 export interface GarbageQueueInitializeParams {
   cap: {
