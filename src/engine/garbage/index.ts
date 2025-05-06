@@ -222,8 +222,8 @@ export class GarbageQueue {
     for (let i = 0; i < lines && this.queue.length !== 0; i++) {
       const item = this.queue[0];
 
-			// TODO: Fix this
-			// The real game uses an "active" system where garbages have a proptery, may be an issue later
+      // TODO: Fix this
+      // The real game uses an "active" system where garbages have a proptery, may be an issue later
       if (item.frame + this.options.garbage.speed > (hard ? frame : frame - 1))
         break;
 
@@ -233,8 +233,7 @@ export class GarbageQueue {
       let col: number = this.lastColumn!;
       if (
         (col === null || this.rngex() < this.options.messiness.within) &&
-        !this.hasChangedColumn &&
-        i !== 0
+        !this.hasChangedColumn
       ) {
         col = this.#reroll_column();
         this.hasChangedColumn = true;
