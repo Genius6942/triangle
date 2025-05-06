@@ -30,6 +30,8 @@ export class Room {
   public autostart!: RoomTypes.Autostart;
   /** The match config for the room */
   public match!: RoomTypes.Match;
+	/** The maxiumum number of players that can play in the room (override by moving as host) */
+	public userLimit!: number;
   /** The players in the room */
   public players!: RoomTypes.Player[];
   /** The room config */
@@ -62,7 +64,8 @@ export class Room {
       "creator",
       "state",
       "match",
-      "players"
+      "players",
+			"userLimit"
     ].forEach((key) =>
       Object.assign(this, { [key]: data[key as keyof typeof data] })
     );

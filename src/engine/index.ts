@@ -1615,6 +1615,7 @@ export class Engine {
     gb: chalk.bgBlackBright,
     bomb: chalk.bgHex("#FFA500")
   };
+	
 
   get text() {
     const boardTop = this.board.state.findIndex((row: (string | null)[]) =>
