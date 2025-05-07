@@ -689,7 +689,7 @@ export namespace ChannelAPI {
         /**
          * The requested user:
          */
-        user?: {
+        users?: {
           /**
            *  The user's internal ID.
            */
@@ -698,22 +698,52 @@ export namespace ChannelAPI {
            * The user's username.
            */
           username: string;
-        };
+        }[];
       }
+
+			export type Query  =
+			| `discord:id:${string}`               // Discord user ID (snowflake)
+			| `discord:username:${string}`         // Discord username
+			| `twitch:id:${string}`                // Twitch user ID
+			| `twitch:username:${string}`          // Twitch username (URL)
+			| `twitch:display_username:${string}`  // Twitch display name
+			| `twitter:id:${string}`               // X (Twitter) user ID
+			| `twitter:username:${string}`         // X handle (URL)
+			| `twitter:display_username:${string}` // X display name
+			| `reddit:id:${string}`                // Reddit user ID
+			| `reddit:username:${string}`          // Reddit username
+			| `youtube:id:${string}`               // YouTube user ID
+			| `youtube:username:${string}`         // YouTube display name
+			| `steam:id:${string}`                 // SteamID
+			| `steam:username:${string}`           // Steam display name
+		
       export interface Request {
         /**
          * The social connection to look up. Must be one of:
-         * discord:snowflake — a Discord User ID
+					discord:id:<snowflake> - a Discord user ID
+					discord:username:<username> - a Discord username
+					twitch:id:<userid> - a Twitch user ID
+					twitch:username:<username> - a Twitch username (as used in the URL)
+					twitch:display_username:<username> - a Twitch display name (may include Unicode)
+					twitter:id:<userid> - an X user ID
+					twitter:username:<handle> - an X handle (as used in the URL)
+					twitter:display_username:<username> - an X display name (may include Unicode)
+					reddit:id:<userid> - a Reddit user ID
+					reddit:username:<username> - a Reddit username
+					youtube:id:<userid> - a YouTube user ID (as used in the URL)
+					youtube:username:<username> - a YouTube display name
+					steam:id:<steamid> - a SteamID
+					steam:username:<username> - a Steam display name
          */
-        query: string;
+        query: Query;
       }
     }
     export const search: {
-      (query: string): Promise<Search.Response["user"]>;
-      ({ query }: { query: string }): Promise<Search.Response["user"]>;
-    } = generator.args<Search.Request, Search.Response, [string], "user">(
+      (query: Search.Query): Promise<Search.Response["users"]>;
+      ({ query }: { query: Search.Query }): Promise<Search.Response["users"]>;
+    } = generator.args<Search.Request, Search.Response, [string], "users">(
       "users/search/:query",
-      "user"
+      "users"
     );
 
     export namespace Leaderboard {

@@ -9,7 +9,7 @@
 
 > The Tetra Channel section of this library (imported through '@haelp/teto/ch') is open to use by anyone.
 
-Triangle was last known to work with TETR.IO Beta version **1.7.1.**
+Triangle was last known to work with TETR.IO Beta version **1.7.3.**
 
 ## Installation
 
