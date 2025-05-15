@@ -1223,19 +1223,30 @@ export class Engine {
     for (const gb of res.garbage) this.stats.garbage.attack += gb;
 
     if (lines > 0) {
+			const cancelEvents: Events['garbage.cancel'][] = [];
       this.lastWasClear = true;
       while (res.garbage.length > 0) {
         if (res.garbage[0] === 0) {
           res.garbage.shift();
           continue;
         }
-        const r = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
+        const [r, cancelled] = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
+				cancelEvents.push(...cancelled.map((c) => ({
+					id: c.cid,
+					amount: c.amount,
+					size: c.size
+				})));
+
         if (r === 0) res.garbage.shift();
         else {
           res.garbage[0] = r;
           break;
         }
       }
+
+			cancelEvents.forEach((event) => {
+				this.events.emit("garbage.cancel", event);
+			});
     } else {
       this.lastWasClear = false;
       const garbages = this.garbageQueue.tank(
@@ -1244,15 +1255,33 @@ export class Engine {
         hard
       );
       res.garbageAdded = garbages;
+
+			
       if (res.garbageAdded) {
+				const tankEvent: Events['garbage.tank'][] = [];
         garbages.forEach((garbage) => {
           this.board.insertGarbage({
             ...garbage,
             bombs: this.garbageQueue.options.bombs
           });
-        });
+
+					if (tankEvent.length === 0 || tankEvent[tankEvent.length - 1].id !== garbage.id) {
+						tankEvent.push({
+							id: garbage.id,
+							column: garbage.column,
+							amount: garbage.amount,
+							size: garbage.size
+						});
+					} else {
+						tankEvent[tankEvent.length - 1].amount += garbage.amount;
+					}
+				});
+
+				tankEvent.forEach((event) => {
+					this.events.emit("garbage.tank", event);
+				});
       }
-    }
+		}
 
     this.nextPiece();
 

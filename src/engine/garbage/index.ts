@@ -48,6 +48,7 @@ export interface IncomingGarbage extends Garbage {
   confirmed: boolean;
 }
 export interface OutgoingGarbage extends Garbage {
+  id: number;
   column: number;
 }
 
@@ -147,6 +148,8 @@ export class GarbageQueue {
   ) {
     let send = amount,
       cancel = 0;
+
+    let cancelled: IncomingGarbage[] = [];
     if (
       pieceCount + 1 <=
         this.options.openerPhase - (legacy.openerPhase ? 1 : 0) &&
@@ -155,6 +158,14 @@ export class GarbageQueue {
       cancel += amount;
     while ((send > 0 || cancel > 0) && this.size > 0) {
       this.queue[0].amount--;
+      if (
+        cancelled.length === 0 ||
+        cancelled[cancelled.length - 1].cid !== this.queue[0].cid
+      ) {
+        cancelled.push({ ...this.queue[0], amount: 1 });
+      } else {
+        cancelled[cancelled.length - 1].amount++;
+      }
       if (this.queue[0].amount <= 0) {
         this.queue.shift();
         if (this.rngex() < this.options.messiness.change) {
@@ -167,7 +178,7 @@ export class GarbageQueue {
     }
 
     this.sent += send;
-    return send;
+    return [send, cancelled] as const;
   }
 
   get #columnWidth() {
@@ -241,7 +252,8 @@ export class GarbageQueue {
       res.push({
         ...item,
         amount: 1,
-        column: col
+        column: col,
+        id: item.cid
       });
 
       this.hasChangedColumn = false;

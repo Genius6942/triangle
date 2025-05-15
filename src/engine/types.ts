@@ -80,6 +80,17 @@ export interface Events {
     gameid: number;
     frame: number;
   };
+  "garbage.tank": {
+    id: number;
+    column: number;
+    amount: number;
+    size: number;
+  };
+  "garbage.cancel": {
+    id: number;
+    amount: number;
+    size: number;
+  };
 
   "falling.lock": LockRes;
 
