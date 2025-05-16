@@ -285,3 +285,5 @@ export class GarbageQueue {
     }
   }
 }
+
+export * from "./legacy";

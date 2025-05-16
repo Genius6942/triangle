@@ -103,7 +103,7 @@ export class Engine {
     lines: number;
   };
   gameOptions!: GameOptions;
-  garbageQueue!: GarbageQueue;
+  garbageQueue!: GarbageQueue | LegacyGarbageQueue;
 
   frame!: number;
   subframe!: number;
@@ -169,6 +169,8 @@ export class Engine {
       sent: number[];
       received: OutgoingGarbage[];
     };
+		keys: Game.Key[];
+		lastLock: number;
   };
 
   constructor(options: EngineInitializeParams) {
@@ -286,7 +288,9 @@ export class Engine {
       garbage: {
         sent: [],
         received: []
-      }
+      },
+			keys: [],
+			lastLock: 0,
     };
 
     return res!;
@@ -1212,12 +1216,16 @@ export class Engine {
     }
 
     const res: LockRes = {
+			mino: this.falling.symbol,
+			garbageCleared,
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
       stats: this.stats,
-      garbageAdded: false as false | OutgoingGarbage[],
-      topout: false
+      garbageAdded: false,
+      topout: false,
+			keysPresses: this.resCache.keys.splice(0),
+			pieceTime: this.frame - this.resCache.lastLock
     };
 
     for (const gb of res.garbage) this.stats.garbage.attack += gb;
@@ -1232,7 +1240,7 @@ export class Engine {
         }
         const [r, cancelled] = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
 				cancelEvents.push(...cancelled.map((c) => ({
-					id: c.cid,
+					iid: c.cid,
 					amount: c.amount,
 					size: c.size
 				})));
@@ -1265,9 +1273,9 @@ export class Engine {
             bombs: this.garbageQueue.options.bombs
           });
 
-					if (tankEvent.length === 0 || tankEvent[tankEvent.length - 1].id !== garbage.id) {
+					if (tankEvent.length === 0 || tankEvent[tankEvent.length - 1].iid !== garbage.id) {
 						tankEvent.push({
-							id: garbage.id,
+							iid: garbage.id,
 							column: garbage.column,
 							amount: garbage.amount,
 							size: garbage.size
@@ -1307,6 +1315,7 @@ export class Engine {
     this.resCache.pieces++;
     this.resCache.garbage.sent.push(...res.garbage);
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
+		this.resCache.lastLock = this.frame;
 
     this.stats.pieces++;
     this.stats.lines += lines;
@@ -1323,6 +1332,7 @@ export class Engine {
 
   #keydown({ data: event }: Game.Replay.Frames.Keypress) {
     this.#processSubframe(event.subframe);
+		this.resCache.keys.push(event.key);
     // TODO: inversion?
     // if (this.misc.inverted)
     //   switch (e.key) {
@@ -1556,6 +1566,7 @@ export class Engine {
         case "ige":
           if (frame.data.type === "interaction") {
             if (frame.data.data.type === "garbage") {
+							const original = frame.data.data.amt;
               const amount = this.multiplayer?.passthrough?.network
                 ? this.igeHandler.receive({
                     playerID: frame.data.data.gameid,
@@ -1576,7 +1587,9 @@ export class Engine {
               });
               this.stats.garbage.receive += amount;
               this.events.emit("garbage.receive", {
-                amount
+								iid: frame.data.data.iid,
+                amount,
+								originalAmount: original,
               });
             }
           } else if (frame.data.type === "interaction_confirm") {
