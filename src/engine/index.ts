@@ -1,13 +1,7 @@
 import { Game } from "../types";
 import { Board, BoardInitializeParams } from "./board";
 import { constants } from "./constants";
-import {
-  GarbageQueue,
-  GarbageQueueInitializeParams,
-  IncomingGarbage,
-  LegacyGarbageQueue,
-  OutgoingGarbage
-} from "./garbage";
+import { GarbageQueue, GarbageQueueInitializeParams, IncomingGarbage, LegacyGarbageQueue, OutgoingGarbage } from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
 import { Queue, QueueInitializeParams } from "./queue";
 import { Mino } from "./queue/types";
@@ -21,7 +15,10 @@ import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
 import { Rotation } from "./utils/tetromino/types";
 
+
+
 import chalk from "chalk";
+
 
 export interface GameOptions {
   spinBonuses: Game.SpinBonuses;
@@ -189,6 +186,11 @@ export class Engine {
     this._kickTable = options.kickTable;
 
     this.board = new Board(options.board);
+
+		console.log(
+      options.misc.date,
+      (options.misc.date ?? new Date()) > new Date(2025, 4, 6)
+    );
 
     this.garbageQueue = new (
       (options.misc.date ?? new Date()) > new Date(2025, 4, 6)
@@ -1247,7 +1249,7 @@ export class Engine {
           res.garbage[0],
           this.stats.pieces,
           {
-            openerPhase: (this.misc.date ?? new Date()) > new Date(2025, 1, 16)
+            openerPhase: (this.misc.date ?? new Date()) < new Date(2025, 1, 16)
           }
         );
         cancelEvents.push(
