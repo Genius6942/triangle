@@ -86,7 +86,7 @@ export const users = (get: Get, post: Post, __: APIDefaults) => {
   const resolve = async (username: string) => {
     const res = await get<{ _id: string }>({
       token: undefined,
-      uri: `users/${encodeURIComponent(username)}/resolve`
+      uri: `users/${encodeURIComponent(username.trim())}/resolve`
     });
     if (res.success === false) throw new Error(res.error.msg + ": " + username);
     return res._id;
