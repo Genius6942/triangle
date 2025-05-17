@@ -187,11 +187,6 @@ export class Engine {
 
     this.board = new Board(options.board);
 
-		console.log(
-      options.misc.date,
-      (options.misc.date ?? new Date()) > new Date(2025, 4, 6)
-    );
-
     this.garbageQueue = new (
       (options.misc.date ?? new Date()) > new Date(2025, 4, 6)
         ? GarbageQueue
