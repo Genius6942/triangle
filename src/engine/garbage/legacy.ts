@@ -1,6 +1,10 @@
-import { GarbageQueueInitializeParams, IncomingGarbage, GarbageQueueSnapshot, OutgoingGarbage } from ".";
+import {
+  GarbageQueueInitializeParams,
+  IncomingGarbage,
+  GarbageQueueSnapshot,
+  OutgoingGarbage
+} from ".";
 import { deepCopy, RNG } from "../utils";
-
 
 const columnWidth = (width: number, garbageHoleSize: number) => {
   return Math.max(0, width - (garbageHoleSize - 1));
@@ -35,8 +39,8 @@ export class LegacyGarbageQueue {
       lastColumn: this.lastColumn,
       sent: this.sent,
       queue: deepCopy(this.queue),
-			hasChangedColumn: false,
-			lastReceivedCount: 0
+      hasChangedColumn: false,
+      lastReceivedCount: 0
     };
   }
 
@@ -84,6 +88,9 @@ export class LegacyGarbageQueue {
   ) {
     let send = amount,
       cancel = 0;
+
+    let cancelled: IncomingGarbage[] = [];
+
     if (
       pieceCount + 1 <=
         this.options.openerPhase - (legacy.openerPhase ? 1 : 0) &&
@@ -92,13 +99,23 @@ export class LegacyGarbageQueue {
       cancel += amount;
     while ((send > 0 || cancel > 0) && this.size > 0) {
       this.queue[0].amount--;
+
+      if (
+        cancelled.length === 0 ||
+        cancelled[cancelled.length - 1].cid !== this.queue[0].cid
+      ) {
+        cancelled.push({ ...this.queue[0], amount: 1 });
+      } else {
+        cancelled[cancelled.length - 1].amount++;
+      }
+
       if (this.queue[0].amount <= 0) this.queue.shift();
       if (send > 0) send--;
       else cancel--;
     }
 
     this.sent += send;
-    return send;
+    return [send, cancelled] as const;
   }
 
   /**
@@ -212,7 +229,7 @@ export class LegacyGarbageQueue {
           lastColumn() === null || rngex() < this.options.messiness.within;
         res.push({
           ...item,
-					id: item.cid,
+          id: item.cid,
           amount: 1,
           column: r ? reroll() : lastColumn()!
         });

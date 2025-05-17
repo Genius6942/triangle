@@ -5,6 +5,7 @@ import {
   GarbageQueue,
   GarbageQueueInitializeParams,
   IncomingGarbage,
+  LegacyGarbageQueue,
   OutgoingGarbage
 } from "./garbage";
 import { IGEHandler, MultiplayerOptions } from "./multiplayer";
@@ -169,8 +170,8 @@ export class Engine {
       sent: number[];
       received: OutgoingGarbage[];
     };
-		keys: Game.Key[];
-		lastLock: number;
+    keys: Game.Key[];
+    lastLock: number;
   };
 
   constructor(options: EngineInitializeParams) {
@@ -189,7 +190,11 @@ export class Engine {
 
     this.board = new Board(options.board);
 
-    this.garbageQueue = new GarbageQueue(options.garbage);
+    this.garbageQueue = new (
+      (options.misc.date ?? new Date()) > new Date(2025, 4, 6)
+        ? GarbageQueue
+        : LegacyGarbageQueue
+    )(options.garbage);
 
     this.igeHandler = new IGEHandler(options.multiplayer?.opponents || []);
 
@@ -289,8 +294,8 @@ export class Engine {
         sent: [],
         received: []
       },
-			keys: [],
-			lastLock: 0,
+      keys: [],
+      lastLock: 0
     };
 
     return res!;
@@ -1216,34 +1221,42 @@ export class Engine {
     }
 
     const res: LockRes = {
-			mino: this.falling.symbol,
-			garbageCleared,
+      mino: this.falling.symbol,
+      garbageCleared,
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
       stats: this.stats,
       garbageAdded: false,
       topout: false,
-			keysPresses: this.resCache.keys.splice(0),
-			pieceTime: this.frame - this.resCache.lastLock
+      keysPresses: this.resCache.keys.splice(0),
+      pieceTime: this.frame - this.resCache.lastLock
     };
 
     for (const gb of res.garbage) this.stats.garbage.attack += gb;
 
     if (lines > 0) {
-			const cancelEvents: Events['garbage.cancel'][] = [];
+      const cancelEvents: Events["garbage.cancel"][] = [];
       this.lastWasClear = true;
       while (res.garbage.length > 0) {
         if (res.garbage[0] === 0) {
           res.garbage.shift();
           continue;
         }
-        const [r, cancelled] = this.garbageQueue.cancel(res.garbage[0], this.stats.pieces);
-				cancelEvents.push(...cancelled.map((c) => ({
-					iid: c.cid,
-					amount: c.amount,
-					size: c.size
-				})));
+        const [r, cancelled] = this.garbageQueue.cancel(
+          res.garbage[0],
+          this.stats.pieces,
+          {
+            openerPhase: (this.misc.date ?? new Date()) > new Date(2025, 1, 16)
+          }
+        );
+        cancelEvents.push(
+          ...cancelled.map((c) => ({
+            iid: c.cid,
+            amount: c.amount,
+            size: c.size
+          }))
+        );
 
         if (r === 0) res.garbage.shift();
         else {
@@ -1252,9 +1265,9 @@ export class Engine {
         }
       }
 
-			cancelEvents.forEach((event) => {
-				this.events.emit("garbage.cancel", event);
-			});
+      cancelEvents.forEach((event) => {
+        this.events.emit("garbage.cancel", event);
+      });
     } else {
       this.lastWasClear = false;
       const garbages = this.garbageQueue.tank(
@@ -1264,32 +1277,34 @@ export class Engine {
       );
       res.garbageAdded = garbages;
 
-			
       if (res.garbageAdded) {
-				const tankEvent: Events['garbage.tank'][] = [];
+        const tankEvent: Events["garbage.tank"][] = [];
         garbages.forEach((garbage) => {
           this.board.insertGarbage({
             ...garbage,
             bombs: this.garbageQueue.options.bombs
           });
 
-					if (tankEvent.length === 0 || tankEvent[tankEvent.length - 1].iid !== garbage.id) {
-						tankEvent.push({
-							iid: garbage.id,
-							column: garbage.column,
-							amount: garbage.amount,
-							size: garbage.size
-						});
-					} else {
-						tankEvent[tankEvent.length - 1].amount += garbage.amount;
-					}
-				});
+          if (
+            tankEvent.length === 0 ||
+            tankEvent[tankEvent.length - 1].iid !== garbage.id
+          ) {
+            tankEvent.push({
+              iid: garbage.id,
+              column: garbage.column,
+              amount: garbage.amount,
+              size: garbage.size
+            });
+          } else {
+            tankEvent[tankEvent.length - 1].amount += garbage.amount;
+          }
+        });
 
-				tankEvent.forEach((event) => {
-					this.events.emit("garbage.tank", event);
-				});
+        tankEvent.forEach((event) => {
+          this.events.emit("garbage.tank", event);
+        });
       }
-		}
+    }
 
     this.nextPiece();
 
@@ -1315,7 +1330,7 @@ export class Engine {
     this.resCache.pieces++;
     this.resCache.garbage.sent.push(...res.garbage);
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
-		this.resCache.lastLock = this.frame;
+    this.resCache.lastLock = this.frame;
 
     this.stats.pieces++;
     this.stats.lines += lines;
@@ -1332,7 +1347,7 @@ export class Engine {
 
   #keydown({ data: event }: Game.Replay.Frames.Keypress) {
     this.#processSubframe(event.subframe);
-		this.resCache.keys.push(event.key);
+    this.resCache.keys.push(event.key);
     // TODO: inversion?
     // if (this.misc.inverted)
     //   switch (e.key) {
@@ -1566,7 +1581,7 @@ export class Engine {
         case "ige":
           if (frame.data.type === "interaction") {
             if (frame.data.data.type === "garbage") {
-							const original = frame.data.data.amt;
+              const original = frame.data.data.amt;
               const amount = this.multiplayer?.passthrough?.network
                 ? this.igeHandler.receive({
                     playerID: frame.data.data.gameid,
@@ -1587,9 +1602,9 @@ export class Engine {
               });
               this.stats.garbage.receive += amount;
               this.events.emit("garbage.receive", {
-								iid: frame.data.data.iid,
+                iid: frame.data.data.iid,
                 amount,
-								originalAmount: original,
+                originalAmount: original
               });
             }
           } else if (frame.data.type === "interaction_confirm") {
@@ -1657,7 +1672,6 @@ export class Engine {
     gb: chalk.bgBlackBright,
     bomb: chalk.bgHex("#FFA500")
   };
-	
 
   get text() {
     const boardTop = this.board.state.findIndex((row: (string | null)[]) =>
