@@ -1,6 +1,19 @@
-# Triangle.js
-
-### A Typescript library and client for interacting with the TETR.IO main game API and the ch.tetr.io channel API.
+<div align="center">
+	<h1>Triangle.js</h1>
+	<h2>A Typescript library and client for interacting with the TETR.IO main game API and the ch.tetr.io channel API.</h2>
+	<h3>Used by the largest projects in the TETR.IO community:</h3>
+</div>
+<div align="center">
+	<a href="https://ch.tetr.io/u/mochbot">
+  <img src="https://tetr.io/user-content/avatars/65c4d8d9ce9cb4d6c9d73c13.jpg?rv=1707399902733" alt="MochBot" title="MochBot" width=100/></a>
+  <a href="https://ch.tetr.io/u/zzztoj"><img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPSczMDAnIGhlaWdodD0nMzAwJyBzdHlsZT0nYmFja2dyb3VuZC1jb2xvcjpyZ2JhKDgsMTAsNiwxKTsnPjxnIHN0eWxlPSdmaWxsOnJnYmEoMjAyLDQzLDE1NCwxKTsgc3Ryb2tlOnJnYmEoMjAyLDQzLDE1NCwxKTsgc3Ryb2tlLXdpZHRoOjEuNTsnPjxyZWN0ICB4PScxMjknIHk9JzE3MScgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9Jzg3JyB5PSc0NScgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzE3MScgeT0nNDUnIHdpZHRoPSc0MicgaGVpZ2h0PSc0MicvPjxyZWN0ICB4PSc4NycgeT0nODcnIHdpZHRoPSc0MicgaGVpZ2h0PSc0MicvPjxyZWN0ICB4PScxNzEnIHk9Jzg3JyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48cmVjdCAgeD0nODcnIHk9JzEyOScgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzE3MScgeT0nMTI5JyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48cmVjdCAgeD0nODcnIHk9JzE3MScgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzE3MScgeT0nMTcxJyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48cmVjdCAgeD0nODcnIHk9JzIxMycgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzE3MScgeT0nMjEzJyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48cmVjdCAgeD0nNDUnIHk9JzEyOScgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzIxMycgeT0nMTI5JyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48cmVjdCAgeD0nNDUnIHk9JzIxMycgd2lkdGg9JzQyJyBoZWlnaHQ9JzQyJy8+PHJlY3QgIHg9JzIxMycgeT0nMjEzJyB3aWR0aD0nNDInIGhlaWdodD0nNDInLz48L2c+PC9zdmc+" alt="ZZZTOJ" title="ZZZTOJ" width=100/></a>
+	<a href="https://discord.gg/ATHwyMdSDf">
+  <img src="https://cdn.discordapp.com/avatars/1192933531131838544/f45332afa1db00109829b5806d6f2ca4.webp?size=1024&format=webp&width=896&height=896" alt="MinoMuncher" title="MinoMuncher" width=100/></a>
+</div>
+<div align="center">
+	<img alt="NPM Downloads" src="https://img.shields.io/npm/d18m/%40haelp%2Fteto">
+<img alt="NPM Version" src="https://img.shields.io/npm/v/%40haelp%2Fteto">
+</div>
 
 ## Disclaimer:
 
@@ -8,6 +21,8 @@
 > This restriction includes the use of the `Client` class and the `API` class.
 
 > The Tetra Channel section of this library (imported through '@haelp/teto/ch') is open to use by anyone.
+
+---
 
 Triangle was last known to work with TETR.IO Beta version **1.7.3.**
 
