@@ -622,3 +622,6 @@ export class Ribbon {
     return this.codecMethod;
   }
 }
+
+export * from "./types";
+export { CodecType } from "./codec";

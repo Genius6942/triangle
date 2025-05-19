@@ -1,5 +1,5 @@
 export namespace Utils {
-  type DeepKeysInner<T> = T extends object
+  export type DeepKeysInner<T> = T extends object
     ? T extends any[]
       ? never
       : {
@@ -10,7 +10,9 @@ export namespace Utils {
         }[keyof T]
     : "";
 
-  type RemoveDotOptions<T extends string> = T extends `${infer _}.` ? never : T;
+  export type RemoveDotOptions<T extends string> = T extends `${infer _}.`
+    ? never
+    : T;
 
   // @ts-expect-error
   export type DeepKeys<T> = RemoveDotOptions<DeepKeysInner<T>>;

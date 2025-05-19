@@ -3,6 +3,7 @@ import { Mino } from "../../queue/types";
 import { Rotation } from "../tetromino/types";
 import { kicks } from "./data";
 
+export { kicks as kickData };
 export type KickTable = keyof typeof kicks;
 
 export const legal = (blocks: [number, number][], board: BoardSquare[][]) => {

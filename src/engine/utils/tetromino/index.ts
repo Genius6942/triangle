@@ -256,3 +256,4 @@ export class Tetromino {
 }
 
 export * from "./data";
+export * from "./types";

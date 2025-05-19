@@ -131,9 +131,8 @@ export namespace ChannelAPI {
         .split("/")
         .filter((v) => v.startsWith(":"))
         .map((v) => v.slice(1));
-      type ArgsObject = { [k in keyof Req]: Req[k] };
       async function getArgs(
-        ...args: ArgValues | [ArgsObject]
+        ...args: ArgValues | [Types.ArgsObject<Req>]
       ): Promise<
         ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
       > {
@@ -199,13 +198,12 @@ export namespace ChannelAPI {
         .split("/")
         .filter((v) => v.startsWith(":"))
         .map((v) => v.slice(1));
-      type ArgsObject = { [k in keyof Req]: Req[k] };
       async function getArgsAndQuery(
         ...args:
           | [...ArgValues, QueryParams]
           | ArgValues
-          | [ArgsObject, QueryParams]
-          | [ArgsObject]
+          | [Types.ArgsObject<Req>, QueryParams]
+          | [Types.ArgsObject<Req>]
       ): Promise<
         ResKey extends undefined ? Res : Res[Extract<ResKey, keyof Res>]
       > {
@@ -1266,6 +1264,8 @@ export namespace ChannelAPI {
 
   // TYPES
   export namespace Types {
+    export type ArgsObject<Req extends object> = { [k in keyof Req]: Req[k] };
+
     export interface Config {
       sessionID: string | null;
       /** Must include the trailing slash. Include the full url. Example: https://ch.tetr.io/api/ */
