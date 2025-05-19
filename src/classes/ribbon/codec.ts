@@ -2,7 +2,13 @@
 import { pack } from "../../utils";
 import { Bits } from "./bits";
 
-export type CodecType = "vm" | "custom" | "codec-2" | "json" | "teto" | "candor";
+export type CodecType =
+  | "vm"
+  | "custom"
+  | "codec-2"
+  | "json"
+  | "teto"
+  | "candor";
 
 export type Command = {
   flags: number;

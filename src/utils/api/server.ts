@@ -1,7 +1,6 @@
 import { APIDefaults } from ".";
 import type { Get, Post } from "./basic";
 
-
 export namespace Server {
   export interface Signature {
     version: string;
@@ -64,7 +63,7 @@ export namespace Server {
         time: number;
       };
     };
-  };
+  }
 
   export interface Environment {
     stats: {
@@ -143,7 +142,7 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
       if (result.success === false) throw new Error(result.error.msg);
       return result;
     },
-    spool: async () => {
+    spool: async (useSpools: boolean) => {
       const res = await get<{
         endpoint: string;
         spools: {
@@ -163,7 +162,7 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
         throw new Error(res.error.msg);
       }
 
-      if (res.spools === null)
+      if (!useSpools || res.spools === null)
         return { endpoint: `tetr.io${res.endpoint}`, token: "" };
       else {
         const lowestPingSpool = await findLowestPingSpool(res.spools.spools);

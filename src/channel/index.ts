@@ -701,22 +701,22 @@ export namespace ChannelAPI {
         }[];
       }
 
-			export type Query  =
-			| `discord:id:${string}`               // Discord user ID (snowflake)
-			| `discord:username:${string}`         // Discord username
-			| `twitch:id:${string}`                // Twitch user ID
-			| `twitch:username:${string}`          // Twitch username (URL)
-			| `twitch:display_username:${string}`  // Twitch display name
-			| `twitter:id:${string}`               // X (Twitter) user ID
-			| `twitter:username:${string}`         // X handle (URL)
-			| `twitter:display_username:${string}` // X display name
-			| `reddit:id:${string}`                // Reddit user ID
-			| `reddit:username:${string}`          // Reddit username
-			| `youtube:id:${string}`               // YouTube user ID
-			| `youtube:username:${string}`         // YouTube display name
-			| `steam:id:${string}`                 // SteamID
-			| `steam:username:${string}`           // Steam display name
-		
+      export type Query =
+        | `discord:id:${string}` // Discord user ID (snowflake)
+        | `discord:username:${string}` // Discord username
+        | `twitch:id:${string}` // Twitch user ID
+        | `twitch:username:${string}` // Twitch username (URL)
+        | `twitch:display_username:${string}` // Twitch display name
+        | `twitter:id:${string}` // X (Twitter) user ID
+        | `twitter:username:${string}` // X handle (URL)
+        | `twitter:display_username:${string}` // X display name
+        | `reddit:id:${string}` // Reddit user ID
+        | `reddit:username:${string}` // Reddit username
+        | `youtube:id:${string}` // YouTube user ID
+        | `youtube:username:${string}` // YouTube display name
+        | `steam:id:${string}` // SteamID
+        | `steam:username:${string}`; // Steam display name
+
       export interface Request {
         /**
          * The social connection to look up. Must be one of:

@@ -1,7 +1,13 @@
 //@ts-nocheck
 import { default as n } from "../../utils/theorypack/msgpackr.js";
 import { Bits as r } from "./bits";
-import { OptionsList, spinbonuses_rules, kicksets, tetrominoes, minocolors } from "./shared";
+import {
+  OptionsList,
+  spinbonuses_rules,
+  kicksets,
+  tetrominoes,
+  minocolors
+} from "./shared";
 
 import { strictShallowEqual } from "fast-equals";
 

@@ -2,18 +2,13 @@ import { version } from "../../utils";
 import { basic } from "../../utils/api/basic";
 import { Server } from "../../utils/api/server";
 
-
-
 import fsSync from "node:fs";
 import fs from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 import vm from "node:vm";
 
-
-
 import * as msgpackr from "msgpackr";
-
 
 let globalVM: Awaited<ReturnType<typeof vmPack>> | null = null;
 

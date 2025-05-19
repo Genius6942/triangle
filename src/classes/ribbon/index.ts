@@ -2,8 +2,8 @@ import { Emitter, Events, Game } from "../../types";
 import { API, APITypes } from "../../utils";
 import { Bits } from "./bits";
 import { Codec, CodecType } from "./codec";
-import { FullCodec } from "./codec-full";
 import { CandorCodec } from "./codec-candor";
+import { FullCodec } from "./codec-full";
 import { tetoPack } from "./teto-pack";
 import { RibbonEvents } from "./types";
 import { vmPack } from "./vm-pack";
@@ -44,6 +44,7 @@ export class Ribbon {
   private codecWrapper?: Awaited<ReturnType<typeof tetoPack>>;
   private globalVM: boolean;
   private globalTeto: boolean;
+  private useSpools: boolean;
 
   private spool: {
     endpoint?: string;
@@ -100,7 +101,8 @@ export class Ribbon {
     codec = "teto",
     verbose = false,
     globalVM = false,
-    globalPacker = false
+    globalPacker = false,
+    spooling = true
   }: {
     token: string;
     userAgent: string;
@@ -109,6 +111,7 @@ export class Ribbon {
     verbose?: boolean;
     globalVM?: boolean;
     globalPacker?: boolean;
+    spooling?: boolean;
   }) {
     this.token = token;
     this.handling = handling;
@@ -118,6 +121,7 @@ export class Ribbon {
     this.verbose = verbose;
     this.globalVM = globalVM;
     this.globalTeto = globalPacker;
+    this.useSpools = spooling;
   }
 
   log(
@@ -157,7 +161,7 @@ export class Ribbon {
           endpoint: this.spool.endpoint,
           token: this.spool.token
         })
-      : this.api.server.spool();
+      : this.api.server.spool(this.useSpools);
 
     this.session.lastPong = performance.now();
     this.spool.signature = new Promise<APITypes.Server.Signature>(
@@ -177,24 +181,32 @@ export class Ribbon {
 
     const wsClient = new WebSocket();
 
-    wsClient.on("connectFailed", (error: { toString: () => string, errors?: any[] }) => {
-      if (error instanceof AggregateError && Array.isArray((error as any).errors)) {
-        this.log("Aggregated Connect Errors:", {
-          force: true,
-          level: "error"
-        });
-        (error as any).errors.forEach((err: any, idx: number) => {
-          this.log(`  [${idx + 1}] ${err?.stack || err?.message || err?.toString?.() || err}`,
-            { force: true, level: "error" });
-        });
-      } else {
-        this.log("Connect error: " + error.toString(), {
-          force: true,
-          level: "error"
-        });
+    wsClient.on(
+      "connectFailed",
+      (error: { toString: () => string; errors?: any[] }) => {
+        if (
+          error instanceof AggregateError &&
+          Array.isArray((error as any).errors)
+        ) {
+          this.log("Aggregated Connect Errors:", {
+            force: true,
+            level: "error"
+          });
+          (error as any).errors.forEach((err: any, idx: number) => {
+            this.log(
+              `  [${idx + 1}] ${err?.stack || err?.message || err?.toString?.() || err}`,
+              { force: true, level: "error" }
+            );
+          });
+        } else {
+          this.log("Connect error: " + error.toString(), {
+            force: true,
+            level: "error"
+          });
+        }
+        setTimeout(() => this.connect(), 1000);
       }
-      setTimeout(() => this.connect(), 1000);
-    });
+    );
 
     wsClient.on("connect", (connection) => {
       this.ws = connection;

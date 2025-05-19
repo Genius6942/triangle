@@ -38,7 +38,7 @@ export namespace Game {
   /** Only `T-spins` supported */
   export type SpinBonuses =
     | "T-spins"
-		| "T-spins+"
+    | "T-spins+"
     | "all"
     | "all+"
     | "all-mini"
@@ -191,7 +191,7 @@ export namespace Game {
     bagtype: BagType;
     messiness_change: number;
     messiness_inner: number;
-		messiness_center?: boolean;
+    messiness_center?: boolean;
     messiness_nosame: boolean;
     messiness_timeout: number;
     b2bchaining: boolean;

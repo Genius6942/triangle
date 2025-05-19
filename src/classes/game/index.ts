@@ -259,7 +259,7 @@ export class Game {
           nosame: options.messiness_nosame,
           timeout: options.messiness_timeout,
           within: options.messiness_inner,
-					center: options.messiness_center ?? false
+          center: options.messiness_center ?? false
         },
 
         bombs: options.usebombs,
