@@ -5,7 +5,7 @@ import { Codec, CodecType } from "./codec";
 import { CandorCodec } from "./codec-candor";
 import { FullCodec } from "./codec-full";
 import { tetoPack } from "./teto-pack";
-import { RibbonEvents } from "./types";
+import { RibbonEvents, RibbonOptions, RibbonParams } from "./types";
 import { vmPack } from "./vm-pack";
 
 import { EventEmitter } from "node:events";
@@ -98,21 +98,12 @@ export class Ribbon {
     token,
     userAgent,
     handling,
-    codec = "teto",
+    codec = "json",
     verbose = false,
-    globalVM = false,
-    globalPacker = false,
+    globalVM = true,
+    globalPacker = true,
     spooling = true
-  }: {
-    token: string;
-    userAgent: string;
-    handling: Game.Handling;
-    codec?: CodecType;
-    verbose?: boolean;
-    globalVM?: boolean;
-    globalPacker?: boolean;
-    spooling?: boolean;
-  }) {
+  }: RibbonParams & Partial<RibbonOptions>) {
     this.token = token;
     this.handling = handling;
     this.userAgent = userAgent;

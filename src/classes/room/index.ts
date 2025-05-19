@@ -214,7 +214,7 @@ export class Room {
   }
 
   /**
-   * Leave the bot's current room
+   * Leave the current room
    * @example
    * await client.room!.leave();
    */

@@ -180,21 +180,11 @@ export class Client {
       ihs: "tap"
     };
 
-    const ribbonConfig: Partial<ConstructorParameters<typeof Ribbon>[0]> = {
-      verbose: false,
-      globalVM: false,
-      codec: "teto",
-      ...(options.ribbon || {})
-    };
-
     const ribbon = new Ribbon({
       token,
       handling,
       userAgent: options.userAgent || CONSTANTS.userAgent,
-      verbose: ribbonConfig.verbose,
-      globalVM: ribbonConfig.globalVM,
-      codec: ribbonConfig.codec,
-      spooling: ribbonConfig.spooling
+      ...(options.ribbon ?? {})
     });
 
     await ribbon.connect();
@@ -332,12 +322,12 @@ export class Client {
     });
   }
 
-  /** The bot's current handling */
+  /** The client's current handling */
   get handling() {
     return this._handling;
   }
 
-  /** Change the bot's current handling (do not use while in a room) */
+  /** Change the client's current handling (do not use while in a room) */
   set handling(handling: GameTypes.Handling) {
     if (this.room)
       throw new Error(
