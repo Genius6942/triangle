@@ -18,7 +18,7 @@ export type ClientOptions = (
    */
   handling?: Game.Handling;
   /** The client's user agent.
-   * @default Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0
+   * @default "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36 Edg/123.0.0.0"
    */
   userAgent?: string;
   /** a cf_clearance Cloudflare turnstile token. */
