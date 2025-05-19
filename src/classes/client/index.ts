@@ -180,8 +180,9 @@ export class Client {
       ihs: "tap"
     };
 
+		
     const ribbonConfig: Partial<ConstructorParameters<typeof Ribbon>[0]> = {
-      verbose: false,
+			verbose: false,
       globalVM: false,
       codec: "teto",
       ...(options.ribbon || {})
@@ -193,7 +194,8 @@ export class Client {
       userAgent: options.userAgent || CONSTANTS.userAgent,
       verbose: ribbonConfig.verbose,
       globalVM: ribbonConfig.globalVM,
-      codec: ribbonConfig.codec
+      codec: ribbonConfig.codec,
+			spooling: ribbonConfig.spooling,
     });
 
     await ribbon.connect();

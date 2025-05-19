@@ -18,6 +18,7 @@ export type ClientOptions = (
     codec?: CodecType;
     verbose?: boolean;
     globalVM?: boolean;
+		spooling?: boolean;
   };
 };
 
