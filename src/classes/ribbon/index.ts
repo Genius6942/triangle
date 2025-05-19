@@ -626,4 +626,8 @@ export class Ribbon {
   get endpoint() {
     return this.spool.endpoint;
   }
+  
+  get codecType() {
+    return this.codecMethod;
+  }
 }
