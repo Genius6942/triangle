@@ -53,8 +53,8 @@ export interface EngineSnapshot {
 }
 
 export interface LockRes {
-	mino: Mino;
-	garbageCleared: number;
+  mino: Mino;
+  garbageCleared: number;
   lines: number;
   spin: SpinType;
   garbage: number[];
@@ -72,54 +72,54 @@ export interface LockRes {
   };
   garbageAdded: false | OutgoingGarbage[];
   topout: boolean;
-	/** The number of frames since the last piece was placed */
-	pieceTime: number;
-	keysPresses: Game.Key[];
+  /** The number of frames since the last piece was placed */
+  pieceTime: number;
+  keysPresses: Game.Key[];
 }
 
 export interface Events {
-	/** Fired when garbage is recieved, immediately after it is added to the garbage queue */
+  /** Fired when garbage is recieved, immediately after it is added to the garbage queue */
   "garbage.receive": {
-		/** The garbage's interaction id */
-		iid: number;
-		/** The amount added to the garbage queue after passthrough canceling */
-    amount: number;
-		/** The original amount recieved before passthrough cancelling */
-		originalAmount: number;
-  };
-	/** Fired when garbage is confirmed (interaction_confirm ige). This starts the cancel timer (usually 20 frames) */
-  "garbage.confirm": {
-		/** The garbage's interaction id */
+    /** The garbage's interaction id */
     iid: number;
-		/** The sender's game id */
+    /** The amount added to the garbage queue after passthrough canceling */
+    amount: number;
+    /** The original amount recieved before passthrough cancelling */
+    originalAmount: number;
+  };
+  /** Fired when garbage is confirmed (interaction_confirm ige). This starts the cancel timer (usually 20 frames) */
+  "garbage.confirm": {
+    /** The garbage's interaction id */
+    iid: number;
+    /** The sender's game id */
     gameid: number;
-		/** The frame to start timer at */
+    /** The frame to start timer at */
     frame: number;
   };
-	/** Fired immediately after garbage is tanked. */
+  /** Fired immediately after garbage is tanked. */
   "garbage.tank": {
-		/** The garbage's interaction id */
-		iid: number;
-		/** The garbage's spawn column (0-indexed) */
+    /** The garbage's interaction id */
+    iid: number;
+    /** The garbage's spawn column (0-indexed) */
     column: number;
-		/** The height of the garbage column */
+    /** The height of the garbage column */
     amount: number;
-		/** The width of the garbage column */
+    /** The width of the garbage column */
     size: number;
   };
-	/** Fired immediately after garbage is cancelled. */
+  /** Fired immediately after garbage is cancelled. */
   "garbage.cancel": {
-		/** The garbage's interaction id */
+    /** The garbage's interaction id */
     iid: number;
-		/** The amount of garbage that was cancelled */
+    /** The amount of garbage that was cancelled */
     amount: number;
-		/** The width of the would-be garbage */
+    /** The width of the would-be garbage */
     size: number;
   };
 
-	/** Fired whenever a piece locks. */
+  /** Fired whenever a piece locks. */
   "falling.lock": LockRes;
-	
-	/** Fired whenever a new set of pieces is added to the queue. */
+
+  /** Fired whenever a new set of pieces is added to the queue. */
   "queue.add": Mino[];
 }

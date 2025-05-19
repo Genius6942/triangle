@@ -26,7 +26,9 @@ export const basic = (defaults: APIDefaults) => {
       try {
         res = await fetch(`https://tetr.io/api/${uri}`, {
           headers: {
-            Accept: json ? "application/json" : "application/vnd.osk.theorypack",
+            Accept: json
+              ? "application/json"
+              : "application/vnd.osk.theorypack",
             "User-Agent": defaults.userAgent,
             cookie: `${defaults.turnstile ? "cf_clearance=" + defaults.turnstile : ""}`,
             Authorization:
@@ -35,14 +37,13 @@ export const basic = (defaults: APIDefaults) => {
           } as any
         });
       } catch (err: any) {
-        throw new Error(
-          `Fetch failed on GET to ${uri}: ${err.message || err}`)
+        throw new Error(`Fetch failed on GET to ${uri}: ${err.message || err}`);
       }
 
       const copy = res.clone();
       try {
         return json
-          ? (await res.json() as Res<T>)
+          ? ((await res.json()) as Res<T>)
           : pack.unpack(Buffer.from(await res.arrayBuffer()));
       } catch {
         if (res.status === 429)
@@ -114,7 +115,9 @@ export const basic = (defaults: APIDefaults) => {
           //@ts-ignore
           body: json ? JSON.stringify(body) : pack.pack(body),
           headers: {
-            Accept: json ? "application/json" : "application/vnd.osk.theorypack",
+            Accept: json
+              ? "application/json"
+              : "application/vnd.osk.theorypack",
             "User-Agent": defaults.userAgent,
             cookie: `${defaults.turnstile ? "cf_clearance=" + defaults.turnstile : ""}`,
             "Content-Type": json
@@ -128,14 +131,15 @@ export const basic = (defaults: APIDefaults) => {
         });
       } catch (err: any) {
         throw new Error(
-          `Fetch failed on POST to ${uri}: ${err.message || err}`)
+          `Fetch failed on POST to ${uri}: ${err.message || err}`
+        );
       }
 
       const copy = res.clone();
       try {
         return json
-        ? (await res.json() as Res<T>)
-        : pack.unpack(Buffer.from(await res.arrayBuffer()));
+          ? ((await res.json()) as Res<T>)
+          : pack.unpack(Buffer.from(await res.arrayBuffer()));
       } catch {
         if (res.status === 429)
           throw new Error(`Rate limit (429) on GET to ${uri}`);
