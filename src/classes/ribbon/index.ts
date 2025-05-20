@@ -98,7 +98,7 @@ export class Ribbon {
     token,
     userAgent,
     handling,
-    codec = "json",
+    codec = "teto",
     verbose = false,
     globalVM = true,
     globalPacker = true,
