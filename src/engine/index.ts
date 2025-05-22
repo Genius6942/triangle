@@ -1708,4 +1708,4 @@ export * from "./garbage";
 export * from "./utils";
 export * from "./board";
 export * from "./types";
-export * from './multiplayer'
+export * from "./multiplayer";
