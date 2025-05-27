@@ -181,7 +181,7 @@ export class Room {
           id: item.id,
           name: item.username,
           points: item.wins,
-          won: !!item.success
+          won: !!item.active
         }))
       });
 

@@ -5,12 +5,48 @@ export interface Game {
   "game.ready": GameTypes.Ready;
   "game.abort": void;
   "game.match": {
-    refereedata: {
-      ft: number;
-      wb: number;
-      modename: string;
+    gamemode: GameTypes.GameMode;
+    modename: string;
+    rb: {
+      type: string;
+      options: {
+        ft: number;
+        wb: number;
+        gp: number;
+      };
+      leaderboard: GameTypes.Leaderboard[];
     };
-    leaderboard: GameTypes.Leaderboard[];
+    rrb: {
+      type: string;
+      options: {};
+      scoreboard: {
+        id: string;
+        username: string;
+        active: boolean;
+        naturalorder: number;
+        shadows: any[];
+        shadowedBy: (null | string)[];
+        alive: boolean;
+        lifetime: number;
+        stats: {
+          apm: number | null;
+          pps: number | null;
+          vsscore: number | null;
+          garbagesent: number;
+          garbagereceived: number;
+          kills: number;
+          altitude: number;
+          rank: number;
+          targetingfactor: number;
+          targetinggrace: number;
+          btb: number;
+          revives: number;
+          escapeartist: number;
+          blockrationing_app: number;
+          blockrationing_final: number;
+        };
+      }[];
+    };
   };
   "game.start": void;
   "game.advance": {
@@ -49,7 +85,7 @@ export interface Game {
   };
   "game.replay.state": {
     gameid: number;
-    data: "wait";
+    data: "early" | "wait";
   };
 
   "game.replay.ige": {

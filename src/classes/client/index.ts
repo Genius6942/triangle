@@ -320,9 +320,13 @@ export class Client {
         this.emit("client.notify", notif);
       }
     });
+
+    this.on("client.dead", async () => {
+      await this.destroy();
+    });
   }
 
-  /** The client's current handling */
+  /** The client's current handling. */
   get handling() {
     return this._handling;
   }

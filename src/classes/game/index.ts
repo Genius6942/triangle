@@ -24,6 +24,7 @@ export class Game {
   private _target: GameTypes.Target = { strategy: "even" };
   private tick?: GameTypes.Tick.Func;
   private over = false;
+	private isPractice = false;
 
   /** The client's engine */
   public engine!: Engine;
@@ -123,6 +124,7 @@ export class Game {
       this.timeout = (clearTimeout(this.timeout) as any) || null;
     delete this.client.game;
     this.engine.events.removeAllListeners();
+		this.over = true;
   }
 
   // private addIGE(data: Events.in.Game["game.replay.ige"]) {
@@ -130,6 +132,9 @@ export class Game {
   // }
 
   private init() {
+		this.listen("game.match", (data) => {
+			// if (data.)
+		});
     this.listen(
       "game.start",
       () => {

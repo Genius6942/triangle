@@ -384,16 +384,15 @@ export namespace Game {
 
     export interface KEV {
       type: "kev";
-      victim: {
-        gameid: number;
-        name: string;
+      data: {
+        victim: {
+          gameid: number;
+        };
+        killer: {
+          gameid: number;
+        };
+        fire: number;
       };
-      killer: {
-        gameid: number;
-        name: string;
-        type: "sizzle";
-      };
-      fire: number;
     }
   }
 
@@ -407,19 +406,27 @@ export namespace Game {
   export interface Leaderboard {
     id: string;
     username: string;
-    handling: Handling;
     active: boolean;
-    success: null | true;
-    inputs: number;
-    piecesplaced: number;
     naturalorder: number;
-    score: number;
+    shadows: any[];
+    shadowedBy: (null | any)[];
     wins: number;
-    points: {
-      primary: number;
-      secondary: number;
-      tertiary: number;
-      extra: {};
+    stats: {
+      apm: number | null;
+      pps: number | null;
+      vsscore: number | null;
+      garbagesent: number;
+      garbagereceived: number;
+      kills: number;
+      altitude: number;
+      rank: number;
+      targetingfactor: number;
+      targetinggrace: number;
+      btb: number;
+      revives: number;
+      escapeartist: number;
+      blockrationing_app: number;
+      blockrationing_final: number;
     };
   }
 
