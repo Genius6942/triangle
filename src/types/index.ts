@@ -1,6 +1,5 @@
 export * from "./events";
 
-export * from "./emitter";
 export * from "./game";
 export * from "./room";
 export * from "./user";

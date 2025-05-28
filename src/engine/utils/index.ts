@@ -5,7 +5,6 @@ export * from "./tetromino";
 export * from "./seed";
 export * from "./polyfills";
 export * from "./rng";
-export * from "./events";
 
 export const deepCopy = <T>(obj: T): T => {
   if (!obj) return obj;

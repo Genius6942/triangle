@@ -1,4 +1,5 @@
-import { Game } from "../types";
+import type { Game } from "../types";
+import { EventEmitter } from "../utils/events";
 import { Board, BoardInitializeParams } from "./board";
 import { constants } from "./constants";
 import {
@@ -15,7 +16,6 @@ import { EngineSnapshot, Events, IncreasableValue, LockRes } from "./types";
 import { SpinType } from "./types";
 import { IncreaseTracker, deepCopy } from "./utils";
 import { garbageCalcV2, garbageData } from "./utils/damageCalc";
-import { EventEmitter } from "./utils/events";
 import { KickTable, legal, performKick } from "./utils/kicks";
 import { KickTableName, kicks } from "./utils/kicks/data";
 import { Tetromino, tetrominoes } from "./utils/tetromino";
@@ -162,7 +162,7 @@ export class Engine {
 
   state!: number;
 
-  events: EventEmitter<Events> = new EventEmitter();
+  events = new EventEmitter<Events>();
 
   private resCache!: {
     pieces: number;

@@ -191,7 +191,7 @@ export class Room {
     });
 
     // chat
-    this.listen("room.chat", this.chats.push.bind(this.chats));
+    this.listen("room.chat", (item) => this.chats.push(item));
 
     // get booted
     this.listen("room.kick", () => this.destroy());

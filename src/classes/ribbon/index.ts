@@ -1,5 +1,5 @@
-import { Emitter, Events, Game } from "../../types";
-import { API, APITypes } from "../../utils";
+import { Events, Game } from "../../types";
+import { API, APITypes, EventEmitter } from "../../utils";
 import { Bits } from "./bits";
 import { Codec, CodecType } from "./codec";
 import { CandorCodec } from "./codec-candor";
@@ -7,8 +7,6 @@ import { FullCodec } from "./codec-full";
 import { tetoPack } from "./teto-pack";
 import { RibbonEvents, RibbonOptions, RibbonParams } from "./types";
 import { vmPack } from "./vm-pack";
-
-import { EventEmitter } from "node:events";
 
 import chalk from "chalk";
 import { client as WebSocket, connection as Connection } from "websocket";
@@ -76,7 +74,7 @@ export class Ribbon {
 
   private heartbeat?: NodeJS.Timeout;
 
-  emitter: Emitter<Events.in.all> = new EventEmitter();
+  emitter = new EventEmitter<Events.in.all>();
   handling: Game.Handling;
   verbose: boolean = false;
 
@@ -113,6 +111,8 @@ export class Ribbon {
     this.globalVM = globalVM;
     this.globalTeto = globalPacker;
     this.useSpools = spooling;
+
+    this.emitter.maxListeners = 4;
   }
 
   log(
@@ -208,7 +208,7 @@ export class Ribbon {
           force: true,
           level: "error"
         });
-        this.die();
+        this.die(true);
       });
 
       connection.on("close", (code) => {
@@ -546,7 +546,7 @@ export class Ribbon {
     ...data: Events.out.all[T] extends void ? [] : [Events.out.all[T]]
   ) {
     if (event.startsWith("client.")) {
-      this.emitter.emit(event, data[0]);
+      this.emitter.emit(event as keyof Events.out.Client, data[0]);
       return;
     }
 
@@ -608,7 +608,7 @@ export class Ribbon {
   }
 
   destroy() {
-    (this.emitter as unknown as EventEmitter).removeAllListeners();
+    this.emitter.removeAllListeners();
     this.ws?.removeAllListeners();
     this.die(true);
   }
