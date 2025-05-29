@@ -361,6 +361,13 @@ export class Room {
    * await client.room!.switch('player');
    */
   async switch(bracket: "player" | "spectator") {
+    if (
+      this.players.some(
+        (p) => p._id === this.client.user.id && p.bracket === bracket
+      )
+    )
+      return;
+
     return await this.client.wrap(
       "room.bracket.switch",
       bracket,
@@ -374,6 +381,13 @@ export class Room {
    * await client.room!.move('646f633d276f42a80ba44304');
    */
   async move(uid: string, bracket: "player" | "spectator") {
+    const player = this.players.find((p) => p._id === uid);
+    if (!player) {
+      throw new Error(`Player with UID ${uid} not found in room.`);
+    }
+
+    if (player.bracket === bracket) return;
+
     return await this.client.wrap(
       "room.bracket.move",
       { uid, bracket },

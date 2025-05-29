@@ -1,5 +1,5 @@
 export class EventEmitter<T extends Record<string, any>> {
-  #listeners: [keyof T, Function][];
+  #listeners: [keyof T, Function, boolean][];
   #maxListeners: number = 10;
 
   /** Enables more debugging logs for memory leaks */
@@ -10,7 +10,7 @@ export class EventEmitter<T extends Record<string, any>> {
   }
 
   on<K extends keyof T>(event: K, cb: (data: T[K]) => void) {
-    this.#listeners.push([event, cb]);
+    this.#listeners.push([event, cb, false]);
 
     const listeners = this.#listeners.filter(([e]) => e === event);
     if (listeners.length > this.#maxListeners) {
@@ -36,16 +36,19 @@ export class EventEmitter<T extends Record<string, any>> {
   }
 
   emit<K extends keyof T>(event: K, data: T[K]) {
-    this.#listeners.filter(([e]) => e === event).forEach(([_, cb]) => cb(data));
+		const remove: number[] = [];
+    this.#listeners.filter(([e]) => e === event).forEach(([_, cb, once], idx) => {
+      cb(data);
+      if (once) remove.push(idx);
+    });
+
+		this.#listeners = this.#listeners.filter((_, idx) => !remove.includes(idx));
+
+		return this;
   }
 
   once<K extends keyof T>(event: K, cb: (data: T[K]) => any | Promise<any>) {
-    const handler = async (data: T[K]) => {
-      this.off(event, handler);
-      const res = await cb(data);
-      return res;
-    };
-    this.on(event, handler);
+    this.#listeners.push([event, cb, true]);
 
     return this;
   }
