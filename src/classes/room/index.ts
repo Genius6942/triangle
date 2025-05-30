@@ -378,7 +378,7 @@ export class Room {
   /**
    * Move someone's bracket
    * @example
-   * await client.room!.move('646f633d276f42a80ba44304');
+   * await client.room!.move('646f633d276f42a80ba44304', 'spectator');
    */
   async move(uid: string, bracket: "player" | "spectator") {
     const player = this.players.find((p) => p._id === uid);

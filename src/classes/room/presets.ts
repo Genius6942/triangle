@@ -1,5 +1,6 @@
 import { Events, Game } from "../../types";
 
+
 export const roomConfigPresets: {
   [key in Game.Preset]: Events.out.Room["room.setconfig"][number][];
 } = {
@@ -72,9 +73,9 @@ export const roomConfigPresets: {
     { index: "options.room_handling_arr", value: 2 },
     { index: "options.room_handling_das", value: 10 },
     { index: "options.room_handling_sdf", value: 6 },
-    { index: "options.g", value: 0 },
-    { index: "options.gincrease", value: 0 },
-    { index: "options.gmargin", value: 0 },
+    { index: "options.g", value: 0.02 },
+    { index: "options.gincrease", value: 0.0035 },
+    { index: "options.gmargin", value: 7200 },
     { index: "options.garbagemultiplier", value: 1 },
     { index: "options.garbageblocking", value: "combo blocking" },
     { index: "options.garbagemargin", value: 10800 },

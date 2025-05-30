@@ -36,15 +36,17 @@ export class EventEmitter<T extends Record<string, any>> {
   }
 
   emit<K extends keyof T>(event: K, data: T[K]) {
-		const remove: number[] = [];
-    this.#listeners.filter(([e]) => e === event).forEach(([_, cb, once], idx) => {
+    const toRemove = new Set<number>();
+
+    this.#listeners.forEach(([e, cb, once], idx) => {
+      if (e !== event) return;
       cb(data);
-      if (once) remove.push(idx);
+      if (once) toRemove.add(idx);
     });
 
-		this.#listeners = this.#listeners.filter((_, idx) => !remove.includes(idx));
+    this.#listeners = this.#listeners.filter((_, idx) => !toRemove.has(idx));
 
-		return this;
+    return this;
   }
 
   once<K extends keyof T>(event: K, cb: (data: T[K]) => any | Promise<any>) {

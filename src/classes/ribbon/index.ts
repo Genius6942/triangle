@@ -111,8 +111,6 @@ export class Ribbon {
     this.globalVM = globalVM;
     this.globalTeto = globalPacker;
     this.useSpools = spooling;
-
-    this.emitter.maxListeners = 4;
   }
 
   log(

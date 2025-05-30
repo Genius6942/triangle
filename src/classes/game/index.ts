@@ -140,7 +140,7 @@ export class Game {
     this.listen(
       "game.start",
       () => {
-        const timeout = setTimeout(
+         this.timeout = setTimeout(
           () => {
             this.start();
           },
@@ -148,7 +148,7 @@ export class Game {
             this.options.precountdown +
             this.options.prestart
         );
-        this.listen("game.abort", () => clearTimeout(timeout), true);
+        this.listen("game.abort", () => clearTimeout(this.timeout!), true);
       },
       true
     );
@@ -479,7 +479,7 @@ export class Game {
 
   /**
    * Send raw frames to TETR.IO -
-   * Not recommendedfor normal use.
+   * Not recommended for normal use.
    */
   pipe(...frames: GameTypes.Replay.Frame[]) {
     this.frameQueue.push(...frames);
