@@ -561,7 +561,7 @@ export class Ribbon {
     this.session.messageQueue.push(msg);
     this.session.messageHistory.push(msg);
 
-    if (this.session.messageQueue.length >= 500)
+    while (this.session.messageHistory.length >= 500)
       this.session.messageHistory.shift();
 
     if (!this.session.open) {
