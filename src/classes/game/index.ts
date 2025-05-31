@@ -24,7 +24,7 @@ export class Game {
   private _target: GameTypes.Target = { strategy: "even" };
   private tick?: GameTypes.Tick.Func;
   private over = false;
-	// @ts-expect-error
+  // @ts-expect-error
   private isPractice = false;
 
   /** The client's engine */
@@ -133,14 +133,14 @@ export class Game {
   // }
 
   private init() {
-		// @ts-expect-error
+    // @ts-expect-error
     this.listen("game.match", (data) => {
       // if (data.)
     });
     this.listen(
       "game.start",
       () => {
-         this.timeout = setTimeout(
+        this.timeout = setTimeout(
           () => {
             this.start();
           },

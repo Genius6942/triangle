@@ -57,10 +57,7 @@ export interface Ribbon {
   error: any;
   err: any;
   packets: {
-    // packets(packets: any): any;
-    data: {
-      packets: Buffer[];
-    };
+    packets: Buffer[];
   };
 
   notify:

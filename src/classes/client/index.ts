@@ -70,13 +70,6 @@ export class Client {
     this.once = ribbon.emitter.once.bind(ribbon.emitter);
     this.emit = ribbon.emit.bind(ribbon);
 
-    this.ribbon.on("send", (data) => this.emit("client.ribbon.send", data));
-    this.ribbon.on("receive", (data) =>
-      this.emit("client.ribbon.receive", data)
-    );
-
-    this.ribbon.on;
-
     this.user = {
       id: me._id,
       role: me.role,
@@ -180,14 +173,12 @@ export class Client {
       ihs: "tap"
     };
 
-    const ribbon = new Ribbon({
+    const ribbon = await Ribbon.create({
       token,
       handling,
       userAgent: options.userAgent || CONSTANTS.userAgent,
       ...(options.ribbon ?? {})
     });
-
-    await ribbon.connect();
 
     const data = await new Promise<Events.in.Client["client.ready"]>(
       (resolve, reject) => {
@@ -322,6 +313,8 @@ export class Client {
     });
 
     this.on("client.dead", async () => {
+      // let other handlers fire first, this has to come last so others can fire (destroy will remove the client)
+      await new Promise((r) => setTimeout(r, 1));
       await this.destroy();
     });
   }

@@ -163,11 +163,16 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
       }
 
       if (!useSpools || res.spools === null)
-        return { endpoint: `tetr.io${res.endpoint}`, token: "" };
+        return {
+          host: "tetr.io",
+          endpoint: res.endpoint.replace("/ribbon/", ""),
+          token: ""
+        };
       else {
         const lowestPingSpool = await findLowestPingSpool(res.spools.spools);
         return {
-          endpoint: `${lowestPingSpool.host}${res.endpoint}`,
+          host: lowestPingSpool.host,
+          endpoint: res.endpoint.replace("/ribbon/", ""),
           token: res.spools.token
         };
       }

@@ -1,6 +1,5 @@
 import { Events, Game } from "../../types";
 
-
 export const roomConfigPresets: {
   [key in Game.Preset]: Events.out.Room["room.setconfig"][number][];
 } = {

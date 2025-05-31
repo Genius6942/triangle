@@ -1,87 +1,48 @@
 import { Events, Game } from "../../types";
-import { API, APITypes, EventEmitter } from "../../utils";
+import { API, type APITypes, EventEmitter } from "../../utils";
 import { Bits } from "./bits";
-import { Codec, CodecType } from "./codec";
 import { CandorCodec } from "./codec-candor";
-import { FullCodec } from "./codec-full";
 import { tetoPack } from "./teto-pack";
-import { RibbonEvents, RibbonOptions, RibbonParams } from "./types";
-import { vmPack } from "./vm-pack";
+import { RibbonEvents } from "./types";
 
 import chalk from "chalk";
-import { client as WebSocket, connection as Connection } from "websocket";
+import { client as WebSocket, type connection as Connection } from "websocket";
 
-const RIBBON_CLOSE_CODES = {
-  1000: "Ribbon closed normally",
-  1001: "Client closed ribbon",
-  1002: "Protocol error",
-  1003: "Protocol violation",
-  1005: "No reason given",
-  1006: "Ribbon lost",
-  1007: "Payload data corrupted",
-  1008: "Protocol violation",
-  1009: "Too much data",
-  1010: "Negotiation error",
-  1011: "Server error",
-  1012: "Server restarting",
-  1013: "Temporary error",
-  1014: "Bad gateway",
-  1015: "TLS error"
-} as const;
+export type Codec = "json" | "teto" | "candor";
+
+interface Spool {
+  host: string;
+  endpoint: string;
+  token: string;
+  signature: Promise<APITypes.Server.Signature>;
+}
+
+interface CodecHandler {
+  method: Codec;
+  encode: (msg: string, data?: Record<string, any>) => Buffer | string;
+  decode: (data: Buffer | string) => RibbonEvents.Raw<Events.in.all>;
+}
 
 export class Ribbon {
-  private ws: Connection | null = null;
-  private token: string;
-  private userAgent: string;
-  private api: API;
-  private codec = new Codec();
-  private codec2 = FullCodec;
-  private codecCandor = CandorCodec;
-  private codecMethod: CodecType;
-  private codecVM?: Awaited<ReturnType<typeof vmPack>>;
-  private codecWrapper?: Awaited<ReturnType<typeof tetoPack>>;
-  private globalVM: boolean;
-  private globalTeto: boolean;
-  private useSpools: boolean;
-
-  private spool: {
-    endpoint?: string;
-    detail?: string;
-    token?: string;
-    tokenid?: string;
-    signature?: Promise<APITypes.Server.Signature>;
-    migrated?: boolean;
-  } = {};
-
-  private session: {
-    ready?: boolean;
-    flags: number;
-    lastPong?: number;
-    lastSent: number;
-    lastReceived: number;
-    open: boolean;
-    id?: string;
-    messageQueue: any[];
-    messageHistory: any[];
-  } = {
-    flags: 0,
-    open: false,
-    messageQueue: [],
-    messageHistory: [],
-    lastSent: 0,
-    lastReceived: 0
-  };
-
-  private heartbeat?: NodeJS.Timeout;
-
-  emitter = new EventEmitter<Events.in.all>();
-  handling: Game.Handling;
-  verbose: boolean = false;
-
-  private listeners: {
-    type: "send" | "receive";
-    callback: (message: Events.in.Client["client.ribbon.receive"]) => void;
-  }[] = [];
+  static CACHE_MAXSIZE = 4096;
+  static BATCH_TIMEOUT = 25;
+  static readonly CLOSE_CODES = {
+    1000: "ribbon closed normally",
+    1001: "client closed ribbon",
+    1002: "protocol error",
+    1003: "protocol violation",
+    1005: "no error provided",
+    1006: "ribbon lost",
+    1007: "payload data corrupted",
+    1008: "protocol violation",
+    1009: "too much data",
+    1010: "negotiation error",
+    1011: "server error",
+    1012: "server restarting",
+    1013: "temporary error",
+    1014: "bad gateway",
+    1015: "TLS error"
+  } as const;
 
   static FLAGS = {
     ALIVE: 1,
@@ -91,86 +52,238 @@ export class Ribbon {
     TIMING_OUT: 16,
     DEAD: 32
   };
-  /** @hideconstructor */
-  constructor({
-    token,
-    userAgent,
-    handling,
-    codec = "teto",
-    verbose = false,
-    globalVM = true,
-    globalPacker = true,
-    spooling = true
-  }: RibbonParams & Partial<RibbonOptions>) {
-    this.token = token;
-    this.handling = handling;
-    this.userAgent = userAgent;
-    this.codecMethod = codec;
-    this.api = new API({ token, userAgent });
-    this.verbose = verbose;
-    this.globalVM = globalVM;
-    this.globalTeto = globalPacker;
-    this.useSpools = spooling;
-  }
 
-  log(
-    msg: string,
-    {
-      force = false,
-      level = "info"
-    }: { force: boolean; level: "info" | "warning" | "error" } = {
-      force: false,
-      level: "info"
+  static CODEC_FLAGS = {
+    F_ID: 128
+  } as const;
+
+  static SLOW_CODEC_THRESHOLD = 100;
+
+  #socket: Connection | null = null;
+
+  #token: string;
+
+  #handling: Game.Handling;
+
+  #userAgent: string;
+
+  #codec: CodecHandler;
+
+  #spool: Spool;
+
+  #pinger = {
+    heartbeat: 0,
+    interval: setInterval(() => this.#ping(), 2500),
+    last: 0,
+    time: 0
+  };
+
+  #tokenID: string | null = null;
+  #sentid = 0;
+  #receivedId = 0;
+  #flags = 0;
+  #lastDisconnectReason:
+    | (typeof Ribbon.CLOSE_CODES)[keyof typeof Ribbon.CLOSE_CODES]
+    | "ping timeout"
+    | "failed to connect"
+    | "server closed ribbon" = "ribbon lost";
+  #sentQueue: { id: number; packet: Buffer | string }[] = [];
+  #receivedQueue: { command: string; data?: any; id?: any }[] = [];
+  #lastReconnect = 0;
+  #reconnectCount = 0;
+  #reconnectPenalty = 0;
+  #reconnectTimeout: null | NodeJS.Timeout = null;
+
+  verbose: boolean;
+
+  emitter = new EventEmitter<Events.in.all>();
+
+  static #getCodec(codec: Codec, userAgent: string): CodecHandler {
+    switch (codec) {
+      case "json":
+        return {
+          method: codec,
+          encode: (msg, data) => {
+            if (data) {
+              return JSON.stringify({ command: msg, data });
+            }
+            return JSON.stringify({ command: msg });
+          },
+          decode: (data) => {
+            if (typeof data === "string") {
+              return JSON.parse(data) as RibbonEvents.Raw<Events.in.all>;
+            }
+            return JSON.parse(
+              data.toString()
+            ) as RibbonEvents.Raw<Events.in.all>;
+          }
+        };
+      case "teto":
+        let pack: Awaited<ReturnType<typeof tetoPack>>;
+        tetoPack(userAgent, { global: true }).then((p) => {
+          pack = p;
+        });
+        return {
+          method: codec,
+          encode: (msg, data) => {
+            return pack.encode(msg, data);
+          },
+          decode: (data) => {
+            if (typeof data === "string")
+              throw new Error("Invalid data type for teto codec");
+            return pack.decode(data);
+          }
+        };
+      case "candor":
+        return {
+          method: codec,
+          encode: (msg, data) => {
+            return CandorCodec.Encode(msg, data);
+          },
+          decode: (data) => {
+            if (typeof data === "string")
+              throw new Error("Invalid data type for candor codec");
+            return CandorCodec.Decode(data);
+          }
+        };
     }
-  ) {
-    if (!this.verbose && !force) return;
-    const func =
-      level === "info"
-        ? chalk.blue
-        : level === "warning"
-          ? chalk.yellow
-          : chalk.red;
-    console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
-  async connect() {
-    const envPromise = this.api.server.environment();
+  constructor({
+    verbose,
+    token,
+    handling,
+    userAgent,
+    codec,
+    spool
+  }: {
+    verbose: boolean;
+    token: string;
+    handling: Game.Handling;
+    userAgent: string;
+    codec: Codec;
+    spool: Spool;
+  }) {
+    this.verbose = verbose;
 
-    const vmPromise =
-      this.codecMethod === "vm"
-        ? vmPack(this.userAgent, { globalVM: this.globalVM })
-        : Promise.resolve(undefined);
-    const packerPromise =
-      this.codecMethod === "teto"
-        ? tetoPack(this.userAgent, { global: this.globalTeto })
-        : Promise.resolve(undefined);
+    this.#token = token;
+    this.#handling = handling;
+    this.#userAgent = userAgent;
 
-    const spool = this.spool.endpoint
-      ? Promise.resolve({
-          endpoint: this.spool.endpoint,
-          token: this.spool.token
-        })
-      : this.api.server.spool(this.useSpools);
+    this.#spool = spool;
 
-    this.session.lastPong = performance.now();
-    this.spool.signature = new Promise<APITypes.Server.Signature>(
+    this.#codec = Ribbon.#getCodec(codec, userAgent);
+
+    this.#connect();
+  }
+
+  static async create({
+    verbose = false,
+    token,
+    handling,
+    userAgent,
+    codec = "candor",
+    spooling = true
+  }: {
+    verbose?: boolean;
+    token: string;
+    handling: Game.Handling;
+    userAgent: string;
+    codec?: Codec;
+    spooling?: boolean;
+  }): Promise<Ribbon> {
+    const api = new API({
+      token,
+      userAgent
+    });
+
+    const envPromise = api.server.environment();
+
+    const spool = await api.server.spool(spooling);
+
+    const signature = new Promise<APITypes.Server.Signature>(
       async (r) => await envPromise.then((s) => r(s.signature))
     );
 
-    this.codecVM = await vmPromise;
-    this.codecWrapper = await packerPromise;
+    return new Ribbon({
+      verbose,
+      token,
+      handling,
+      userAgent,
+      codec,
+      spool: {
+        host: spool.host,
+        endpoint: spool.endpoint,
+        token: spool.token,
+        signature: signature
+      }
+    });
+  }
 
-    this.spool = { ...this.spool, ...(await spool) };
+  #encode(msg: string, data?: Record<string, any>): Buffer | string {
+    const start = performance.now();
 
-    if (this.verbose) {
-      this.log(
-        `Connecting to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
+    const res = this.#codec.encode(msg, data);
+
+    const end = performance.now();
+    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
+      this.log(`Slow encode: ${msg} (${end - start}ms)`, {
+        force: true,
+        level: "warning"
+      });
+    }
+    return res;
+  }
+
+  #decode(data: Buffer): any {
+    const start = performance.now();
+
+    const res = this.#codec.decode(data);
+
+    const end = performance.now();
+    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
+      this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
+        force: true,
+        level: "warning"
+      });
+    }
+    return res;
+  }
+
+  #processPacket(packet: any) {
+    let command = "ribbon:unparsed";
+    try {
+      const decoded =
+        this.#codec.method === "json" ? packet : this.#decode(packet);
+
+      command = decoded.command;
+
+      return decoded;
+    } catch (e) {
+      console.error(
+        `failed to unpack packet with command ${command}`,
+        packet,
+        e
       );
+      throw new Error(`failed to unpack packet with command ${command}`);
+    }
+  }
+
+  #connect() {
+    if (this.verbose) {
+      this.log(`Connecting to <${this.#spool.host}/${this.#spool.endpoint}>`);
     }
 
-    const wsClient = new WebSocket();
+    if (this.#socket) {
+      this.#socket.removeAllListeners();
+      this.#socket.close();
+    }
 
-    wsClient.on(
+    this.#flags |= Ribbon.FLAGS.CONNECTING;
+
+    const socket = new WebSocket();
+
+    socket.on(
       "connectFailed",
       (error: { toString: () => string; errors?: any[] }) => {
         if (
@@ -193,350 +306,356 @@ export class Ribbon {
             level: "error"
           });
         }
-        setTimeout(() => this.connect(), 1000);
       }
     );
 
-    wsClient.on("connect", (connection) => {
-      this.ws = connection;
-      this.onWSOpen();
+    socket.on("connect", (connection: Connection) => {
+      this.#socket = connection;
+      this.#onOpen();
 
-      connection.on("error", (error) => {
-        this.log("Connection error: " + error.toString(), {
-          force: true,
-          level: "error"
-        });
-        this.die(true);
-      });
+      connection.on("error", this.#onError.bind(this));
 
-      connection.on("close", (code) => {
-        this.onWSClose(code);
-      });
+      connection.on("close", this.#onClose.bind(this));
 
       connection.on("message", (message) => {
         if (message.type === "utf8" && message.utf8Data) {
-          this.onWSMessage(Buffer.from(message.utf8Data));
+          this.#onMessage(Buffer.from(message.utf8Data));
         } else if (message.type === "binary" && message.binaryData) {
-          // @ts-ignore
-          this.onWSMessage(Buffer.from(message.binaryData));
+          this.#onMessage(Buffer.from(message.binaryData));
         }
       });
     });
 
-    wsClient.connect(`wss://${this.spool.endpoint}`, undefined, undefined, {
-      "user-agent": this.userAgent,
-      authorization: `Bearer ${this.spool.token}`
+    socket.connect(this.#uri, undefined, undefined, {
+      "user-agent": this.#userAgent,
+      authorization: "Bearer " + this.#spool.token
     });
   }
 
-  static SLOW_CODEC_THRESHOLD = 100;
+  #migrate(target: string) {
+    this.#spool.endpoint = target;
 
-  encode(msg: string, data?: Record<string, any>): Buffer | string {
-    const start = performance.now();
-    let res;
-    switch (this.codecMethod) {
-      case "vm":
-        res = this.codecVM!.encode(msg, data);
-        break;
-      case "teto":
-        res = this.codecWrapper!.encode(msg, data);
-        break;
-      case "codec-2":
-        res = this.codec2.encode(msg, data);
-        break;
-      case "candor":
-        res = this.codecCandor.Encode(msg, data);
-        break;
-      case "json":
-        res = JSON.stringify({ command: msg, data });
-        break;
-      default:
-        res = this.codec.encode(msg, data);
-    }
-    const end = performance.now();
-    if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
-      this.log(`Slow encode: ${msg} (${end - start}ms)`, {
-        force: true,
-        level: "warning"
-      });
-    }
-    return res;
+    this.log(`Migrating to ${this.#uri}`);
+
+    this.#flags |= Ribbon.FLAGS.CONNECTING;
+
+    this.#__internal_reconnect();
   }
-  decode(data: Buffer) {
-    try {
-      const start = performance.now();
-      let res;
 
-      if (this.codecMethod === "codec-2") {
-        try {
-          res = this.codec2.decode(data);
-          if (res.command === "packets") {
-            res.data.packets = res.data.packets.map((packet: any) =>
-              Buffer.from([...packet])
-            );
-          }
-        } catch (e) {
-          if (this.codecVM) {
-            res = this.codecVM.decode(data);
-            this.log("Decoded with VM", { level: "warning", force: true });
-            console.warn(res);
-          } else {
-            throw e;
-          }
-        }
-      } else {
-        res = (() => {
-          switch (this.codecMethod) {
-            case "vm":
-              return this.codecVM!.decode(data);
-            case "teto":
-              return this.codecWrapper!.decode(data);
-            case "candor":
-              return this.codecCandor.Decode(data);
-            case "json":
-              return JSON.parse(data.toString());
-            default:
-              return this.codec.decode(data);
-          }
-        })();
-      }
+  #reconnect() {
+    if (this.#reconnectTimeout !== null) return;
 
-      const end = performance.now();
-      if (end - start > Ribbon.SLOW_CODEC_THRESHOLD) {
-        this.log(`Slow decode: ${res.command} (${end - start}ms)`, {
-          force: true,
-          level: "warning"
-        });
-      }
-      return res;
-    } catch (e: any) {
-      this.log(`Error decoding message: ${e.stack || e.message || e}`, {
-        force: true,
-        level: "error"
-      });
-      this.log(
-        `Data (${typeof data} | ${data instanceof Buffer}): ${JSON.stringify(data)}`,
-        {
-          force: true,
-          level: "error"
-        }
+    this.#socket?.close();
+    if (Date.now() - this.#lastReconnect > 4000) this.#reconnectCount = 0;
+
+    this.#lastReconnect = Date.now();
+
+    if (this.#reconnectCount >= 20 || this.#dead) {
+      return this.#close(
+        this.#dead ? "may not reconnect" : "too many reconnects"
       );
     }
+
+    const wait = this.#reconnectPenalty + 5 + 100 * this.#reconnectCount;
+
+    this.#reconnectTimeout = setTimeout(
+      this.#__internal_reconnect.bind(this),
+      wait
+    );
+
+    this.#reconnectPenalty = 0;
+    this.#reconnectCount++;
   }
 
-  private pipe(msg: string, data?: Record<string, any>) {
-    if (!this.ws) return this.session.messageQueue.push({ command: msg, data });
-
-    const encoded = this.encode(msg, data);
-    if (Buffer.isBuffer(encoded) && encoded[0] & Codec.FLAGS.F_ID) {
-      const id = ++this.session.lastSent!;
-      new Bits(encoded).seek(8).write(id, 24);
-    }
-    if (this.codecMethod === "json") {
-      this.ws.sendUTF(encoded.toString());
-    } else {
-      this.ws.sendBytes(
-        Buffer.isBuffer(encoded) ? encoded : Buffer.from(encoded)
-      );
-    }
-    if (msg !== "ping")
-      this.listeners
-        .filter((l) => l.type === "send")
-        .forEach((l) =>
-          l.callback(data ? { command: msg, data } : { command: msg })
-        );
+  #__internal_reconnect() {
+    this.#reconnectTimeout = null;
+    if (!this.#dead) this.#connect();
   }
 
-  private ping() {
-    this.pipe("ping", { recvid: this.session.lastReceived });
-  }
-
-  private async onWSOpen() {
+  async #onOpen() {
     if (this.verbose)
-      this.log(
-        `Connected to <${this.spool.endpoint?.split(".")[0]}/${this.spool.endpoint?.split("/").at(-1)}>`
-      );
-    this.session.open = true;
-    this.session.flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
-    this.session.flags &= ~Ribbon.FLAGS.TIMING_OUT;
+      this.log(`Connected to <${this.#spool.host}/${this.#spool.endpoint}>`);
 
-    if (!this.spool.tokenid) {
-      this.pipe("new");
+    this.#flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
+    this.#flags &= ~Ribbon.FLAGS.TIMING_OUT;
+
+    if (this.#tokenID === null) {
+      this.#pipe("new");
     } else {
-      this.pipe("session", {
-        ribbonid: this.session.id,
-        tokenid: this.spool.tokenid
+      this.#pipe("session", {
+        ribbonid: this.#spool.token,
+        tokenid: this.#tokenID
       });
     }
-    this.session.lastPong = performance.now();
-
-    this.heartbeat = setInterval(() => {
-      if (this.ws!.connected) {
-        if (performance.now() - this.session.lastPong! > 30000) {
-          this.ws!.close(3001, "pong timeout");
-        } else {
-          this.ping();
-        }
-      }
-    }, 2500);
   }
 
-  private handleMigrate = async (newEndpoint: string) => {
-    if (this.spool.migrated) {
-      if (this.verbose) {
-        this.log(
-          `Already migrated to <${
-            this.spool.endpoint?.split(".")[0]
-          }/${this.spool.endpoint?.split("/").at(-1)}>`
-        );
-      }
-      return;
-    }
-    this.spool.endpoint = `${this.spool.endpoint!.split("/ribbon/")[0]}${newEndpoint}`;
+  #onMessage(data: string | Buffer<ArrayBufferLike>) {
+    this.#flags |= Ribbon.FLAGS.ALIVE;
+    this.#flags &= ~Ribbon.FLAGS.TIMING_OUT;
 
-    this.die();
-    this.spool.migrated = true;
-    await this.connect();
-  };
+    const packet = this.#processPacket(data);
+    this.#processMessage(packet);
+    this.#processQueue();
+  }
 
-  private onWSMessage(data: any) {
-    try {
-      const reProcessPacket = (packetData: any) => {
-        const item =
-          this.codecMethod === "json"
-            ? packetData instanceof Buffer
-              ? JSON.parse(packetData.toString())
-              : packetData
-            : this.decode(packetData);
-
-        if (!item) return;
-
-        if (item.command === "packets") {
-          const packets = item.data.packets;
-          packets.forEach((packet: any) => {
-            let command = "ribbon:unparsed";
-            try {
-              const decoded =
-                this.codecMethod === "json" ? packet : this.decode(packet);
-
-              command = decoded.command;
-
-              if (decoded.command === "packets") {
-                reProcessPacket(packet);
-              } else {
-                this.handleMessage(decoded);
-              }
-            } catch (e) {
-              console.error(
-                `failed to unpack packet with command ${command}`,
-                packet,
-                e
-              );
-            }
-          });
-        } else {
-          this.handleMessage(item);
-        }
-      };
-
-      reProcessPacket(data);
-    } catch (e: any) {
-      this.log(`error handling message: ${e.stack || e.message || e}`, {
+  #onError(error: Error) {
+    if (!this.#hasConnectedOnce) {
+      this.log("Connection error: " + error.toString(), {
         force: true,
         level: "error"
       });
-      this.log(
-        `data (${typeof data} | ${data instanceof Buffer}): ${JSON.stringify(data)}`,
-        {
-          force: true,
-          level: "error"
+    }
+  }
+
+  #onClose(code: number) {
+    this.#socket = null;
+    this.#lastDisconnectReason =
+      Ribbon.CLOSE_CODES[code as keyof typeof Ribbon.CLOSE_CODES] || "unknown";
+    this.#flags |= Ribbon.FLAGS.CONNECTING;
+
+    if (this.#lastDisconnectReason === "ribbon lost") {
+      if (this.#isTimingOut) {
+        this.#lastDisconnectReason = "ping timeout";
+      } else if (!this.#hasConnectedOnce) {
+        this.#lastDisconnectReason = "failed to connect";
+      }
+    }
+  }
+
+  #pipe(command: string, data?: Record<string, any>) {
+    const packet = this.#encode(command, data);
+
+    if (!Buffer.isBuffer(packet)) {
+      this.log("SEND UTF " + command + " " + JSON.stringify(data, null, 2));
+      return this.#socket?.sendUTF(packet);
+    }
+
+    if (!(packet[0] & Ribbon.CODEC_FLAGS.F_ID)) {
+      this.log("SEND " + command + " " + JSON.stringify(data, null, 2));
+      return this.#socket?.sendBytes(packet);
+    }
+
+    const id = ++this.#sentid;
+
+    this.log(this.#connecting.toString() + " " + this.#connected.toString());
+    new Bits(packet).seek(8).write(id, 24);
+
+    this.#sentQueue.push({ id, packet });
+
+    if (!this.#connecting) {
+      while (this.#sentQueue.length > Ribbon.CACHE_MAXSIZE)
+        this.#sentQueue.shift();
+      if (this.#connected) this.#socket?.sendBytes(packet);
+      this.emitter.emit("client.ribbon.send", {
+        command,
+        data
+      });
+      this.log("SEND " + command + " " + JSON.stringify(data, null, 2));
+    }
+  }
+
+  #ping() {
+    this.#pinger.heartbeat++;
+    if (!this.#shouldPing) return;
+
+    if (!this.#alive) {
+      this.#flags |=
+        Ribbon.FLAGS.TIMING_OUT | Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.CONNECTING;
+      this.#reconnect();
+    } else {
+      this.#flags &= ~Ribbon.FLAGS.ALIVE;
+      if (this.#connected) {
+        this.#pinger.last = Date.now();
+        this.#pipe("ping", { recvid: this.#receivedId });
+      }
+    }
+  }
+
+  #processMessage(message: { command: string; data?: any; id?: number }) {
+    if (message.id) {
+      if (message.id > this.#receivedId) {
+        if (message.id === this.#receivedId + 1) {
+          this.#runMessage(message);
+        } else {
+          this.#receivedQueue.push(message);
         }
+      }
+    } else {
+      this.#runMessage(message);
+    }
+  }
+
+  #processQueue() {
+    if (this.#receivedQueue.length === 0) return;
+
+    if (this.#receivedQueue.length > Ribbon.CACHE_MAXSIZE) {
+      return this.#close("too many lost packets");
+    }
+
+    this.#receivedQueue.sort((a, b) => a.id - b.id);
+
+    while (this.#receivedQueue.length > 0) {
+      const item = this.#receivedQueue[0];
+
+      if (item.id <= this.#receivedId) {
+        this.#receivedQueue.shift();
+        continue;
+      }
+
+      if (item.id !== this.#receivedId + 1) {
+        break;
+      }
+
+      this.#runMessage(item);
+    }
+  }
+
+  async #runMessage(message: { command: string; data?: any; id?: number }) {
+    if (message.id) {
+      this.#receivedId = message.id;
+    }
+
+    if (message.command !== "ping" && message.command !== "packets") {
+      this.emitter.emit("client.ribbon.receive", message);
+      this.log(
+        "RECEIVE " +
+          message.command +
+          " " +
+          JSON.stringify(message.data, null, 2)
       );
     }
-  }
 
-  private onWSClose(code: number) {
-    if (!this.spool.tokenid) {
-      return this.connect();
-    }
+    let msg = message as RibbonEvents.Raw<Events.in.all>;
 
-    this.ws!.removeAllListeners();
-    this.session.open = false;
-    clearInterval(this.heartbeat);
-
-    const closeReason =
-      code in RIBBON_CLOSE_CODES
-        ? RIBBON_CLOSE_CODES[code as unknown as keyof typeof RIBBON_CLOSE_CODES]
-        : "Unknown reason: " + code;
-
-    this.emitter.emit("client.close", closeReason);
-  }
-
-  private async handleMessage(msg: any): Promise<void> {
-    if (msg.id) {
-      this.session.lastReceived = msg.id;
-    }
-    if (msg.command !== "ping") {
-      this.listeners
-        .filter((l) => l.type === "receive")
-        .forEach((l) => l.callback(msg));
-    }
-
-    const m: RibbonEvents.Raw<Events.in.all> = msg;
-
-    switch (m.command) {
-      case "ping":
-        this.session.lastPong = performance.now();
-        return;
+    switch (msg.command) {
       case "session":
-        if (!this.spool.tokenid) {
-          this.pipe("server.authorize", {
-            token: this.token,
-            handling: this.handling,
-            signature: await this.spool.signature,
+        const { ribbonid, tokenid } = message.data;
+
+        this.#flags &= ~Ribbon.FLAGS.CONNECTING;
+
+        this.#spool.token = ribbonid;
+
+        if (this.#tokenID !== null) {
+          this.#pipe(
+            "packets",
+            this.#sentQueue.map((item) => item.packet)
+          );
+        } else {
+          this.#pipe("server.authorize", {
+            token: this.#token,
+            handling: this.#handling,
+            signature: await this.#spool.signature,
             i: undefined
           });
         }
-        this.session.id = m.data.ribbonid;
-        this.spool.tokenid = m.data.tokenid;
-        return;
+
+        this.#tokenID = tokenid;
+        break;
+      case "ping":
+        const id = msg.data?.recvid;
+
+        this.#pinger.time = Date.now() - this.#pinger.last;
+        while (this.#sentQueue.length > 0 && this.#sentQueue[0].id <= id) {
+          this.#sentQueue.shift();
+        }
+
+        break;
+      case "kick":
+        const { reason } = msg.data;
+
+        this.#lastDisconnectReason = "server closed ribbon";
+
+        this.log(`kicked: ${reason}`, { force: true, level: "error" });
+
+        this.#close();
+        break;
+      case "nope":
+        const { reason: nopeReason } = msg.data;
+        this.#lastDisconnectReason = nopeReason as any;
+        this.log(`nope: ${nopeReason}`, { force: true, level: "error" });
+
+        this.#close();
+
+        break;
+      case "packets":
+        for (const packet of msg.data.packets) {
+          const message = this.#processPacket(packet);
+          this.#processMessage(message);
+        }
+        break;
+
       case "server.authorize":
-        if (m.data.success) {
+        if (msg.data.success) {
           this.log("Authorized");
           this.emit("social.presence", {
             status: "online",
             detail: "menus"
           });
-          this.ping();
           this.emitter.emit("client.ready", {
-            endpoint: this.spool.endpoint!,
-            social: m.data.social
+            endpoint: this.#uri,
+            social: msg.data.social
           });
         } else {
           this.emitter.emit("client.error", "Failure to authorize ribbon");
         }
-        this.pipe("ping", { recvid: this.session.lastReceived });
         break;
       case "server.migrate":
-        this.log(`Migrating to ${m.data.endpoint}`);
-        this.handleMigrate(m.data.endpoint);
+        const { endpoint } = msg.data;
+        this.#migrate(endpoint.replace("/ribbon/", ""));
         break;
       case "server.migrated":
-        while (this.session.messageQueue.length > 0) {
-          const message = this.session.messageQueue.shift()!;
-          this.pipe(message.command, message.data);
-        }
-        break;
-      case "kick":
-      case "nope":
-        this.log(
-          `${m.command}${m.command === "kick" ? "ed" : "d"}: ${m.data.reason}`,
-          { force: true, level: "error" }
-        );
-        this.destroy();
         break;
     }
-    this.emitter.emit(m.command, (m as any).data);
+
+    this.emitter.emit(msg.command, (msg as any).data);
+  }
+
+  #close(reason: string = this.#lastDisconnectReason) {
+    this.#lastDisconnectReason = reason as any;
+    this.emitter.emit("client.dead", this.#lastDisconnectReason);
+    if (this.#connected && this.#socket) {
+      this.#pipe("die");
+      this.#socket.close();
+      this.#socket.removeAllListeners();
+    }
+
+    this.#flags |= Ribbon.FLAGS.DEAD;
+    clearInterval(this.#pinger.heartbeat);
+  }
+
+  get #uri() {
+    return `wss://${this.#spool.host}/ribbon/${this.#spool.endpoint}`;
+  }
+
+  get #hasConnectedOnce() {
+    return this.#flags & Ribbon.FLAGS.SUCCESSFUL;
+  }
+
+  get #isTimingOut() {
+    return this.#flags & Ribbon.FLAGS.TIMING_OUT;
+  }
+
+  get #shouldPing() {
+    return (
+      !(!(this.#flags & Ribbon.FLAGS.FAST_PING) || this.#isTimingOut) ||
+      this.#pinger.heartbeat % 2 == 0
+    );
+  }
+
+  get #alive() {
+    return this.#flags & Ribbon.FLAGS.ALIVE;
+  }
+
+  get #dead() {
+    return this.#flags & Ribbon.FLAGS.DEAD;
+  }
+
+  get #connecting() {
+    return this.#flags & Ribbon.FLAGS.CONNECTING;
+  }
+
+  get #connected() {
+    return !!this.#socket?.connected;
   }
 
   emit<T extends keyof Events.out.all>(
@@ -544,81 +663,55 @@ export class Ribbon {
     ...data: Events.out.all[T] extends void ? [] : [Events.out.all[T]]
   ) {
     if (event.startsWith("client.")) {
-      this.emitter.emit(event as keyof Events.out.Client, data[0]);
+      this.emitter.emit(event as keyof Events.out.Client, data[0] as any);
       return;
     }
 
-    const msg = data[0]
-      ? {
-          command: event,
-          data: data[0],
-          id: this.session.lastSent
-        }
-      : {
-          command: event,
-          id: this.session.lastSent
-        };
-    this.session.messageQueue.push(msg);
-    this.session.messageHistory.push(msg);
+    console.log("pipe", event, data);
 
-    while (this.session.messageHistory.length >= 500)
-      this.session.messageHistory.shift();
-
-    if (!this.session.open) {
-      return;
-    }
-
-    for (let i = 0; i < this.session.messageQueue!.length; i++) {
-      const message = this.session.messageQueue!.shift();
-      this.pipe(message.command, message.data);
-    }
+    this.#pipe(event, data[0] as any);
   }
 
-  on(
-    event: (typeof this.listeners)[number]["type"],
-    callback: (typeof this.listeners)[number]["callback"]
+  log(
+    msg: string,
+    {
+      force = false,
+      level = "info"
+    }: { force: boolean; level: "info" | "warning" | "error" } = {
+      force: false,
+      level: "info"
+    }
   ) {
-    this.listeners.push({
-      type: event,
-      callback
-    });
+    if (!this.verbose && !force) return;
+    const func =
+      level === "info"
+        ? chalk.blue
+        : level === "warning"
+          ? chalk.yellow
+          : chalk.red;
+    console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
-  off(
-    event: (typeof this.listeners)[number]["type"],
-    callback: (typeof this.listeners)[number]["callback"]
-  ) {
-    this.listeners = this.listeners.filter(
-      (l) => l.type === event && l.callback !== callback
-    );
+  get ping() {
+    return this.#pinger.time;
   }
 
-  die(permanent = false) {
-    if (!this.session.open) return;
+  set fasterPing(value: boolean) {
+    this.#flags =
+      (this.#flags & ~Ribbon.FLAGS.FAST_PING) |
+      // @ts-expect-error
+      (value << Math.log2(Ribbon.FLAGS.FAST_PING));
+  }
 
-    this.session.open = false;
-
-    if (this.ws) this.ws.close(1000, "die");
-
-    if (permanent) {
-      this.emitter.emit("client.dead", undefined);
-    }
+  get spool() {
+    return {
+      host: this.#spool.host,
+      endpoint: this.#spool.endpoint
+    };
   }
 
   destroy() {
     this.emitter.removeAllListeners();
-    this.ws?.removeAllListeners();
-    this.die(true);
-  }
-
-  get endpoint() {
-    return this.spool.endpoint;
-  }
-
-  get codecType() {
-    return this.codecMethod;
+    this.#close();
   }
 }
-
-export * from "./types";
-export { CodecType } from "./codec";

@@ -15,7 +15,7 @@ export interface Client {
   /** Fires when recieving an "err" notification. Data is the "msg" of the notification */
   "client.error": string;
   /** Fires when the client dies. */
-  "client.dead": any;
+  "client.dead": string;
   /**
    * Fires when the websocket closes.
    * Note: the websocket might just be migrating, to check for a fully disconnected client, use `client.dead`
