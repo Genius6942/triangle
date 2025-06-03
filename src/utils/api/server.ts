@@ -1,6 +1,8 @@
 import { APIDefaults } from ".";
 import type { Get, Post } from "./basic";
 
+import chalk from "chalk";
+
 export namespace Server {
   export interface Signature {
     version: string;
@@ -93,31 +95,38 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
     );
     const res = new Uint8Array(await req.arrayBuffer());
 
-    const parseSpoolData = (e: Uint8Array) => {
-      const t = e[0],
-        n = {
-          online: 128 & e[1],
-          avoidDueToHighLoad: 64 & e[1],
-          recentlyRestarted: 32 & e[1],
-          backhaulDisrupted: 16 & e[1]
-        },
-        s = [0, 0, 0];
-      (s[0] = (e[2] / 256) * 4),
-        (s[1] = (e[3] / 256) * 4),
-        (s[2] = (e[4] / 256) * 4);
+    const parseSpoolData = (binary: Uint8Array) => {
+      const version = binary[0];
+      const flags = {
+        online: binary[1] & 0b10000000,
+        avoidDueToHighLoad: binary[1] & 0b01000000,
+        recentlyRestarted: binary[1] & 0b00100000,
+        backhaulDisrupted: binary[1] & 0b00010000,
+        unused5: binary[1] & 0b00001000,
+        unused6: binary[1] & 0b00000100,
+        unused7: binary[1] & 0b00000010,
+        unused8: binary[1] & 0b00000001
+      } as const;
+      const load = [0, 0, 0];
+      const latency = binary[5] * 2;
+
+      load[0] = (binary[2] / 0x100) * 4;
+      load[1] = (binary[3] / 0x100) * 4;
+      load[2] = (binary[4] / 0x100) * 4;
+
       return {
-        version: t,
-        flags: n,
-        load: s,
-        latency: e[5],
-        str: `v${t} /${n.avoidDueToHighLoad ? "Av" : ""}${n.recentlyRestarted ? "Rr" : ""}${n.backhaulDisrupted ? "Bd" : ""}/ ${s[0]}, ${s[1]}, ${s[2]}`
+        version,
+        flags,
+        load,
+        latency,
+        str: `v${version} /${flags.avoidDueToHighLoad ? "Av" : ""}${flags.recentlyRestarted ? "Rr" : ""}${flags.backhaulDisrupted ? "Bd" : ""}/ ${load[0]}, ${load[1]}, ${load[2]}`
       };
     };
 
     return parseSpoolData(res);
   };
 
-  const findLowestPingSpool = async (
+  const findFastestAvailableSpool = async (
     spools: { name: string; host: string; flag: string; location: string }[]
   ): Promise<{
     name: string;
@@ -125,12 +134,26 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
     flag: string;
     location: string;
   }> => {
-    return await Promise.any(
-      spools.map(async (spool, index) => {
-        await getDespool(spool.host, index.toString());
-        return spool;
-      })
-    );
+    try {
+      return await Promise.any(
+        spools.map(async (s, index) => {
+          const spool = await getDespool(s.host, index.toString());
+          if (spool.flags.avoidDueToHighLoad || spool.flags.recentlyRestarted)
+            throw new Error("Spool is unstable");
+          return s;
+        })
+      );
+    } catch {
+      console.log(
+        `${chalk.yellow("[🎀\u2009Ribbon]")}: All spools down or recently restarted (unstable). Falling back to root TETR.IO host.`
+      );
+    }
+    return {
+      name: "tetr.io",
+      host: "tetr.io",
+      flag: "NL",
+      location: "osk"
+    };
   };
 
   return {
@@ -169,7 +192,9 @@ export const server = (get: Get, _: Post, options: APIDefaults) => {
           token: ""
         };
       else {
-        const lowestPingSpool = await findLowestPingSpool(res.spools.spools);
+        const lowestPingSpool = await findFastestAvailableSpool(
+          res.spools.spools
+        );
         return {
           host: lowestPingSpool.host,
           endpoint: res.endpoint.replace("/ribbon/", ""),

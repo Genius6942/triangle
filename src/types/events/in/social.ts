@@ -4,6 +4,8 @@ export interface Social {
   "social.online": number;
 
   "social.dm": SocialTypes.DM;
+  /** Known: `they.fail` */
+  "social.dm.fail": string;
 
   "social.presence": {
     user: string;

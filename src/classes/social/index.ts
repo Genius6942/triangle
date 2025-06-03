@@ -271,7 +271,8 @@ export class Social {
         recipient: userID,
         msg: message
       },
-      "social.dm"
+      "social.dm",
+      ["social.dm.fail", "client.error"]
     );
   }
 

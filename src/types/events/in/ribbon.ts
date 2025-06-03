@@ -34,6 +34,8 @@ export interface Ribbon {
 
   "server.migrate": {
     endpoint: string;
+    name: string;
+    flag: string;
   };
 
   "server.migrated": {};

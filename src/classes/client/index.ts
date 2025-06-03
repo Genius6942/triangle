@@ -13,6 +13,8 @@ export type * from "./types";
 export class Client {
   /** User information */
   public user: ClientUser;
+  /** Whether the client has been disconnected. If true, the client needs to be reconnected with `.reconnect()` or destroyed */
+  public disconnected: boolean = false;
   /**
    * Utils for the client.
    * @deprecated - functionality has been moved to other sections. This may be removed in the future.
@@ -221,8 +223,9 @@ export class Client {
    * @param event - the `command` of the event to send
    * @param data - the data to send along with the command. For void (no) data, just pass in `undefined`
    * @param listen - the event to wait for before resolving.
+   * @param error - a list of custom error events to listen for. Defaults to `[client.error]`.
    * @returns the data sent by the `listen` event
-   * @throws an error if the 'err' message is received from TETR.IO
+   * @throws an error if the error event provided (or `client.error`) is received from TETR.IO
    * @example
    * // This is just for example, use `client.room!.chat` instead
    * await client.wrap('room.chat', { content: 'Hello', pinned: false }, 'room.chat');
@@ -230,12 +233,13 @@ export class Client {
   wrap<O extends keyof Events.out.all, I extends keyof Events.in.all>(
     event: O,
     data: Events.out.all[O],
-    listen: I
+    listen: I,
+    error: (keyof Events.in.all)[] = ["client.error"]
   ) {
     return new Promise<Events.in.all[I]>((resolve, reject) => {
       const disband = () => {
         this.off(listen, rs);
-        this.off("client.error", rj);
+        error.forEach((err) => this.off(err, rj));
       };
       const rs = (data: Events.in.all[I]) => {
         disband();
@@ -248,7 +252,7 @@ export class Client {
       };
 
       this.on(listen, rs);
-      this.on("client.error", rj);
+      error.forEach((err) => this.on(err, rj));
 
       // @ts-expect-error
       this.emit(event, data);
@@ -313,10 +317,33 @@ export class Client {
     });
 
     this.on("client.dead", async () => {
-      // let other handlers fire first, this has to come last so others can fire (destroy will remove the client)
-      await new Promise((r) => setTimeout(r, 1));
-      await this.destroy();
+      this.disconnected = true;
     });
+  }
+
+  /**
+   * Reconnect the client to TETR.IO.
+   * @throws {Error} if the client is already connected
+   */
+  async reconnect() {
+    if (!this.disconnected) {
+      throw new Error("Client is not disconnected.");
+    }
+
+    const newRibbon = await this.ribbon.clone();
+    this.ribbon.destroy();
+    this.ribbon = newRibbon;
+
+    const data = await new Promise<Events.in.Client["client.ready"]>(
+      (resolve, reject) => {
+        setTimeout(() => reject("Failed to connect"), 5000);
+        this.ribbon.emitter.once("client.ready", (d) => {
+          if (d) resolve(d);
+        });
+      }
+    );
+
+    this.social = await Social.create(this, data.social);
   }
 
   /** The client's current handling. */

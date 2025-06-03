@@ -1,8 +1,8 @@
 import { Events, Game } from "../../types";
 import { API, type APITypes, EventEmitter } from "../../utils";
-import { Bits } from "./bits";
-import { CandorCodec } from "./codec-candor";
-import { tetoPack } from "./teto-pack";
+import { CandorCodec } from "./codecs/codec-candor";
+import { tetoPack } from "./codecs/teto-pack";
+import { Bits } from "./codecs/utils/bits";
 import { RibbonEvents } from "./types";
 
 import chalk from "chalk";
@@ -10,7 +10,7 @@ import { client as WebSocket, type connection as Connection } from "websocket";
 
 export type Codec = "json" | "teto" | "candor";
 
-interface Spool {
+export interface Spool {
   host: string;
   endpoint: string;
   token: string;
@@ -71,6 +71,8 @@ export class Ribbon {
 
   #spool: Spool;
 
+  #api: API;
+
   #pinger = {
     heartbeat: 0,
     interval: setInterval(() => this.#ping(), 2500),
@@ -78,7 +80,11 @@ export class Ribbon {
     time: 0
   };
 
-  #tokenID: string | null = null;
+  #session = {
+    tokenID: null as string | null,
+    ribbonID: null as string | null
+  };
+
   #sentid = 0;
   #receivedId = 0;
   #flags = 0;
@@ -94,7 +100,10 @@ export class Ribbon {
   #reconnectPenalty = 0;
   #reconnectTimeout: null | NodeJS.Timeout = null;
 
-  verbose: boolean;
+  #options: {
+    verbose: boolean;
+    spooling: boolean;
+  };
 
   emitter = new EventEmitter<Events.in.all>();
 
@@ -155,7 +164,9 @@ export class Ribbon {
     handling,
     userAgent,
     codec,
-    spool
+    spool,
+    api,
+    spooling = true
   }: {
     verbose: boolean;
     token: string;
@@ -163,9 +174,9 @@ export class Ribbon {
     userAgent: string;
     codec: Codec;
     spool: Spool;
+    api: API;
+    spooling?: boolean;
   }) {
-    this.verbose = verbose;
-
     this.#token = token;
     this.#handling = handling;
     this.#userAgent = userAgent;
@@ -173,6 +184,13 @@ export class Ribbon {
     this.#spool = spool;
 
     this.#codec = Ribbon.#getCodec(codec, userAgent);
+
+    this.#api = api;
+
+    this.#options = {
+      verbose,
+      spooling
+    };
 
     this.#connect();
   }
@@ -182,7 +200,7 @@ export class Ribbon {
     token,
     handling,
     userAgent,
-    codec = "candor",
+    codec = "teto",
     spooling = true
   }: {
     verbose?: boolean;
@@ -199,12 +217,9 @@ export class Ribbon {
 
     const envPromise = api.server.environment();
 
-    const spool = await api.server.spool(spooling);
-
     const signature = new Promise<APITypes.Server.Signature>(
       async (r) => await envPromise.then((s) => r(s.signature))
     );
-
     return new Ribbon({
       verbose,
       token,
@@ -212,11 +227,13 @@ export class Ribbon {
       userAgent,
       codec,
       spool: {
-        host: spool.host,
-        endpoint: spool.endpoint,
-        token: spool.token,
+        host: "",
+        endpoint: "",
+        token: "",
         signature: signature
-      }
+      },
+      api,
+      spooling
     });
   }
 
@@ -269,8 +286,18 @@ export class Ribbon {
     }
   }
 
-  #connect() {
-    if (this.verbose) {
+  async #connect() {
+    const spool = await this.#api.server.spool(this.#options.spooling);
+
+    this.#spool = {
+      host: spool.host,
+      endpoint:
+        this.#spool.endpoint !== "" ? this.#spool.endpoint : spool.endpoint,
+      token: spool.token,
+      signature: this.#spool.signature
+    };
+
+    if (this.#options.verbose) {
       this.log(`Connecting to <${this.#spool.host}/${this.#spool.endpoint}>`);
     }
 
@@ -321,7 +348,7 @@ export class Ribbon {
         if (message.type === "utf8" && message.utf8Data) {
           this.#onMessage(Buffer.from(message.utf8Data));
         } else if (message.type === "binary" && message.binaryData) {
-          this.#onMessage(Buffer.from(message.binaryData));
+          this.#onMessage(message.binaryData as Buffer);
         }
       });
     });
@@ -332,12 +359,11 @@ export class Ribbon {
     });
   }
 
-  #migrate(target: string) {
+  async #switch(target: string) {
     this.#spool.endpoint = target;
-
-    this.log(`Migrating to ${this.#uri}`);
-
     this.#flags |= Ribbon.FLAGS.CONNECTING;
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
 
     this.#__internal_reconnect();
   }
@@ -369,27 +395,29 @@ export class Ribbon {
 
   #__internal_reconnect() {
     this.#reconnectTimeout = null;
-    if (!this.#dead) this.#connect();
+    if (!this.#dead) {
+      this.#connect();
+    }
   }
 
   async #onOpen() {
-    if (this.verbose)
+    if (this.#options.verbose)
       this.log(`Connected to <${this.#spool.host}/${this.#spool.endpoint}>`);
 
     this.#flags |= Ribbon.FLAGS.ALIVE | Ribbon.FLAGS.SUCCESSFUL;
     this.#flags &= ~Ribbon.FLAGS.TIMING_OUT;
 
-    if (this.#tokenID === null) {
+    if (this.#session.tokenID === null) {
       this.#pipe("new");
     } else {
       this.#pipe("session", {
-        ribbonid: this.#spool.token,
-        tokenid: this.#tokenID
+        ribbonid: this.#session.ribbonID,
+        tokenid: this.#session.tokenID
       });
     }
   }
 
-  #onMessage(data: string | Buffer<ArrayBufferLike>) {
+  #onMessage(data: string | Buffer) {
     this.#flags |= Ribbon.FLAGS.ALIVE;
     this.#flags &= ~Ribbon.FLAGS.TIMING_OUT;
 
@@ -533,13 +561,12 @@ export class Ribbon {
 
         this.#flags &= ~Ribbon.FLAGS.CONNECTING;
 
-        this.#spool.token = ribbonid;
+        this.#session.ribbonID = ribbonid;
 
-        if (this.#tokenID !== null) {
-          this.#pipe(
-            "packets",
-            this.#sentQueue.map((item) => item.packet)
-          );
+        if (this.#session.tokenID !== null) {
+          this.#pipe("packets", {
+            packets: this.#sentQueue.map((item) => item.packet)
+          });
         } else {
           this.#pipe("server.authorize", {
             token: this.#token,
@@ -549,7 +576,7 @@ export class Ribbon {
           });
         }
 
-        this.#tokenID = tokenid;
+        this.#session.tokenID = tokenid;
         break;
       case "ping":
         const id = msg.data?.recvid;
@@ -601,7 +628,8 @@ export class Ribbon {
         break;
       case "server.migrate":
         const { endpoint } = msg.data;
-        this.#migrate(endpoint.replace("/ribbon/", ""));
+        this.log(`Migrating to worker ${endpoint}`);
+        this.#switch(endpoint.replace("/ribbon/", ""));
         break;
       case "server.migrated":
         break;
@@ -667,8 +695,6 @@ export class Ribbon {
       return;
     }
 
-    console.log("pipe", event, data);
-
     this.#pipe(event, data[0] as any);
   }
 
@@ -682,7 +708,7 @@ export class Ribbon {
       level: "info"
     }
   ) {
-    if (!this.verbose && !force) return;
+    if (!this.#options.verbose && !force) return;
     const func =
       level === "info"
         ? chalk.blue
@@ -692,10 +718,12 @@ export class Ribbon {
     console.log(`${func("[🎀\u2009Ribbon]")}: ${msg}`);
   }
 
+  /** The last ping time, in ms */
   get ping() {
     return this.#pinger.time;
   }
 
+  /** Used in the Game class to detect disconnects faster, don't touch. */
   set fasterPing(value: boolean) {
     this.#flags =
       (this.#flags & ~Ribbon.FLAGS.FAST_PING) |
@@ -703,6 +731,7 @@ export class Ribbon {
       (value << Math.log2(Ribbon.FLAGS.FAST_PING));
   }
 
+  /** Ribbon spool information, useful for logging */
   get spool() {
     return {
       host: this.#spool.host,
@@ -710,8 +739,36 @@ export class Ribbon {
     };
   }
 
+  /** Closes and cleans up the ribbon, called automatically by `client.destroy()` */
   destroy() {
     this.emitter.removeAllListeners();
-    this.#close();
+    this.#close(this.#lastDisconnectReason);
+  }
+
+  /** Automatically disconnect the ribbon's connection. It will attempt to automatically reconnect. */
+  disconnect() {
+    if (this.#socket) {
+      this.#socket.close();
+      this.#socket = null;
+    }
+  }
+
+  /** Clones a ribbon. Used internally by Client.reconnect. */
+  async clone() {
+    const newRibbon = await Ribbon.create({
+      verbose: this.#options.verbose,
+      token: this.#token,
+      handling: this.#handling,
+      userAgent: this.#userAgent,
+      codec: this.#codec.method,
+      spooling: this.#options.spooling
+    });
+
+    const emitter = this.emitter.export();
+    newRibbon.emitter.import(emitter);
+
+    return newRibbon;
   }
 }
+
+export { RibbonOptions } from "./types";

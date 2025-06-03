@@ -74,4 +74,29 @@ export class EventEmitter<T extends Record<string, any>> {
   get maxListeners() {
     return this.#maxListeners;
   }
+
+  export() {
+    return {
+      listeners: this.#listeners.map(([event, cb, once]) => ({
+        event,
+        cb,
+        once
+      })),
+      maxListeners: this.#maxListeners,
+      verbose: this.verbose
+    };
+  }
+
+  import(data: ReturnType<EventEmitter<T>["export"]>) {
+    data.listeners.forEach(({ event, cb, once }) => {
+      if (once) {
+        this.once(event, cb as any);
+      } else {
+        this.on(event, cb as any);
+      }
+    });
+    this.#maxListeners = data.maxListeners;
+    this.verbose = data.verbose;
+    return this;
+  }
 }

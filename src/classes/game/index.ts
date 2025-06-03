@@ -126,6 +126,7 @@ export class Game {
     delete this.client.game;
     this.engine.events.removeAllListeners();
     this.over = true;
+    this.client.ribbon.fasterPing = false;
   }
 
   // private addIGE(data: Events.in.Game["game.replay.ige"]) {
@@ -133,6 +134,8 @@ export class Game {
   // }
 
   private init() {
+    this.client.ribbon.fasterPing = true;
+
     // @ts-expect-error
     this.listen("game.match", (data) => {
       // if (data.)
