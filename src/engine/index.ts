@@ -175,7 +175,7 @@ export class Engine {
   };
 
   constructor(options: EngineInitializeParams) {
-    this.initializer = options;
+    this.initializer = deepCopy(options);
     this.init();
   }
 
