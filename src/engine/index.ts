@@ -162,6 +162,8 @@ export class Engine {
 
   state!: number;
 
+  currentSpike!: number;
+
   events = new EventEmitter<Events>();
 
   private resCache!: {
@@ -282,6 +284,8 @@ export class Engine {
 
     this.state = 0;
 
+    this.currentSpike = 0;
+
     this.flushRes();
 
     this.nextPiece();
@@ -346,6 +350,7 @@ export class Engine {
       glock: this.glock,
       ige: this.igeHandler.snapshot(),
       state: this.state,
+      currentSpike: this.currentSpike,
       resCache: deepCopy(this.resCache)
     };
   }
@@ -408,6 +413,7 @@ export class Engine {
     this.stats = deepCopy(snapshot.stats);
     this.glock = snapshot.glock;
     this.state = snapshot.state;
+    this.currentSpike = snapshot.currentSpike;
     this.igeHandler.fromSnapshot(snapshot.ige);
 
     this.resCache = deepCopy(snapshot.resCache);
@@ -1322,7 +1328,11 @@ export class Engine {
           )
         );
 
-    res.garbage.forEach((gb) => (this.stats.garbage.sent += gb));
+    const sent = res.garbage.reduce((a, b) => a + b, 0);
+    this.stats.garbage.sent += sent;
+
+    if (this.stats.combo >= 0) this.currentSpike += sent;
+    else this.currentSpike = 0;
 
     this.resCache.pieces++;
     this.resCache.garbage.sent.push(...res.garbage);

@@ -33,6 +33,7 @@ export interface EngineSnapshot {
   stats: Engine["stats"];
   glock: number;
   state: number;
+	currentSpike: number;
   ige: IGEHandlerSnapshot;
 	resCache: Engine["resCache"];
 }
