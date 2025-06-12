@@ -1220,6 +1220,7 @@ export class Engine {
       lines,
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
+      rawGarbage: gEvents.filter((g) => g > 0),
       stats: this.stats,
       garbageAdded: false,
       topout: false,
