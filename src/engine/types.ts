@@ -44,6 +44,8 @@ export interface LockRes {
   lines: number;
   spin: SpinType;
   garbage: number[];
+  rawGarbage: number[];
+  /** Garbage from attacks before cancelling */
   stats: {
     garbage: {
       sent: number;
