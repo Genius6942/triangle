@@ -4,7 +4,7 @@ const path = require("node:path");
 
 fs.writeFileSync(
   path.join(__dirname, "src/utils/version.ts"),
-  `export const version = "${version}";`
+  `export const version = "${version}";\n`
 );
 
 console.log("Version:", version);

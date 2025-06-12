@@ -6,7 +6,7 @@ export * from "./seed";
 export * from "./polyfills";
 export * from "./rng";
 
-interface Handler<T> {
+export interface Handler<T> {
   type: new (...args: any[]) => T;
   copy: (value: T) => T;
 }

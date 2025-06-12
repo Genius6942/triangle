@@ -8,7 +8,6 @@ import type {
 } from ".";
 import { Game } from "../types";
 import { IGEHandlerSnapshot } from "./multiplayer";
-import type { Rotation } from "./utils/tetromino/types";
 
 export type SpinType = "none" | "mini" | "normal";
 
