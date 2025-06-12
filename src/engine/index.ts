@@ -328,23 +328,7 @@ export class Engine {
   snapshot(): EngineSnapshot {
     return {
       board: deepCopy(this.board.state),
-      falling: {
-        aox: this.falling.aox,
-        aoy: this.falling.aoy,
-        fallingRotations: this.falling.fallingRotations,
-        highestY: this.falling.highestY,
-        ihs: this.falling.ihs,
-        irs: this.falling.irs,
-        keys: this.falling.keys,
-        rotation: this.falling.rotation,
-        location: this.falling.location,
-        locking: this.falling.locking,
-        lockResets: this.falling.lockResets,
-        rotResets: this.falling.rotResets,
-        safeLock: this.falling.safeLock,
-        symbol: this.falling.symbol,
-        totalRotations: this.falling.totalRotations
-      },
+      falling: this.falling.snapshot(),
       frame: this.frame,
       garbage: this.garbageQueue.snapshot(),
       hold: this.held,
@@ -358,7 +342,8 @@ export class Engine {
       stats: deepCopy(this.stats),
       glock: this.glock,
       ige: this.igeHandler.snapshot(),
-      state: this.state
+      state: this.state,
+			resCache: deepCopy(this.resCache)
     };
   }
 
@@ -367,10 +352,8 @@ export class Engine {
     this.initiatePiece(snapshot.falling.symbol, true);
     for (const key of Object.keys(snapshot.falling)) {
       // @ts-expect-error
-      this.falling[key] = snapshot.falling[key];
+      this.falling[key] = deepCopy(snapshot.falling[key]);
     }
-    this.falling.location[0] = snapshot.falling.location[0];
-    this.falling.location[1] = snapshot.falling.location[1];
     this.frame = snapshot.frame;
     this.subframe = snapshot.subframe;
     this.garbageQueue.fromSnapshot(snapshot.garbage);
@@ -414,6 +397,8 @@ export class Engine {
     this.glock = snapshot.glock;
     this.state = snapshot.state;
     this.igeHandler.fromSnapshot(snapshot.ige);
+
+		this.resCache = deepCopy(snapshot.resCache);
   }
 
   get kickTable(): (typeof kicks)[KickTableName] {

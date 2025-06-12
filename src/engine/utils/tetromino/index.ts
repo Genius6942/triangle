@@ -1,3 +1,4 @@
+import { deepCopy } from "..";
 import { BoardSquare } from "../../board";
 import { Mino } from "../../queue/types";
 import { KickTable, legal, performKick } from "../kicks";
@@ -10,6 +11,24 @@ export interface TetrominoInitializeParams {
   boardHeight: number;
   boardWidth: number;
   from?: Tetromino;
+}
+
+export interface TetrominoSnapshot {
+  symbol: Mino;
+  location: [number, number];
+  locking: number;
+  lockResets: number;
+  rotResets: number;
+  safeLock: number;
+  highestY: number;
+  rotation: Rotation;
+  fallingRotations: number;
+  totalRotations: number;
+  irs: number;
+  ihs: boolean;
+  aox: number;
+  aoy: number;
+  keys: number;
 }
 
 export class Tetromino {
@@ -252,6 +271,26 @@ export class Tetromino {
     }
 
     return start !== this.location[1];
+  }
+
+  snapshot(): TetrominoSnapshot {
+    return {
+      aox: this.aox,
+      aoy: this.aoy,
+      fallingRotations: this.fallingRotations,
+      highestY: this.highestY,
+      ihs: this.ihs,
+      irs: this.irs,
+      keys: this.keys,
+      rotation: this.rotation,
+      location: deepCopy(this.location),
+      locking: this.locking,
+      lockResets: this.lockResets,
+      rotResets: this.rotResets,
+      safeLock: this.safeLock,
+      symbol: this.symbol,
+      totalRotations: this.totalRotations
+    };
   }
 }
 
