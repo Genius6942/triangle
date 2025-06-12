@@ -39,13 +39,19 @@ export interface EngineSnapshot {
 }
 
 export interface LockRes {
+	/** The locked mino */
   mino: Mino;
+	/** The number of garbage lines cleared */
   garbageCleared: number;
+	/** The number of lines cleared */
   lines: number;
+	/** The type of spin performed */
   spin: SpinType;
-  garbage: number[];
-  rawGarbage: number[];
   /** Garbage from attacks before cancelling */
+  rawGarbage: number[];
+	/** Garbage from attacks after cancelling */
+  garbage: number[];
+	/** The current engine stats */
   stats: {
     garbage: {
       sent: number;
@@ -58,10 +64,13 @@ export interface LockRes {
     pieces: number;
     lines: number;
   };
+	/** The amount of garbage added to the board */
   garbageAdded: false | OutgoingGarbage[];
+	/** Whether or not the engine is topped out */
   topout: boolean;
   /** The number of frames since the last piece was placed */
   pieceTime: number;
+	/** The keys pressed since the last lock */
   keysPresses: Game.Key[];
 }
 
