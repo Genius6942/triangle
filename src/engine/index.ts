@@ -1702,10 +1702,10 @@ export class Engine {
     return output.reverse().join("\n");
   }
 
-	/** Return an engine with the same config. Does not preserve state. */
-	clone() {
-		return new Engine(this.initializer);
-	}
+  /** Return an engine with the same config. Does not preserve state. */
+  clone() {
+    return new Engine(this.initializer);
+  }
 }
 
 export * from "./queue";
