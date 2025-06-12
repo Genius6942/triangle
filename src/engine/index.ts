@@ -175,7 +175,10 @@ export class Engine {
   };
 
   constructor(options: EngineInitializeParams) {
-    this.initializer = deepCopy(options);
+    this.initializer = deepCopy(options, [
+      { type: Date, copy: (d) => new Date(d) }
+    ]);
+
     this.init();
   }
 
@@ -343,7 +346,7 @@ export class Engine {
       glock: this.glock,
       ige: this.igeHandler.snapshot(),
       state: this.state,
-			resCache: deepCopy(this.resCache)
+      resCache: deepCopy(this.resCache)
     };
   }
 
@@ -407,7 +410,7 @@ export class Engine {
     this.state = snapshot.state;
     this.igeHandler.fromSnapshot(snapshot.ige);
 
-		this.resCache = deepCopy(snapshot.resCache);
+    this.resCache = deepCopy(snapshot.resCache);
   }
 
   get kickTable(): (typeof kicks)[KickTableName] {
