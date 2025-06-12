@@ -349,7 +349,16 @@ export class Engine {
 
   fromSnapshot(snapshot: EngineSnapshot) {
     this.board.state = deepCopy(snapshot.board);
-    this.initiatePiece(snapshot.falling.symbol, true);
+    this.falling = new Tetromino({
+      boardHeight: this.board.height,
+      boardWidth: this.board.width,
+      initialRotation:
+        this.kickTable.spawn_rotation[
+          snapshot.falling.symbol.toLowerCase() as keyof typeof this.kickTable.spawn_rotation
+        ] ?? 0,
+      symbol: snapshot.falling.symbol,
+      from: snapshot.falling
+    });
     for (const key of Object.keys(snapshot.falling)) {
       // @ts-expect-error
       this.falling[key] = deepCopy(snapshot.falling[key]);

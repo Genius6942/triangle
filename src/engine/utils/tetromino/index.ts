@@ -10,7 +10,7 @@ export interface TetrominoInitializeParams {
   initialRotation: Rotation;
   boardHeight: number;
   boardWidth: number;
-  from?: Tetromino;
+  from?: Tetromino | TetrominoSnapshot;
 }
 
 export interface TetrominoSnapshot {
