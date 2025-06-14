@@ -302,7 +302,7 @@ export class Engine {
         received: []
       },
       keys: [],
-      lastLock: res?.lastLock || 0
+      lastLock: res?.lastLock ?? 0
     };
 
     return res!;
