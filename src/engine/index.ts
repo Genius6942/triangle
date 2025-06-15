@@ -1234,7 +1234,7 @@ export class Engine {
       garbageAdded: false,
       topout: false,
       keysPresses: this.resCache.keys.splice(0),
-      pieceTime: this.frame - this.resCache.lastLock
+      pieceTime: Math.round((this.frame + this.subframe - this.resCache.lastLock) * 10) / 10
     };
 
     for (const gb of res.garbage) this.stats.garbage.attack += gb;
@@ -1338,7 +1338,7 @@ export class Engine {
     this.resCache.pieces++;
     this.resCache.garbage.sent.push(...res.garbage);
     this.resCache.garbage.received.push(...(res.garbageAdded || []));
-    this.resCache.lastLock = this.frame;
+    this.resCache.lastLock = this.frame + this.subframe;
 
     this.stats.pieces++;
     this.stats.lines += lines;
