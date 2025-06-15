@@ -1199,17 +1199,20 @@ export class Engine {
           ]
         : [];
 
+    let surged = 0;
+
     if (brokeB2B !== false) {
       let btb = brokeB2B;
       if (this.b2b.charging !== false && btb + 1 > this.b2b.charging.at) {
-        const value = Math.floor(
+        surged = Math.floor(
           (btb - this.b2b.charging.at + this.b2b.charging.base + 1) *
             this.dynamic.garbageMultiplier.get()
         );
+
         const garbages = [
-          Math.round(value / 3),
-          Math.round(value / 3),
-          value - 2 * Math.round(value / 3)
+          Math.round(surged / 3),
+          Math.round(surged / 3),
+          surged - 2 * Math.round(surged / 3)
         ];
         gEvents.splice(0, 0, ...garbages);
         brokeB2B = false;
@@ -1230,11 +1233,14 @@ export class Engine {
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
       rawGarbage: gEvents.filter((g) => g > 0),
+			surge: surged,
       stats: this.stats,
       garbageAdded: false,
       topout: false,
       keysPresses: this.resCache.keys.splice(0),
-      pieceTime: Math.round((this.frame + this.subframe - this.resCache.lastLock) * 10) / 10
+      pieceTime:
+        Math.round((this.frame + this.subframe - this.resCache.lastLock) * 10) /
+        10
     };
 
     for (const gb of res.garbage) this.stats.garbage.attack += gb;

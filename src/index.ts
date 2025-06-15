@@ -14,7 +14,7 @@ if (!(suppressKey in process.env)) {
   fetch("https://registry.npmjs.org/@haelp/teto")
     .then((r) => r.json())
     .then((d: any) => {
-      if (version !== d["dist-tags"].latest)
+      if (version < d["dist-tags"].latest)
         console.log(
           `${chalk.redBright("[Triangle.js]")} Your triangle.js is out of date (v${version} vs v${d["dist-tags"].latest}). We recommend updating with 'npm install @haelp/teto@latest'.\nTo suppress this warning, set the ${suppressKey} environment variable.`
         );

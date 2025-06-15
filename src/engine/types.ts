@@ -51,6 +51,8 @@ export interface LockRes {
   rawGarbage: number[];
 	/** Garbage from attacks after cancelling */
   garbage: number[];
+	/** The amount of garbage released by surge before cancelling */
+	surge: number;
 	/** The current engine stats */
   stats: {
     garbage: {
