@@ -444,8 +444,7 @@ export class Engine {
             (this.stats.b2b -
               this.b2b.charging.at +
               this.b2b.charging.base +
-              1) *
-              this.dynamic.garbageMultiplier.get()
+              1)
           )
         : 0
     };

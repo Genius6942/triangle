@@ -8,6 +8,7 @@ import { Social } from "../social";
 import { ClientUtils } from "../utils";
 import { ClientOptions, ClientUser } from "./types";
 
+
 export type * from "./types";
 
 export class Client {
@@ -184,7 +185,10 @@ export class Client {
 
     const data = await new Promise<Events.in.Client["client.ready"]>(
       (resolve, reject) => {
-        setTimeout(() => reject("Failed to connect"), 5000);
+        setTimeout(() => {
+					ribbon.destroy();
+					reject("Failed to connect");
+				}, 5000);
         ribbon.emitter.once("client.ready", (d) => {
           if (d) resolve(d);
         });
@@ -336,8 +340,10 @@ export class Client {
 
     const data = await new Promise<Events.in.Client["client.ready"]>(
       (resolve, reject) => {
-        setTimeout(() => reject("Failed to connect"), 5000);
-        this.ribbon.emitter.once("client.ready", (d) => {
+				setTimeout(() => {
+          newRibbon.destroy();
+          reject("Failed to connect");
+        }, 5000);        this.ribbon.emitter.once("client.ready", (d) => {
           if (d) resolve(d);
         });
       }
