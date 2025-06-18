@@ -185,12 +185,15 @@ export class Client {
 
     const data = await new Promise<Events.in.Client["client.ready"]>(
       (resolve, reject) => {
-        setTimeout(() => {
-					ribbon.destroy();
-					reject("Failed to connect");
-				}, 5000);
+        const t = setTimeout(() => {
+          ribbon.destroy();
+          reject("Failed to connect");
+        }, 5000);
         ribbon.emitter.once("client.ready", (d) => {
-          if (d) resolve(d);
+          if (d) {
+            clearTimeout(t);
+            resolve(d);
+          }
         });
       }
     );
@@ -340,11 +343,15 @@ export class Client {
 
     const data = await new Promise<Events.in.Client["client.ready"]>(
       (resolve, reject) => {
-				setTimeout(() => {
+        const t = setTimeout(() => {
           newRibbon.destroy();
           reject("Failed to connect");
-        }, 5000);        this.ribbon.emitter.once("client.ready", (d) => {
-          if (d) resolve(d);
+        }, 5000);
+        this.ribbon.emitter.once("client.ready", (d) => {
+          if (d) {
+						clearTimeout(t);
+						resolve(d);
+					}
         });
       }
     );
