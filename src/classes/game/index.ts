@@ -29,14 +29,18 @@ export class Game {
 
   /** The client's engine */
   public engine!: Engine;
-  /** Data on the opponents in game */
-  public opponents: {
+  /** Data on the players in game */
+  public players: {
     name: string;
     gameid: number;
     userid: string;
     engine: Engine;
     queue: GameTypes.Replay.Frame[];
   }[] = [];
+	/** @deprecated - use `players` */
+	public get opponents() {
+		return this.players;
+	}
   /** The client's `gameid` set by the server */
   public gameid: number;
   /** The raw game config sent by TETR.IO */
@@ -56,14 +60,6 @@ export class Game {
   static fps = 60;
   /** Frames per message */
   private static fpm = 12;
-
-  /**
-   * Game stats
-   * @deprecated use engine.stats instead
-   */
-  public stats = {
-    piecesPlaced: 0
-  };
 
   /** @hideconstructor */
   constructor(client: Client, ready: GameTypes.Ready) {
@@ -158,8 +154,8 @@ export class Game {
 
     const p = this.readyData.players;
     // TODO: Add support for choosing who to spectate
-    const opponents = p.filter((p) => p.gameid !== this.gameid);
-    this.opponents = opponents.map((o) => ({
+    const players = p.filter((p) => p.gameid !== this.gameid);
+    this.players = players.map((o) => ({
       name: o.options.username,
       userid: o.userid,
       gameid: o.gameid,
@@ -170,7 +166,7 @@ export class Game {
     // this.listen("game.replay.ige", (data) => this.addIGE(data));
     this.listen("game.replay.ige", (data) => this.handleIGE(data));
     this.listen("game.replay", ({ gameid, frames }) => {
-      const game = this.opponents.find((player) => player.gameid === gameid);
+      const game = this.players.find((player) => player.gameid === gameid);
       if (!game || game.engine.toppedOut) return false;
 
       game.queue.push(...frames);
@@ -208,10 +204,10 @@ export class Game {
       },
       this.engine,
       [
-        ...this.opponents.map((opponent) => ({
-          name: opponent.name,
-          gameid: opponent.gameid,
-          engine: opponent.engine
+        ...this.players.map((player) => ({
+          name: player.name,
+          gameid: player.gameid,
+          engine: player.engine
         }))
       ]
     ]);
@@ -431,12 +427,10 @@ export class Game {
     keys.splice(0, keys.length, ...keys.reverse());
 
     try {
-      const { garbage, pieces } = this.engine.tick([
+      const { garbage } = this.engine.tick([
         ...this.incomingGarbage.splice(0, this.incomingGarbage.length),
         ...keys
       ]);
-
-      this.stats.piecesPlaced += pieces;
 
       this.messageQueue.push(
         ...garbage.received.map((g) => ({

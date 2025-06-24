@@ -80,7 +80,8 @@ export interface Client {
    * @see https://github.com/tetrjs/tetr.js/issues/62
    */
   "client.game.end": {
-    players: { id: string; name: string; points: number; won: boolean }[];
+		duration: number;
+    players: { id: string; name: string; points: number; won: boolean, raw: Game.Leaderboard}[];
   };
 
   /** Same as game.abort */

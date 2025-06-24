@@ -38,6 +38,8 @@ export class Room {
   public options!: GameTypes.Options;
   /** The current state of the room (ingame | lobby) */
   public state!: RoomTypes.State;
+  /** The time the last game started */
+  public gameStart: number | null = null;
 
   /** Room chat history */
   public chats: Events.in.Room["room.chat"][] = [];
@@ -119,6 +121,7 @@ export class Room {
     this.listen("game.ready", (data) => {
       try {
         this.client.game = new Game(this.client, data);
+        this.gameStart = performance.now();
       } catch {
         return; // not in room, don't do anything
       }
@@ -176,13 +179,22 @@ export class Room {
     });
 
     this.listen("game.end", (data) => {
+      const maxWins = data.leaderboard.reduce(
+        (max, item) => Math.max(max, item.wins),
+        0
+      );
       this.client.emit("client.game.end", {
-        players: data.leaderboard.map((item) => ({
-          id: item.id,
-          name: item.username,
-          points: item.wins,
-          won: !!item.active
-        }))
+        duration: performance.now() - (this.gameStart ?? 0),
+        players: data.leaderboard.map(
+          (item) =>
+            ({
+              id: item.id,
+              name: item.username,
+              points: item.wins,
+              won: item.wins === maxWins,
+              raw: item
+            }) satisfies Events.in.Client["client.game.end"]["players"][number]
+        )
       });
 
       if (!this.client.game) return;
