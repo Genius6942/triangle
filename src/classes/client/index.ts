@@ -8,7 +8,6 @@ import { Social } from "../social";
 import { ClientUtils } from "../utils";
 import { ClientOptions, ClientUser } from "./types";
 
-
 export type * from "./types";
 
 export class Client {
@@ -349,9 +348,9 @@ export class Client {
         }, 5000);
         this.ribbon.emitter.once("client.ready", (d) => {
           if (d) {
-						clearTimeout(t);
-						resolve(d);
-					}
+            clearTimeout(t);
+            resolve(d);
+          }
         });
       }
     );

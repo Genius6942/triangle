@@ -441,10 +441,7 @@ export class Engine {
           100 || 0,
       surgePower: this.b2b.charging
         ? Math.floor(
-            (this.stats.b2b -
-              this.b2b.charging.at +
-              this.b2b.charging.base +
-              1)
+            this.stats.b2b - this.b2b.charging.at + this.b2b.charging.base + 1
           )
         : 0
     };
@@ -1232,7 +1229,7 @@ export class Engine {
       spin: this.lastSpin ? this.lastSpin.type : "none",
       garbage: gEvents.filter((g) => g > 0),
       rawGarbage: gEvents.filter((g) => g > 0),
-			surge: surged,
+      surge: surged,
       stats: this.stats,
       garbageAdded: false,
       topout: false,

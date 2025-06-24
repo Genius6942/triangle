@@ -1601,10 +1601,7 @@ class Ue extends De {
   static MAX_WIDTH = Math.log2(512);
   static MAX_HEIGHT = Math.log2(512);
   static init() {
-    const t = {
-      tVHFK: "blk"
-    };
-    super.AddTable(t.tVHFK, [false, null, ...minocolors]);
+    super.AddTable("blk", [false, null, ...minocolors]);
   }
   static encode(e, t) {
     const n = t[0]?.length ?? 0;
@@ -1647,11 +1644,7 @@ class Ue extends De {
 }
 class Xe extends De {
   static init() {
-    const s = {
-      CDRHx: "piece",
-      OMnMr: "flexible"
-    };
-    super.AddTable(s.CDRHx, [null, ...Object.keys(tetrominoes)], s.OMnMr);
+    super.AddTable("piece", [null, ...Object.keys(tetrominoes)], "flexible");
   }
   static encode(e, t) {
     e.writeTable(t.type, this.$$piece);

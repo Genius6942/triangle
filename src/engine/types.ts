@@ -4,7 +4,7 @@ import type {
   GarbageQueueSnapshot,
   Mino,
   OutgoingGarbage,
-	TetrominoSnapshot
+  TetrominoSnapshot
 } from ".";
 import { Game } from "../types";
 import { IGEHandlerSnapshot } from "./multiplayer";
@@ -33,27 +33,27 @@ export interface EngineSnapshot {
   stats: Engine["stats"];
   glock: number;
   state: number;
-	currentSpike: number;
+  currentSpike: number;
   ige: IGEHandlerSnapshot;
-	resCache: Engine["resCache"];
+  resCache: Engine["resCache"];
 }
 
 export interface LockRes {
-	/** The locked mino */
+  /** The locked mino */
   mino: Mino;
-	/** The number of garbage lines cleared */
+  /** The number of garbage lines cleared */
   garbageCleared: number;
-	/** The number of lines cleared */
+  /** The number of lines cleared */
   lines: number;
-	/** The type of spin performed */
+  /** The type of spin performed */
   spin: SpinType;
   /** Garbage from attacks before cancelling */
   rawGarbage: number[];
-	/** Garbage from attacks after cancelling */
+  /** Garbage from attacks after cancelling */
   garbage: number[];
-	/** The amount of garbage released by surge before cancelling */
-	surge: number;
-	/** The current engine stats */
+  /** The amount of garbage released by surge before cancelling */
+  surge: number;
+  /** The current engine stats */
   stats: {
     garbage: {
       sent: number;
@@ -66,13 +66,13 @@ export interface LockRes {
     pieces: number;
     lines: number;
   };
-	/** The amount of garbage added to the board */
+  /** The amount of garbage added to the board */
   garbageAdded: false | OutgoingGarbage[];
-	/** Whether or not the engine is topped out */
+  /** Whether or not the engine is topped out */
   topout: boolean;
   /** The number of frames since the last piece was placed */
   pieceTime: number;
-	/** The keys pressed since the last lock */
+  /** The keys pressed since the last lock */
   keysPresses: Game.Key[];
 }
 

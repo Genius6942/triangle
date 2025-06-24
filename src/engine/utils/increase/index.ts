@@ -1,5 +1,5 @@
 export class IncreaseTracker {
-   #value: number;
+  #value: number;
 
   base: number;
   increase: number;
