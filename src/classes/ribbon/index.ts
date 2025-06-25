@@ -648,7 +648,11 @@ export class Ribbon {
     }
 
     this.#flags |= Ribbon.FLAGS.DEAD;
-    clearInterval(this.#pinger.heartbeat);
+    clearInterval(this.#pinger.interval);
+    if (this.#reconnectTimeout !== null) {
+      clearTimeout(this.#reconnectTimeout);
+      this.#reconnectTimeout = null;
+    }
   }
 
   get #uri() {
